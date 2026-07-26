@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   FiBell,
   FiMenu,
@@ -12,12 +13,25 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const Navbar = ({ setSidebarOpen }) => {
+const Navbar = ({
+  setSidebarOpen,
+  title = "Nxthack",
+  subtitle = "",
+  searchPlaceholder = "Search...",
+  profilePath = "/settings",
+  settingsPath = "/settings",
+}) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const [searchFocused, setSearchFocused] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Initials
+  |--------------------------------------------------------------------------
+  */
 
   const getInitials = (name = "") => {
     if (!name) return "U";
@@ -31,6 +45,12 @@ const Navbar = ({ setSidebarOpen }) => {
       .toUpperCase();
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Format Role
+  |--------------------------------------------------------------------------
+  */
+
   const formatRole = (role = "") => {
     if (!role) return "User";
 
@@ -39,6 +59,12 @@ const Navbar = ({ setSidebarOpen }) => {
       .toLowerCase()
       .replace(/\b\w/g, (char) => char.toUpperCase());
   };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Logout
+  |--------------------------------------------------------------------------
+  */
 
   const handleLogout = async () => {
     await logout();
@@ -50,7 +76,9 @@ const Navbar = ({ setSidebarOpen }) => {
 
   return (
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-300 bg-white px-4 shadow-sm md:px-6">
-      {/* LEFT */}
+      {/* ================================================================
+          LEFT
+      ================================================================= */}
 
       <div className="flex min-w-0 items-center gap-4">
         <button
@@ -64,16 +92,20 @@ const Navbar = ({ setSidebarOpen }) => {
 
         <div className="min-w-0">
           <h2 className="truncate text-lg font-bold tracking-tight text-slate-950">
-            Trainer Operations
+            {title}
           </h2>
 
-          <p className="mt-0.5 hidden text-xs font-medium text-slate-600 sm:block">
-            Manage requirements, trainers and assignments
-          </p>
+          {subtitle && (
+            <p className="mt-0.5 hidden text-xs font-medium text-slate-600 sm:block">
+              {subtitle}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* RIGHT */}
+      {/* ================================================================
+          RIGHT
+      ================================================================= */}
 
       <div className="flex items-center gap-2 md:gap-3">
         {/* Search */}
@@ -88,7 +120,7 @@ const Navbar = ({ setSidebarOpen }) => {
 
           <input
             type="text"
-            placeholder="Search trainers, vendors..."
+            placeholder={searchPlaceholder}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
             className="w-72 rounded-lg border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-500 hover:border-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10"
@@ -117,11 +149,11 @@ const Navbar = ({ setSidebarOpen }) => {
           <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-600 ring-2 ring-white" />
         </button>
 
-        {/* Divider */}
-
         <div className="hidden h-9 w-px bg-slate-300 sm:block" />
 
-        {/* Profile */}
+        {/* ================================================================
+            PROFILE
+        ================================================================= */}
 
         <div className="relative">
           <button
@@ -131,17 +163,13 @@ const Navbar = ({ setSidebarOpen }) => {
               profileOpen ? "bg-slate-100" : "hover:bg-slate-100"
             }`}
           >
-            {/* Avatar */}
-
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white shadow-sm">
               {getInitials(user?.name)}
             </div>
 
-            {/* User */}
-
             <div className="hidden min-w-0 text-left sm:block">
               <p className="max-w-36 truncate text-sm font-bold text-slate-950">
-                {user?.name || "Administrator"}
+                {user?.name || "User"}
               </p>
 
               <p className="mt-0.5 max-w-36 truncate text-xs font-medium text-slate-600">
@@ -157,7 +185,9 @@ const Navbar = ({ setSidebarOpen }) => {
             />
           </button>
 
-          {/* Dropdown */}
+          {/* ================================================================
+              DROPDOWN
+          ================================================================= */}
 
           {profileOpen && (
             <>
@@ -169,7 +199,7 @@ const Navbar = ({ setSidebarOpen }) => {
               />
 
               <div className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-                {/* User Information */}
+                {/* User */}
 
                 <div className="border-b border-slate-200 bg-slate-50 px-4 py-4">
                   <div className="flex items-center gap-3">
@@ -179,7 +209,7 @@ const Navbar = ({ setSidebarOpen }) => {
 
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-slate-950">
-                        {user?.name || "Administrator"}
+                        {user?.name || "User"}
                       </p>
 
                       <p className="mt-0.5 truncate text-xs font-medium text-slate-600">
@@ -196,7 +226,7 @@ const Navbar = ({ setSidebarOpen }) => {
                     type="button"
                     onClick={() => {
                       setProfileOpen(false);
-                      navigate("/settings");
+                      navigate(profilePath);
                     }}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
                   >
@@ -208,7 +238,7 @@ const Navbar = ({ setSidebarOpen }) => {
                     type="button"
                     onClick={() => {
                       setProfileOpen(false);
-                      navigate("/settings");
+                      navigate(settingsPath);
                     }}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
                   >

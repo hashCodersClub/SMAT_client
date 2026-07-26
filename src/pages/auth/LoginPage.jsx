@@ -8,10 +8,33 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
 
+/*
+|--------------------------------------------------------------------------
+| Role Redirect
+|--------------------------------------------------------------------------
+*/
+
+const getHomeRoute = (user) => {
+  const role = user?.role;
+
+  switch (role) {
+    case "SUPER_ADMIN":
+    case "ADMIN":
+    case "OPERATIONS":
+      return "/";
+
+    case "VENDOR":
+      return "/vendor/dashboard";
+
+    default:
+      return "/";
+  }
+};
+
 const LoginPage = () => {
   const navigate = useNavigate();
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, user, isAuthenticated, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState("");
 
@@ -23,13 +46,25 @@ const LoginPage = () => {
 
   const [error, setError] = useState("");
 
+  /*
+  |--------------------------------------------------------------------------
+  | Already Logged In
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/", {
+    if (!authLoading && isAuthenticated && user) {
+      navigate(getHomeRoute(user), {
         replace: true,
       });
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, user, navigate]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Login
+  |--------------------------------------------------------------------------
+  */
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -48,11 +83,27 @@ const LoginPage = () => {
 
     try {
       setLoading(true);
+
       setError("");
 
-      await login(email.trim(), password);
+      /*
+      |--------------------------------------------------------------------------
+      | IMPORTANT
+      |--------------------------------------------------------------------------
+      |
+      | AuthContext.login() returns the logged-in user.
+      |--------------------------------------------------------------------------
+      */
 
-      navigate("/", {
+      const loggedInUser = await login(email.trim(), password);
+
+      /*
+      |--------------------------------------------------------------------------
+      | Redirect By Role
+      |--------------------------------------------------------------------------
+      */
+
+      navigate(getHomeRoute(loggedInUser), {
         replace: true,
       });
     } catch (error) {
@@ -68,12 +119,16 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-950">
-      {/* Left */}
+      {/* ================================================================
+          LEFT
+      ================================================================= */}
 
       <div className="relative hidden w-1/2 overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-blue-600/20 blur-[120px]" />
 
         <div className="absolute -bottom-40 right-0 h-[500px] w-[500px] rounded-full bg-cyan-500/10 blur-[120px]" />
+
+        {/* Logo */}
 
         <div className="relative z-10">
           <div className="flex items-center gap-3">
@@ -87,11 +142,13 @@ const LoginPage = () => {
               </h1>
 
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-blue-300/70">
-                Operations Portal
+                Training Operations Platform
               </p>
             </div>
           </div>
         </div>
+
+        {/* Hero */}
 
         <div className="relative z-10 max-w-xl">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-400">
@@ -113,10 +170,14 @@ const LoginPage = () => {
         </p>
       </div>
 
-      {/* Right */}
+      {/* ================================================================
+          RIGHT
+      ================================================================= */}
 
       <div className="flex w-full items-center justify-center bg-white px-6 py-12 lg:w-1/2">
         <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+
           <div className="mb-9 lg:hidden">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600">
@@ -127,11 +188,13 @@ const LoginPage = () => {
                 <h1 className="font-bold text-slate-900">NXTHACK</h1>
 
                 <p className="text-[10px] uppercase tracking-widest text-slate-400">
-                  Operations Portal
+                  Training Operations Platform
                 </p>
               </div>
             </div>
           </div>
+
+          {/* Heading */}
 
           <div>
             <p className="text-sm font-semibold text-blue-600">Welcome back</p>
@@ -141,9 +204,11 @@ const LoginPage = () => {
             </h2>
 
             <p className="mt-2 text-sm text-slate-500">
-              Enter your Nxthack administrator credentials.
+              Enter your Nxthack account credentials.
             </p>
           </div>
+
+          {/* Error */}
 
           {error && (
             <div className="mt-6 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -153,7 +218,11 @@ const LoginPage = () => {
             </div>
           )}
 
+          {/* Form */}
+
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            {/* Email */}
+
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
                 Email address
@@ -166,12 +235,14 @@ const LoginPage = () => {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="admin@nxthack.com"
+                  placeholder="you@example.com"
                   autoComplete="email"
                   className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                 />
               </div>
             </div>
+
+            {/* Password */}
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -200,6 +271,8 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {/* Submit */}
+
             <button
               type="submit"
               disabled={loading}
@@ -210,7 +283,7 @@ const LoginPage = () => {
           </form>
 
           <p className="mt-8 text-center text-xs text-slate-400">
-            Authorized Nxthack personnel only
+            Secure Nxthack platform access
           </p>
         </div>
       </div>

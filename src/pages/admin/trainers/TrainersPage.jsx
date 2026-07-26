@@ -8,12 +8,11 @@ import {
 } from "react-icons/fi";
 
 import trainersApi from "../../../api/trainersApi";
+import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
 
 import TrainerStats from "../../../components/admin/trainers/TrainerStats";
 import TrainerFilters from "../../../components/admin/trainers/TrainerFilters";
 import TrainerTable from "../../../components/admin/trainers/TrainerTable";
-
-import { trainers } from "../../../data/trainers";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -35,7 +34,7 @@ const TrainersPage = () => {
           limit: 100,
         });
 
-        setTrainers(data.trainers || []);
+        setTrainers((data.trainers || []).map(mapTrainerFromApi));
       } catch (error) {
         console.error(error);
 

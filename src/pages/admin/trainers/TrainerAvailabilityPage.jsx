@@ -1,25 +1,46 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FiArrowLeft, FiCalendar, FiPlus, FiTrash2 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { trainers } from "../../../data/trainers";
-import { trainerAvailability } from "../../../data/trainerAvailability";
+import trainersApi from "../../../api/trainersApi";
+import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
+
+// NOTE: There is no backend model for availability blocks yet, so blocked
+// periods below are kept in local component state only (same as before)
+// and will not persist across a reload. The trainer's identity, however,
+// is now loaded from the real API.
 
 const TrainerAvailabilityPage = () => {
   const { id } = useParams();
 
   const navigate = useNavigate();
 
-  const trainer = trainers.find((item) => item.id === id);
+  const [trainer, setTrainer] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const initialBlocks = useMemo(
-    () => trainerAvailability.filter((item) => item.trainerId === id),
-    [id],
-  );
-
-  const [blocks, setBlocks] = useState(initialBlocks);
+  const [blocks, setBlocks] = useState([]);
 
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    const loadTrainer = async () => {
+      try {
+        setLoading(true);
+
+        const response = await trainersApi.getById(id);
+
+        setTrainer(mapTrainerFromApi(response.trainer));
+      } catch (err) {
+        console.error("Failed to load trainer:", err);
+
+        setTrainer(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTrainer();
+  }, [id]);
 
   const [form, setForm] = useState({
     startDate: "",
@@ -28,6 +49,15 @@ const TrainerAvailabilityPage = () => {
     title: "",
     notes: "",
   });
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="h-5 w-32 animate-pulse rounded bg-slate-200" />
+        <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+      </div>
+    );
+  }
 
   if (!trainer) {
     return (

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -9,27 +10,88 @@ import {
   FiBriefcase,
   FiFileText,
   FiCheckCircle,
+  FiAlertCircle,
+  FiRefreshCw,
 } from "react-icons/fi";
 
-import { trainers } from "../../../data/trainers";
+import trainersApi from "../../../api/trainersApi";
+import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
 
 const TrainerDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const trainer = trainers.find((item) => item.id === id);
+  const [trainer, setTrainer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!trainer) {
+  const fetchTrainer = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await trainersApi.getById(id);
+
+      setTrainer(mapTrainerFromApi(response.trainer));
+    } catch (err) {
+      console.error("Failed to fetch trainer:", err);
+
+      setError(
+        err.response?.data?.message || "Unable to load trainer information.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrainer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-        <h2 className="text-xl font-semibold">Trainer not found</h2>
+      <div className="space-y-6">
+        <div className="h-5 w-24 animate-pulse rounded bg-slate-200" />
 
-        <button
-          onClick={() => navigate("/trainers")}
-          className="mt-4 text-sm font-medium text-blue-600"
-        >
-          Return to trainers
-        </button>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <div className="h-16 w-16 animate-pulse rounded-2xl bg-slate-200" />
+
+          <div className="mt-4 h-6 w-56 animate-pulse rounded bg-slate-200" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !trainer) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
+        <FiAlertCircle size={30} className="mx-auto text-red-500" />
+
+        <h2 className="mt-3 text-xl font-semibold text-red-900">
+          {error ? "Trainer could not be loaded" : "Trainer not found"}
+        </h2>
+
+        {error && <p className="mt-1 text-sm text-red-700">{error}</p>}
+
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <button
+            onClick={() => navigate("/trainers")}
+            className="text-sm font-medium text-blue-600"
+          >
+            Return to trainers
+          </button>
+
+          {error && (
+            <button
+              onClick={fetchTrainer}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-100"
+            >
+              <FiRefreshCw />
+              Retry
+            </button>
+          )}
+        </div>
       </div>
     );
   }

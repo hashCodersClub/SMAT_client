@@ -5,6 +5,7 @@ import AdminLayout from "../layouts/AdminLayout";
 // Authentication
 import LoginPage from "../pages/auth/LoginPage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
+import VendorRegisterPage from "../pages/auth/VendorRegisterPage";
 
 // Dashboard
 import DashboardPage from "../pages/admin/DashboardPage";
@@ -37,6 +38,14 @@ import AssignmentsPage from "../pages/assignments/AssignmentsPage";
 // Settings
 import SettingsPage from "../pages/admin/SettingsPage";
 
+//vendor layout
+import VendorLayout from "../layouts/VendorLayout";
+import VendorDashboardPage from "../pages/vendor/dashboard/VendorDashboardPage";
+import VendorRequirementsPage from "../pages/vendor/requirements/VendorRequirementsPage";
+import AddVendorRequirementPage from "../pages/vendor/requirements/AddVendorRequirementPage";
+import VendorRequirementDetailsPage from "../pages/vendor/requirements/VendorRequirementDetailsPage";
+import EditVendorRequirementPage from "../pages/vendor/requirements/EditVendorRequirementPage";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -45,6 +54,42 @@ const AppRoutes = () => {
       ================================================================= */}
 
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/vendor/register" element={<VendorRegisterPage />} />
+
+      {/* ================================================================
+    PROTECTED VENDOR PORTAL
+================================================================= */}
+
+      <Route element={<ProtectedRoute allowedRoles={["VENDOR"]} />}>
+        <Route element={<VendorLayout />}>
+          <Route path="/vendor/dashboard" element={<VendorDashboardPage />} />
+          <Route
+            path="/vendor/requirements"
+            element={<VendorRequirementsPage />}
+          />
+
+          {/* Create */}
+
+          <Route
+            path="/vendor/requirements/add"
+            element={<AddVendorRequirementPage />}
+          />
+
+          {/* Details */}
+
+          <Route
+            path="/vendor/requirements/:id"
+            element={<VendorRequirementDetailsPage />}
+          />
+
+          {/* Edit */}
+
+          <Route
+            path="/vendor/requirements/:id/edit"
+            element={<EditVendorRequirementPage />}
+          />
+        </Route>
+      </Route>
 
       {/* ================================================================
           PROTECTED ADMIN / OPERATIONS PORTAL

@@ -1,109 +1,328 @@
-import { useState } from "react";
-import { FiPlus, FiX } from "react-icons/fi";
-
-import { vendors } from "../../../data/vendors";
+import { useEffect, useState } from "react";
+import { FiAlertCircle, FiPlus, FiX } from "react-icons/fi";
 
 const emptyRequirement = {
-  title: "",
   vendorId: "",
+
+  title: "",
+  trainingType: "CORPORATE",
+  description: "",
 
   skills: [],
 
-  trainingType: "Corporate",
-  mode: "Offline",
+  mode: "ONLINE",
 
   city: "",
   state: "",
-  venue: "",
 
   startDate: "",
   endDate: "",
 
-  startTime: "",
-  endTime: "",
+  durationValue: "",
+  durationUnit: "DAYS",
 
-  numberOfTrainers: 1,
-  batchSize: "",
-
-  budgetType: "Per Day",
-  budget: "",
-
+  participants: "",
   experienceRequired: "",
 
-  priority: "MEDIUM",
-  source: "WhatsApp",
+  budget: "",
+  budgetType: "PER_DAY",
 
-  description: "",
-  notes: "",
+  priority: "MEDIUM",
+
+  vendorNotes: "",
+  internalNotes: "",
 };
+
+/*
+|--------------------------------------------------------------------------
+| Requirement Form
+|--------------------------------------------------------------------------
+*/
 
 const RequirementForm = ({
   initialData = emptyRequirement,
+  vendors = [],
+  vendorsLoading = false,
   onSubmit,
-  submitLabel = "Create Requirement",
+  submitLabel = "Save Requirement",
+  submitting = false,
+  isEdit = false,
 }) => {
   const [form, setForm] = useState({
     ...emptyRequirement,
     ...initialData,
+
+    skills: initialData?.skills || [],
   });
 
   const [skillInput, setSkillInput] = useState("");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const [formError, setFormError] = useState("");
 
-    setForm((previous) => ({
-      ...previous,
+  /*
+  |--------------------------------------------------------------------------
+  | Sync Initial Data
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    setForm({
+      ...emptyRequirement,
+      ...initialData,
+
+      skills: initialData?.skills || [],
+    });
+  }, [initialData]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Change
+  |--------------------------------------------------------------------------
+  */
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((current) => ({
+      ...current,
       [name]: value,
     }));
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Add Skill
+  |--------------------------------------------------------------------------
+  */
+
   const addSkill = () => {
-    const value = skillInput.trim();
+    const skill = skillInput.trim();
 
-    if (!value) return;
+    if (!skill) return;
 
-    if (
-      !form.skills.some((skill) => skill.toLowerCase() === value.toLowerCase())
-    ) {
-      setForm((previous) => ({
-        ...previous,
-        skills: [...previous.skills, value],
-      }));
+    const alreadyExists = form.skills.some(
+      (existingSkill) => existingSkill.toLowerCase() === skill.toLowerCase(),
+    );
+
+    if (alreadyExists) {
+      setSkillInput("");
+      return;
     }
+
+    setForm((current) => ({
+      ...current,
+
+      skills: [...current.skills, skill],
+    }));
 
     setSkillInput("");
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Skill Keyboard
+  |--------------------------------------------------------------------------
+  */
+
+  const handleSkillKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault();
+
+      addSkill();
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Remove Skill
+  |--------------------------------------------------------------------------
+  */
+
   const removeSkill = (skill) => {
-    setForm((previous) => ({
-      ...previous,
-      skills: previous.skills.filter((item) => item !== skill),
+    setForm((current) => ({
+      ...current,
+
+      skills: current.skills.filter((item) => item !== skill),
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  /*
+  |--------------------------------------------------------------------------
+  | Validation
+  |--------------------------------------------------------------------------
+  */
 
-    const vendor = vendors.find((item) => item.id === form.vendorId);
+  const validate = () => {
+    if (!form.vendorId) {
+      return "Please select a vendor.";
+    }
 
-    onSubmit({
-      ...form,
+    if (!form.title.trim()) {
+      return "Requirement title is required.";
+    }
 
-      vendorName: vendor?.companyName || "",
+    if (!form.skills.length) {
+      return "Add at least one required skill.";
+    }
 
-      numberOfTrainers: Number(form.numberOfTrainers),
-      batchSize: Number(form.batchSize),
-      budget: Number(form.budget),
-      experienceRequired: Number(form.experienceRequired),
-    });
+    if (!form.startDate) {
+      return "Start date is required.";
+    }
+
+    if (!form.endDate) {
+      return "End date is required.";
+    }
+
+    if (new Date(form.endDate) < new Date(form.startDate)) {
+      return "End date cannot be before start date.";
+    }
+
+    if (form.mode !== "ONLINE" && !form.city.trim()) {
+      return "City is required for offline or hybrid training.";
+    }
+
+    return "";
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Submit
+  |--------------------------------------------------------------------------
+  */
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    setFormError("");
+
+    const validationError = validate();
+
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normalize Payload
+    |--------------------------------------------------------------------------
+    */
+
+    const payload = {
+      vendorId: form.vendorId,
+
+      title: form.title.trim(),
+
+      trainingType: form.trainingType,
+
+      description: form.description?.trim() || "",
+
+      skills: form.skills,
+
+      mode: form.mode,
+
+      city: form.mode === "ONLINE" ? "" : form.city?.trim() || "",
+
+      state: form.mode === "ONLINE" ? "" : form.state?.trim() || "",
+
+      startDate: form.startDate,
+      endDate: form.endDate,
+
+      durationValue:
+        form.durationValue === "" ? undefined : Number(form.durationValue),
+
+      durationUnit: form.durationUnit,
+
+      participants:
+        form.participants === "" ? undefined : Number(form.participants),
+
+      experienceRequired:
+        form.experienceRequired === ""
+          ? undefined
+          : Number(form.experienceRequired),
+
+      budget: form.budget === "" ? undefined : Number(form.budget),
+
+      budgetType: form.budgetType,
+
+      priority: form.priority,
+
+      vendorNotes: form.vendorNotes?.trim() || "",
+
+      internalNotes: form.internalNotes?.trim() || "",
+    };
+
+    await onSubmit(payload);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* ================================================================
+          FORM ERROR
+      ================================================================= */}
+
+      {formError && (
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <FiAlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
+
+          <p className="text-sm font-medium text-red-700">{formError}</p>
+        </div>
+      )}
+
+      {/* ================================================================
+          VENDOR
+      ================================================================= */}
+
       <Section
-        title="Requirement Information"
-        description="Basic information about the incoming training requirement."
+        title="Vendor"
+        description="Select the company that provided this training requirement."
+      >
+        <div className="md:col-span-2">
+          <Select
+            label="Vendor"
+            name="vendorId"
+            value={form.vendorId}
+            onChange={handleChange}
+            disabled={vendorsLoading || submitting}
+            required
+          >
+            <option value="">
+              {vendorsLoading ? "Loading vendors..." : "Select vendor"}
+            </option>
+
+            {vendors.map((vendor) => (
+              <option
+                key={vendor._id || vendor.id}
+                value={vendor._id || vendor.id}
+              >
+                {vendor.companyName}
+                {vendor.city ? ` — ${vendor.city}` : ""}
+              </option>
+            ))}
+          </Select>
+
+          {!vendorsLoading && vendors.length === 0 && (
+            <p className="mt-2 text-xs text-amber-600">
+              No vendors are available. Add or invite a vendor first.
+            </p>
+          )}
+
+          {isEdit && (
+            <p className="mt-2 text-xs text-slate-400">
+              Changing the vendor will transfer this requirement to another
+              vendor account.
+            </p>
+          )}
+        </div>
+      </Section>
+
+      {/* ================================================================
+          TRAINING INFORMATION
+      ================================================================= */}
+
+      <Section
+        title="Training Information"
+        description="Describe the training requirement and required trainer profile."
       >
         <div className="md:col-span-2">
           <Input
@@ -111,40 +330,10 @@ const RequirementForm = ({
             name="title"
             value={form.title}
             onChange={handleChange}
-            placeholder="Python + Data Analytics Trainer"
+            placeholder="Example: Azure Administrator Corporate Training"
             required
           />
         </div>
-
-        <Select
-          label="Vendor"
-          name="vendorId"
-          value={form.vendorId}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select vendor</option>
-
-          {vendors.map((vendor) => (
-            <option key={vendor.id} value={vendor.id}>
-              {vendor.companyName}
-            </option>
-          ))}
-        </Select>
-
-        <Select
-          label="Source"
-          name="source"
-          value={form.source}
-          onChange={handleChange}
-        >
-          <option>WhatsApp</option>
-          <option>Email</option>
-          <option>Phone</option>
-          <option>Referral</option>
-          <option>Website</option>
-          <option>Other</option>
-        </Select>
 
         <Select
           label="Training Type"
@@ -152,104 +341,156 @@ const RequirementForm = ({
           value={form.trainingType}
           onChange={handleChange}
         >
-          <option>Corporate</option>
-          <option>College</option>
-          <option>Bootcamp</option>
-          <option>Workshop</option>
-          <option>Faculty Development</option>
-          <option>Other</option>
+          <option value="CORPORATE">Corporate</option>
+
+          <option value="COLLEGE">College</option>
+
+          <option value="BOOTCAMP">Bootcamp</option>
+
+          <option value="WORKSHOP">Workshop</option>
+
+          <option value="OTHER">Other</option>
         </Select>
 
-        <Select
-          label="Training Mode"
-          name="mode"
-          value={form.mode}
+        <Input
+          label="Participants"
+          name="participants"
+          type="number"
+          min="1"
+          value={form.participants}
           onChange={handleChange}
-        >
-          <option>Offline</option>
-          <option>Online</option>
-          <option>Hybrid</option>
-        </Select>
+          placeholder="Example: 25"
+        />
 
-        <Select
-          label="Priority"
-          name="priority"
-          value={form.priority}
-          onChange={handleChange}
-        >
-          <option value="LOW">Low</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HIGH">High</option>
-        </Select>
-      </Section>
-
-      <Section
-        title="Skills Required"
-        description="Add technologies and competencies required from the trainer."
-      >
         <div className="md:col-span-2">
+          <Textarea
+            label="Description"
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Describe the training objectives, audience, expected coverage and any important requirements..."
+            rows={5}
+          />
+        </div>
+
+        {/* Skills */}
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Required Skills
+            <span className="ml-1 text-red-500">*</span>
+          </label>
+
           <div className="flex gap-2">
             <input
+              type="text"
               value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addSkill();
-                }
-              }}
-              placeholder="e.g. Python"
-              className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+              onChange={(event) => setSkillInput(event.target.value)}
+              onKeyDown={handleSkillKeyDown}
+              placeholder="Example: Azure, AZ-104, PowerShell"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
             />
 
             <button
               type="button"
               onClick={addSkill}
-              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white"
+              className="flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <FiPlus />
               Add
             </button>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {form.skills.map((skill) => (
-              <span
-                key={skill}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700"
-              >
-                {skill}
+          <p className="mt-2 text-xs text-slate-400">
+            Press Enter or comma after each skill.
+          </p>
 
-                <button type="button" onClick={() => removeSkill(skill)}>
-                  <FiX />
-                </button>
-              </span>
-            ))}
-          </div>
+          {form.skills.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {form.skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700"
+                >
+                  {skill}
+
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(skill)}
+                    className="text-blue-400 transition hover:text-red-500"
+                  >
+                    <FiX size={13} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <Input
-          label="Minimum Experience"
+          label="Trainer Experience Required"
           name="experienceRequired"
           type="number"
           min="0"
           value={form.experienceRequired}
           onChange={handleChange}
-          placeholder="3"
-          suffix="years"
-        />
-
-        <Input
-          label="Number of Trainers"
-          name="numberOfTrainers"
-          type="number"
-          min="1"
-          value={form.numberOfTrainers}
-          onChange={handleChange}
+          placeholder="Years"
         />
       </Section>
 
-      <Section title="Schedule" description="Training dates and daily timings.">
+      {/* ================================================================
+          DELIVERY
+      ================================================================= */}
+
+      <Section
+        title="Delivery & Location"
+        description="Define how and where the training will be delivered."
+      >
+        <Select
+          label="Training Mode"
+          name="mode"
+          value={form.mode}
+          onChange={handleChange}
+        >
+          <option value="ONLINE">Online</option>
+
+          <option value="OFFLINE">Offline</option>
+
+          <option value="HYBRID">Hybrid</option>
+        </Select>
+
+        <div />
+
+        {form.mode !== "ONLINE" && (
+          <>
+            <Input
+              label="City"
+              name="city"
+              value={form.city}
+              onChange={handleChange}
+              placeholder="Example: Bengaluru"
+              required
+            />
+
+            <Input
+              label="State"
+              name="state"
+              value={form.state}
+              onChange={handleChange}
+              placeholder="Example: Karnataka"
+            />
+          </>
+        )}
+      </Section>
+
+      {/* ================================================================
+          SCHEDULE
+      ================================================================= */}
+
+      <Section
+        title="Schedule"
+        description="Define expected training dates and duration."
+      >
         <Input
           label="Start Date"
           name="startDate"
@@ -265,128 +506,134 @@ const RequirementForm = ({
           type="date"
           value={form.endDate}
           onChange={handleChange}
+          min={form.startDate || undefined}
           required
         />
 
         <Input
-          label="Start Time"
-          name="startTime"
-          type="time"
-          value={form.startTime}
-          onChange={handleChange}
-        />
-
-        <Input
-          label="End Time"
-          name="endTime"
-          type="time"
-          value={form.endTime}
-          onChange={handleChange}
-        />
-
-        <Input
-          label="Batch Size"
-          name="batchSize"
+          label="Duration"
+          name="durationValue"
           type="number"
-          min="0"
-          value={form.batchSize}
+          min="1"
+          value={form.durationValue}
           onChange={handleChange}
-          placeholder="60"
+          placeholder="Example: 5"
         />
+
+        <Select
+          label="Duration Unit"
+          name="durationUnit"
+          value={form.durationUnit}
+          onChange={handleChange}
+        >
+          <option value="HOURS">Hours</option>
+
+          <option value="DAYS">Days</option>
+
+          <option value="WEEKS">Weeks</option>
+
+          <option value="MONTHS">Months</option>
+        </Select>
       </Section>
+
+      {/* ================================================================
+          COMMERCIAL
+      ================================================================= */}
 
       <Section
-        title="Location"
-        description="Where the training will be delivered."
+        title="Commercial Information"
+        description="Record the vendor budget and requirement priority."
       >
         <Input
-          label="City"
-          name="city"
-          value={form.city}
+          label="Budget"
+          name="budget"
+          type="number"
+          min="0"
+          value={form.budget}
           onChange={handleChange}
-          placeholder="Noida"
+          placeholder="Example: 15000"
         />
 
-        <Input
-          label="State"
-          name="state"
-          value={form.state}
-          onChange={handleChange}
-          placeholder="Uttar Pradesh"
-        />
-
-        <div className="md:col-span-2">
-          <Input
-            label="Venue / Client Location"
-            name="venue"
-            value={form.venue}
-            onChange={handleChange}
-            placeholder="College or client office"
-          />
-        </div>
-      </Section>
-
-      <Section title="Commercial" description="Vendor budget for the trainer.">
         <Select
           label="Budget Type"
           name="budgetType"
           value={form.budgetType}
           onChange={handleChange}
         >
-          <option>Per Day</option>
-          <option>Per Hour</option>
-          <option>Fixed</option>
+          <option value="PER_HOUR">Per Hour</option>
+
+          <option value="PER_DAY">Per Day</option>
+
+          <option value="PER_BATCH">Per Batch</option>
+
+          <option value="FIXED">Fixed</option>
         </Select>
 
-        <Input
-          label="Maximum Budget"
-          name="budget"
-          type="number"
-          min="0"
-          value={form.budget}
+        <Select
+          label="Priority"
+          name="priority"
+          value={form.priority}
           onChange={handleChange}
-          placeholder="5000"
-          prefix="₹"
-        />
+        >
+          <option value="LOW">Low</option>
+
+          <option value="MEDIUM">Medium</option>
+
+          <option value="HIGH">High</option>
+        </Select>
       </Section>
+
+      {/* ================================================================
+          NOTES
+      ================================================================= */}
 
       <Section
-        title="Additional Information"
-        description="Requirement description and internal notes."
+        title="Notes"
+        description="Record vendor instructions and internal operational information."
       >
-        <div className="md:col-span-2">
-          <Textarea
-            label="Requirement Description"
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Paste or summarize the vendor requirement..."
-          />
-        </div>
+        <Textarea
+          label="Vendor Notes"
+          name="vendorNotes"
+          value={form.vendorNotes}
+          onChange={handleChange}
+          placeholder="Instructions or notes received from the vendor..."
+          rows={4}
+        />
 
-        <div className="md:col-span-2">
+        <div>
           <Textarea
             label="Internal Notes"
-            name="notes"
-            value={form.notes}
+            name="internalNotes"
+            value={form.internalNotes}
             onChange={handleChange}
-            placeholder="Anything your operations team should know..."
+            placeholder="Internal notes for the Nxthack operations team..."
+            rows={4}
           />
+
+          <p className="mt-2 text-xs text-amber-600">
+            Internal notes must never be shown in the Vendor Portal.
+          </p>
         </div>
       </Section>
 
-      <div className="flex justify-end gap-3">
+      {/* ================================================================
+          ACTIONS
+      ================================================================= */}
+
+      <div className="sticky bottom-4 z-10 flex flex-col-reverse justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row">
         <button
           type="button"
+          disabled={submitting}
           onClick={() => window.history.back()}
-          className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancel
         </button>
 
         <button
           type="submit"
-          className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+          disabled={submitting || vendorsLoading || vendors.length === 0}
+          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
         >
           {submitLabel}
         </button>
@@ -395,59 +642,77 @@ const RequirementForm = ({
   );
 };
 
+/*
+|--------------------------------------------------------------------------
+| Section
+|--------------------------------------------------------------------------
+*/
+
 const Section = ({ title, description, children }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-    <h2 className="font-semibold text-slate-900">{title}</h2>
+  <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+    <div>
+      <h2 className="font-semibold text-slate-900">{title}</h2>
 
-    <p className="mt-1 text-sm text-slate-500">{description}</p>
+      {description && (
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
+      )}
+    </div>
 
-    <div className="mt-5 grid gap-4 md:grid-cols-2">{children}</div>
+    <div className="mt-5 grid gap-5 md:grid-cols-2">{children}</div>
   </section>
 );
 
-const Input = ({ label, prefix, suffix, ...props }) => (
+/*
+|--------------------------------------------------------------------------
+| Input
+|--------------------------------------------------------------------------
+*/
+
+const Input = ({ label, required, ...props }) => (
   <div>
     <label className="mb-2 block text-sm font-medium text-slate-700">
       {label}
+
+      {required && <span className="ml-1 text-red-500">*</span>}
     </label>
 
-    <div className="relative">
-      {prefix && (
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-          {prefix}
-        </span>
-      )}
-
-      <input
-        {...props}
-        className={`w-full rounded-xl border border-slate-200 py-2.5 text-sm outline-none focus:border-blue-500 ${
-          prefix ? "pl-8" : "pl-3"
-        } ${suffix ? "pr-14" : "pr-3"}`}
-      />
-
-      {suffix && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-          {suffix}
-        </span>
-      )}
-    </div>
+    <input
+      {...props}
+      required={required}
+      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+    />
   </div>
 );
 
-const Select = ({ label, children, ...props }) => (
+/*
+|--------------------------------------------------------------------------
+| Select
+|--------------------------------------------------------------------------
+*/
+
+const Select = ({ label, required, children, ...props }) => (
   <div>
     <label className="mb-2 block text-sm font-medium text-slate-700">
       {label}
+
+      {required && <span className="ml-1 text-red-500">*</span>}
     </label>
 
     <select
       {...props}
-      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+      required={required}
+      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100"
     >
       {children}
     </select>
   </div>
 );
+
+/*
+|--------------------------------------------------------------------------
+| Textarea
+|--------------------------------------------------------------------------
+*/
 
 const Textarea = ({ label, ...props }) => (
   <div>
@@ -457,8 +722,7 @@ const Textarea = ({ label, ...props }) => (
 
     <textarea
       {...props}
-      rows={4}
-      className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+      className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
     />
   </div>
 );

@@ -1,37 +1,31 @@
 import {
   FiBriefcase,
   FiCheckCircle,
-  FiClipboard,
-  FiUserCheck,
+  FiPauseCircle,
+  FiSlash,
 } from "react-icons/fi";
 
-const VendorStats = ({ vendors }) => {
+const VendorStats = ({ vendors = [] }) => {
   const stats = [
     {
-      label: "Total Vendors",
+      label: "Loaded Vendors",
       value: vendors.length,
       icon: FiBriefcase,
     },
     {
-      label: "Active Vendors",
-      value: vendors.filter((v) => v.status === "ACTIVE").length,
+      label: "Active",
+      value: vendors.filter((vendor) => vendor.status === "ACTIVE").length,
       icon: FiCheckCircle,
     },
     {
-      label: "Active Requirements",
-      value: vendors.reduce(
-        (total, vendor) => total + vendor.activeRequirements,
-        0,
-      ),
-      icon: FiClipboard,
+      label: "Inactive",
+      value: vendors.filter((vendor) => vendor.status === "INACTIVE").length,
+      icon: FiPauseCircle,
     },
     {
-      label: "Completed Assignments",
-      value: vendors.reduce(
-        (total, vendor) => total + vendor.completedAssignments,
-        0,
-      ),
-      icon: FiUserCheck,
+      label: "Blocked",
+      value: vendors.filter((vendor) => vendor.status === "BLOCKED").length,
+      icon: FiSlash,
     },
   ];
 
@@ -40,18 +34,18 @@ const VendorStats = ({ vendors }) => {
       {stats.map(({ label, value, icon: Icon }) => (
         <div
           key={label}
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500">{label}</p>
+              <p className="text-sm font-semibold text-slate-600">{label}</p>
 
-              <h3 className="mt-2 text-3xl font-bold text-slate-900">
+              <h3 className="mt-2 text-3xl font-bold text-slate-950">
                 {value}
               </h3>
             </div>
 
-            <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
+            <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
               <Icon size={20} />
             </div>
           </div>
