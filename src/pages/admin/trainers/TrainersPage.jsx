@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FiPlus,
@@ -6,6 +6,8 @@ import {
   FiChevronLeft,
   FiChevronRight,
 } from "react-icons/fi";
+
+import trainersApi from "../../../api/trainersApi";
 
 import TrainerStats from "../../../components/admin/trainers/TrainerStats";
 import TrainerFilters from "../../../components/admin/trainers/TrainerFilters";
@@ -17,7 +19,34 @@ const ITEMS_PER_PAGE = 5;
 
 const TrainersPage = () => {
   const navigate = useNavigate();
+  const [trainers, setTrainers] = useState([]);
 
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadTrainers = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await trainersApi.getAll({
+          limit: 100,
+        });
+
+        setTrainers(data.trainers || []);
+      } catch (error) {
+        console.error(error);
+
+        setError(error.response?.data?.message || "Unable to load trainers");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTrainers();
+  }, []);
   const [search, setSearch] = useState("");
   const [skill, setSkill] = useState("");
   const [location, setLocation] = useState("");

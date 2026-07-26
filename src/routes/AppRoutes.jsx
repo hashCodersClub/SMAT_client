@@ -2,59 +2,139 @@ import { Routes, Route } from "react-router-dom";
 
 import AdminLayout from "../layouts/AdminLayout";
 
+// Authentication
+import LoginPage from "../pages/auth/LoginPage";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+
+// Dashboard
 import DashboardPage from "../pages/admin/DashboardPage";
 
+// Trainers
 import TrainersPage from "../pages/admin/trainers/TrainersPage";
 import AddTrainerPage from "../pages/admin/trainers/AddTrainerPage";
 import TrainerDetailsPage from "../pages/admin/trainers/TrainerDetailsPage";
+import TrainerAvailabilityPage from "../pages/admin/trainers/TrainerAvailabilityPage";
 import EditTrainerPage from "../pages/admin/trainers/EditTrainerPage";
 
+// Requirements
 import RequirementsPage from "../pages/admin/requirements/RequirementsPage";
 import AddRequirementPage from "../pages/admin/requirements/AddRequirementPage";
 import RequirementDetailsPage from "../pages/admin/requirements/RequirementDetailsPage";
 import EditRequirementPage from "../pages/admin/requirements/EditRequirementPage";
-import AssignmentsPage from "../pages/admin/AssignmentsPage";
-import SettingsPage from "../pages/admin/SettingsPage";
+import SmartRequirementPage from "../pages/admin/requirements/SmartRequirementPage";
+import VendorSelectionPage from "../pages/admin/requirements/VendorSelectionPage";
 
+// Vendors
 import VendorsPage from "../pages/admin/vendors/VendorsPage";
 import AddVendorPage from "../pages/admin/vendors/AddVendorPage";
 import VendorDetailsPage from "../pages/admin/vendors/VendorDetailsPage";
 import EditVendorPage from "../pages/admin/vendors/EditVendorPage";
+
+// Assignments
+import CreateAssignmentPage from "../pages/assignments/CreateAssignmentPage";
+import AssignmentsPage from "../pages/assignments/AssignmentsPage";
+
+// Settings
+import SettingsPage from "../pages/admin/SettingsPage";
+
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route element={<AdminLayout />}>
-        <Route path="/" element={<DashboardPage />} />
+      {/* ================================================================
+          PUBLIC ROUTES
+      ================================================================= */}
 
-        {/* Trainers */}
-        <Route path="/trainers" element={<TrainersPage />} />
-        <Route path="/trainers/add" element={<AddTrainerPage />} />
-        <Route path="/trainers/:id" element={<TrainerDetailsPage />} />
-        <Route path="/trainers/:id/edit" element={<EditTrainerPage />} />
+      <Route path="/login" element={<LoginPage />} />
 
-        {/* Operations */}
-        <Route path="/requirements" element={<RequirementsPage />} />
+      {/* ================================================================
+          PROTECTED ADMIN / OPERATIONS PORTAL
+      ================================================================= */}
 
-        <Route path="/requirements/add" element={<AddRequirementPage />} />
+      <Route
+        element={
+          <ProtectedRoute
+            allowedRoles={["SUPER_ADMIN", "ADMIN", "OPERATIONS"]}
+          />
+        }
+      >
+        <Route element={<AdminLayout />}>
+          {/* Dashboard */}
+          <Route path="/" element={<DashboardPage />} />
 
-        <Route path="/requirements/:id" element={<RequirementDetailsPage />} />
+          {/* ============================================================
+              TRAINERS
+          ============================================================= */}
 
-        <Route
-          path="/requirements/:id/edit"
-          element={<EditRequirementPage />}
-        />
+          <Route path="/trainers" element={<TrainersPage />} />
 
-        <Route path="/vendors" element={<VendorsPage />} />
+          <Route path="/trainers/add" element={<AddTrainerPage />} />
 
-        <Route path="/vendors/add" element={<AddVendorPage />} />
+          <Route path="/trainers/:id" element={<TrainerDetailsPage />} />
 
-        <Route path="/vendors/:id" element={<VendorDetailsPage />} />
+          <Route path="/trainers/:id/edit" element={<EditTrainerPage />} />
 
-        <Route path="/vendors/:id/edit" element={<EditVendorPage />} />
+          <Route
+            path="/trainers/:id/availability"
+            element={<TrainerAvailabilityPage />}
+          />
 
-        <Route path="/assignments" element={<AssignmentsPage />} />
+          {/* ============================================================
+              REQUIREMENTS
+          ============================================================= */}
 
-        <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/requirements" element={<RequirementsPage />} />
+
+          <Route path="/requirements/add" element={<AddRequirementPage />} />
+
+          <Route
+            path="/requirements/smart-create"
+            element={<SmartRequirementPage />}
+          />
+
+          <Route
+            path="/requirements/:id"
+            element={<RequirementDetailsPage />}
+          />
+
+          <Route
+            path="/requirements/:id/edit"
+            element={<EditRequirementPage />}
+          />
+
+          <Route
+            path="/requirements/:id/vendor-selection"
+            element={<VendorSelectionPage />}
+          />
+
+          {/* ============================================================
+              VENDORS
+          ============================================================= */}
+
+          <Route path="/vendors" element={<VendorsPage />} />
+
+          <Route path="/vendors/add" element={<AddVendorPage />} />
+
+          <Route path="/vendors/:id" element={<VendorDetailsPage />} />
+
+          <Route path="/vendors/:id/edit" element={<EditVendorPage />} />
+
+          {/* ============================================================
+              ASSIGNMENTS
+          ============================================================= */}
+
+          <Route path="/assignments" element={<AssignmentsPage />} />
+
+          <Route
+            path="/requirements/:id/create-assignment/:trainerId"
+            element={<CreateAssignmentPage />}
+          />
+
+          {/* ============================================================
+              SETTINGS
+          ============================================================= */}
+
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
       </Route>
     </Routes>
   );

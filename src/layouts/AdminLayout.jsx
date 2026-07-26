@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
+
 import Sidebar from "../components/layout/Sidebar";
 import Navbar from "../components/layout/Navbar";
 
@@ -7,14 +8,18 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-primary">
+    <div className="min-h-screen bg-slate-50">
+      {/* Sidebar */}
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
 
-      <div className="lg:ml-72 transition-all duration-300">
+      {/* Main Application Area */}
+      <div className="min-h-screen lg:ml-72">
+        {/* Navbar */}
         <Navbar setSidebarOpen={setSidebarOpen} />
 
-        <main className="p-4 md:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl rounded-2xl bg-card backdrop-blur-sm border-theme p-6 md:p-8 shadow-theme">
+        {/* Page Content */}
+        <main className="min-h-[calc(100vh-5rem)] bg-slate-50">
+          <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-5 md:p-6 lg:p-7">
             <Outlet />
           </div>
         </main>
