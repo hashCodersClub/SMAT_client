@@ -4,8 +4,10 @@ import {
   FiAlertCircle,
   FiBriefcase,
   FiCheck,
-  FiDollarSign,
   FiEdit2,
+  FiExternalLink,
+  FiGlobe,
+  FiLinkedin,
   FiLoader,
   FiMail,
   FiMapPin,
@@ -18,6 +20,7 @@ import {
 } from "react-icons/fi";
 
 import trainersApi from "../../../api/trainersApi";
+import SkillDetailsEditor from "../../../components/trainer/profile/SkillDetailsEditor";
 
 /*
 |--------------------------------------------------------------------------
@@ -29,28 +32,43 @@ const INITIAL_FORM = {
   name: "",
   email: "",
   phone: "",
+  alternatePhone: "",
 
   city: "",
   state: "",
+  country: "India",
 
+  professionalHeadline: "",
+  professionalSummary: "",
+
+  currentDesignation: "",
+  currentOrganization: "",
+
+  // Legacy + structured skills
   skills: [],
+  skillDetails: [],
 
   experience: 0,
-  trainingExperienceYears: 0,
+  trainingExperience: 0,
 
-  hourlyRate: 0,
-  dailyRate: 0,
+  industries: [],
 
   trainingModes: [],
 
   preferredLocations: [],
 
+  willingToTravel: true,
+
   availabilityStatus: "AVAILABLE",
 
   resumeUrl: "",
   linkedinUrl: "",
+  portfolioUrl: "",
+  githubUrl: "",
 
-  bio: "",
+  profileCompletion: 0,
+  profileVerified: false,
+  vendorProfileCode: "",
 };
 
 /*
@@ -63,18 +81,14 @@ const TrainerProfilePage = () => {
   const [form, setForm] = useState(INITIAL_FORM);
 
   const [loading, setLoading] = useState(true);
-
   const [saving, setSaving] = useState(false);
-
   const [editing, setEditing] = useState(false);
 
   const [error, setError] = useState("");
-
   const [success, setSuccess] = useState("");
 
-  const [skillInput, setSkillInput] = useState("");
-
   const [locationInput, setLocationInput] = useState("");
+  const [industryInput, setIndustryInput] = useState("");
 
   /*
   |--------------------------------------------------------------------------
@@ -93,24 +107,33 @@ const TrainerProfilePage = () => {
 
       setForm({
         name: trainer.name || "",
-
         email: trainer.email || "",
-
         phone: trainer.phone || "",
+        alternatePhone: trainer.alternatePhone || "",
 
         city: trainer.city || "",
-
         state: trainer.state || "",
+        country: trainer.country || "India",
+
+        professionalHeadline: trainer.professionalHeadline || "",
+
+        professionalSummary: trainer.professionalSummary || "",
+
+        currentDesignation: trainer.currentDesignation || "",
+
+        currentOrganization: trainer.currentOrganization || "",
 
         skills: Array.isArray(trainer.skills) ? trainer.skills : [],
 
+        skillDetails: Array.isArray(trainer.skillDetails)
+          ? trainer.skillDetails
+          : [],
+
         experience: trainer.experience ?? 0,
 
-        trainingExperienceYears: trainer.trainingExperienceYears ?? 0,
+        trainingExperience: trainer.trainingExperience ?? 0,
 
-        hourlyRate: trainer.hourlyRate ?? 0,
-
-        dailyRate: trainer.dailyRate ?? 0,
+        industries: Array.isArray(trainer.industries) ? trainer.industries : [],
 
         trainingModes: Array.isArray(trainer.trainingModes)
           ? trainer.trainingModes
@@ -120,13 +143,23 @@ const TrainerProfilePage = () => {
           ? trainer.preferredLocations
           : [],
 
+        willingToTravel: trainer.willingToTravel ?? true,
+
         availabilityStatus: trainer.availabilityStatus || "AVAILABLE",
 
         resumeUrl: trainer.resumeUrl || "",
 
         linkedinUrl: trainer.linkedinUrl || "",
 
-        bio: trainer.bio || "",
+        portfolioUrl: trainer.portfolioUrl || "",
+
+        githubUrl: trainer.githubUrl || "",
+
+        profileCompletion: trainer.profileCompletion ?? 0,
+
+        profileVerified: trainer.profileVerified ?? false,
+
+        vendorProfileCode: trainer.vendorProfileCode || "",
       });
     } catch (error) {
       console.error("Failed to load trainer profile:", error);
@@ -150,12 +183,12 @@ const TrainerProfilePage = () => {
   */
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
 
     setForm((current) => ({
       ...current,
 
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     if (success) {
@@ -165,83 +198,89 @@ const TrainerProfilePage = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Skills
+  | Generic Tag Helpers
   |--------------------------------------------------------------------------
   */
 
-  const addSkill = () => {
-    const skill = skillInput.trim();
+  const addUniqueItem = (field, value, clearInput) => {
+    const item = value.trim();
 
-    if (!skill) {
+    if (!item) {
       return;
     }
 
-    const alreadyExists = form.skills.some(
-      (existingSkill) => existingSkill.toLowerCase() === skill.toLowerCase(),
-    );
+    setForm((current) => {
+      const list = current[field] || [];
 
-    if (alreadyExists) {
-      setSkillInput("");
-      return;
+      const exists = list.some(
+        (existing) => existing.toLowerCase() === item.toLowerCase(),
+      );
+
+      if (exists) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [field]: [...list, item],
+      };
+    });
+
+    clearInput("");
+
+    if (success) {
+      setSuccess("");
     }
-
-    setForm((current) => ({
-      ...current,
-
-      skills: [...current.skills, skill],
-    }));
-
-    setSkillInput("");
   };
 
-  const removeSkill = (skill) => {
+  const removeItem = (field, value) => {
     setForm((current) => ({
       ...current,
 
-      skills: current.skills.filter((item) => item !== skill),
+      [field]: current[field].filter((item) => item !== value),
     }));
+
+    if (success) {
+      setSuccess("");
+    }
   };
 
   /*
   |--------------------------------------------------------------------------
-  | Preferred Locations
+  | Structured Skills
   |--------------------------------------------------------------------------
   */
 
-  const addLocation = () => {
-    const location = locationInput.trim();
+  const handleSkillDetailsChange = (skillDetails) => {
+    /*
+    |--------------------------------------------------------------------------
+    | Synchronize Legacy Skills
+    |--------------------------------------------------------------------------
+    |
+    | Existing requirement matching / admin UI may still read trainer.skills.
+    | We therefore maintain both representations.
+    |
+    */
 
-    if (!location) {
-      return;
-    }
-
-    const alreadyExists = form.preferredLocations.some(
-      (existingLocation) =>
-        existingLocation.toLowerCase() === location.toLowerCase(),
-    );
-
-    if (alreadyExists) {
-      setLocationInput("");
-      return;
-    }
-
-    setForm((current) => ({
-      ...current,
-
-      preferredLocations: [...current.preferredLocations, location],
-    }));
-
-    setLocationInput("");
-  };
-
-  const removeLocation = (location) => {
-    setForm((current) => ({
-      ...current,
-
-      preferredLocations: current.preferredLocations.filter(
-        (item) => item !== location,
+    const legacySkills = [
+      ...new Set(
+        skillDetails
+          .map((skill) => String(skill?.name || "").trim())
+          .filter(Boolean),
       ),
+    ];
+
+    setForm((current) => ({
+      ...current,
+
+      skillDetails,
+
+      skills: legacySkills,
     }));
+
+    if (success) {
+      setSuccess("");
+    }
   };
 
   /*
@@ -262,11 +301,15 @@ const TrainerProfilePage = () => {
           : [...current.trainingModes, mode],
       };
     });
+
+    if (success) {
+      setSuccess("");
+    }
   };
 
   /*
   |--------------------------------------------------------------------------
-  | Save Profile
+  | Save
   |--------------------------------------------------------------------------
   */
 
@@ -277,28 +320,75 @@ const TrainerProfilePage = () => {
       setError("");
       setSuccess("");
 
+      /*
+      |--------------------------------------------------------------------------
+      | Normalize Skills Before Sending
+      |--------------------------------------------------------------------------
+      */
+
+      const skillDetails = Array.isArray(form.skillDetails)
+        ? form.skillDetails
+            .filter((skill) => skill && String(skill.name || "").trim())
+            .map((skill) => ({
+              name: String(skill.name).trim(),
+
+              proficiency: skill.proficiency || "INTERMEDIATE",
+
+              yearsOfExperience: Number(skill.yearsOfExperience) || 0,
+
+              trainingExperienceYears:
+                Number(skill.trainingExperienceYears) || 0,
+
+              isPrimary: Boolean(skill.isPrimary),
+            }))
+        : [];
+
+      const skills = [
+        ...new Set(skillDetails.map((skill) => skill.name).filter(Boolean)),
+      ];
+
       const payload = {
         name: form.name.trim(),
 
         phone: form.phone.trim(),
 
+        alternatePhone: form.alternatePhone.trim(),
+
         city: form.city.trim(),
 
         state: form.state.trim(),
 
-        skills: form.skills,
+        country: form.country.trim(),
+
+        professionalHeadline: form.professionalHeadline.trim(),
+
+        professionalSummary: form.professionalSummary.trim(),
+
+        currentDesignation: form.currentDesignation.trim(),
+
+        currentOrganization: form.currentOrganization.trim(),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Skills
+        |--------------------------------------------------------------------------
+        */
+
+        skills,
+
+        skillDetails,
 
         experience: Number(form.experience) || 0,
 
-        trainingExperienceYears: Number(form.trainingExperienceYears) || 0,
+        trainingExperience: Number(form.trainingExperience) || 0,
 
-        hourlyRate: Number(form.hourlyRate) || 0,
-
-        dailyRate: Number(form.dailyRate) || 0,
+        industries: form.industries,
 
         trainingModes: form.trainingModes,
 
         preferredLocations: form.preferredLocations,
+
+        willingToTravel: Boolean(form.willingToTravel),
 
         availabilityStatus: form.availabilityStatus,
 
@@ -306,12 +396,12 @@ const TrainerProfilePage = () => {
 
         linkedinUrl: form.linkedinUrl.trim(),
 
-        bio: form.bio.trim(),
+        portfolioUrl: form.portfolioUrl.trim(),
+
+        githubUrl: form.githubUrl.trim(),
       };
 
       const response = await trainersApi.updateMyProfile(payload);
-
-      setSuccess(response?.message || "Profile updated successfully.");
 
       setEditing(false);
 
@@ -331,15 +421,15 @@ const TrainerProfilePage = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Cancel Editing
+  | Cancel
   |--------------------------------------------------------------------------
   */
 
   const handleCancel = async () => {
     setEditing(false);
 
-    setSkillInput("");
     setLocationInput("");
+    setIndustryInput("");
 
     setError("");
     setSuccess("");
@@ -358,7 +448,7 @@ const TrainerProfilePage = () => {
       <div className="space-y-6">
         <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200" />
 
-        <div className="h-44 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+        <div className="h-52 animate-pulse rounded-2xl border border-slate-200 bg-white" />
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white" />
@@ -368,12 +458,6 @@ const TrainerProfilePage = () => {
       </div>
     );
   }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Render
-  |--------------------------------------------------------------------------
-  */
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -385,9 +469,9 @@ const TrainerProfilePage = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Keep your professional information accurate so Nxthack can match you
-            with relevant training opportunities.
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+            Build a complete professional profile so Nxthack can match you with
+            relevant corporate training opportunities.
           </p>
         </div>
 
@@ -451,15 +535,29 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-2xl font-bold text-white">
             {getInitials(form.name)}
           </div>
 
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-bold text-slate-900">
-              {form.name || "Trainer"}
-            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-bold text-slate-900">
+                {form.name || "Trainer"}
+              </h2>
+
+              {form.profileVerified && (
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                  Verified
+                </span>
+              )}
+            </div>
+
+            <p className="mt-1 text-sm font-medium text-slate-600">
+              {form.professionalHeadline ||
+                form.currentDesignation ||
+                "Professional Trainer"}
+            </p>
 
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
               <span className="flex items-center gap-2">
@@ -477,12 +575,18 @@ const TrainerProfilePage = () => {
               <span className="flex items-center gap-2">
                 <FiMapPin />
 
-                {[form.city, form.state].filter(Boolean).join(", ") || "—"}
+                {[form.city, form.state, form.country]
+                  .filter(Boolean)
+                  .join(", ") || "—"}
               </span>
             </div>
           </div>
 
-          <AvailabilityBadge value={form.availabilityStatus} />
+          <div className="flex min-w-[190px] flex-col gap-3">
+            <AvailabilityBadge value={form.availabilityStatus} />
+
+            <ProfileCompletion value={form.profileCompletion} />
+          </div>
         </div>
       </section>
 
@@ -492,7 +596,7 @@ const TrainerProfilePage = () => {
 
       <Section
         title="Personal Information"
-        description="Basic contact and location information."
+        description="Your basic contact and location information."
         icon={FiUser}
       >
         <div className="grid gap-5 md:grid-cols-2">
@@ -509,7 +613,6 @@ const TrainerProfilePage = () => {
             name="email"
             value={form.email}
             editing={false}
-            icon={FiMail}
           />
 
           <Field
@@ -520,7 +623,13 @@ const TrainerProfilePage = () => {
             onChange={handleChange}
           />
 
-          <div />
+          <Field
+            label="Alternate Phone"
+            name="alternatePhone"
+            value={form.alternatePhone}
+            editing={editing}
+            onChange={handleChange}
+          />
 
           <Field
             label="City"
@@ -537,22 +646,98 @@ const TrainerProfilePage = () => {
             editing={editing}
             onChange={handleChange}
           />
+
+          <Field
+            label="Country"
+            name="country"
+            value={form.country}
+            editing={editing}
+            onChange={handleChange}
+          />
         </div>
 
         {editing && (
           <p className="mt-4 text-xs text-slate-400">
-            Your login email cannot be changed from this page.
+            Your login email cannot be changed from your trainer profile.
           </p>
         )}
       </Section>
 
       {/* ================================================================
-          PROFESSIONAL INFORMATION
+          PROFESSIONAL IDENTITY
       ================================================================= */}
 
       <Section
-        title="Professional Profile"
-        description="Your skills and training experience are used for requirement matching."
+        title="Professional Identity"
+        description="This information forms the foundation of your Nxthack professional profile."
+        icon={FiBriefcase}
+      >
+        <div className="space-y-5">
+          <Field
+            label="Professional Headline"
+            name="professionalHeadline"
+            value={form.professionalHeadline}
+            editing={editing}
+            onChange={handleChange}
+            placeholder="e.g. AWS & DevOps Corporate Trainer"
+          />
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <Field
+              label="Current Designation"
+              name="currentDesignation"
+              value={form.currentDesignation}
+              editing={editing}
+              onChange={handleChange}
+              placeholder="e.g. Senior Cloud Trainer"
+            />
+
+            <Field
+              label="Current Organization"
+              name="currentOrganization"
+              value={form.currentOrganization}
+              editing={editing}
+              onChange={handleChange}
+              placeholder="Organization name"
+            />
+          </div>
+
+          <div>
+            <Label>Professional Summary</Label>
+
+            {editing ? (
+              <>
+                <textarea
+                  name="professionalSummary"
+                  value={form.professionalSummary}
+                  onChange={handleChange}
+                  rows={6}
+                  maxLength={3000}
+                  placeholder="Describe your technical expertise, corporate training experience, industries and the types of programs you deliver..."
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm leading-6 text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                />
+
+                <p className="mt-1 text-right text-xs text-slate-400">
+                  {form.professionalSummary.length}
+                  /3000
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-600">
+                {form.professionalSummary || "No professional summary added."}
+              </p>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      {/* ================================================================
+          EXPERIENCE
+      ================================================================= */}
+
+      <Section
+        title="Experience"
+        description="Your professional and corporate training experience."
         icon={FiBriefcase}
       >
         <div className="grid gap-5 md:grid-cols-2">
@@ -568,8 +753,8 @@ const TrainerProfilePage = () => {
 
           <Field
             label="Training Experience"
-            name="trainingExperienceYears"
-            value={form.trainingExperienceYears}
+            name="trainingExperience"
+            value={form.trainingExperience}
             type="number"
             suffix="years"
             editing={editing}
@@ -577,39 +762,87 @@ const TrainerProfilePage = () => {
           />
         </div>
 
-        {/* Skills */}
-
         <div className="mt-6">
-          <Label>Skills</Label>
+          <Label>Industries</Label>
 
           <div className="mt-2 flex flex-wrap gap-2">
-            {form.skills.map((skill) => (
+            {form.industries.map((industry) => (
               <Tag
-                key={skill}
-                value={skill}
+                key={industry}
+                value={industry}
                 removable={editing}
-                onRemove={() => removeSkill(skill)}
+                onRemove={() => removeItem("industries", industry)}
               />
             ))}
 
-            {!form.skills.length && (
-              <span className="text-sm text-slate-400">No skills added.</span>
+            {!form.industries.length && (
+              <EmptyText>No industries added.</EmptyText>
             )}
           </div>
 
           {editing && (
             <AddItem
-              value={skillInput}
-              onChange={setSkillInput}
-              onAdd={addSkill}
-              placeholder="e.g. AWS, Python, React"
+              value={industryInput}
+              onChange={setIndustryInput}
+              onAdd={() =>
+                addUniqueItem("industries", industryInput, setIndustryInput)
+              }
+              placeholder="e.g. IT Services, Banking, EdTech"
             />
           )}
         </div>
+      </Section>
 
-        {/* Training Modes */}
+      {/* ================================================================
+          STRUCTURED SKILLS
+      ================================================================= */}
 
-        <div className="mt-6">
+      <Section
+        title="Skills & Expertise"
+        description="Add your core technologies and subjects with proficiency and experience. This information helps Nxthack match you with relevant training requirements."
+        icon={FiBriefcase}
+      >
+        <SkillDetailsEditor
+          skills={form.skillDetails}
+          editing={editing}
+          onChange={handleSkillDetailsChange}
+        />
+
+        {form.skillDetails.length > 0 && (
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Matching Skills
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {form.skillDetails.map((skill, index) => (
+                <span
+                  key={skill._id || `${skill.name}-${index}`}
+                  className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600"
+                >
+                  {skill.name}
+                </span>
+              ))}
+            </div>
+
+            <p className="mt-3 text-xs leading-5 text-slate-400">
+              These skills are synchronized with your trainer profile and can
+              later be used by the requirement matching engine.
+            </p>
+          </div>
+        )}
+      </Section>
+
+      {/* ================================================================
+          TRAINING PREFERENCES
+      ================================================================= */}
+
+      <Section
+        title="Training Preferences"
+        description="Tell Nxthack how and where you prefer to deliver training."
+        icon={FiGlobe}
+      >
+        <div>
           <Label>Training Modes</Label>
 
           {editing ? (
@@ -640,44 +873,70 @@ const TrainerProfilePage = () => {
                   <Tag key={mode} value={formatEnum(mode)} />
                 ))
               ) : (
-                <span className="text-sm text-slate-400">
-                  No training modes selected.
-                </span>
+                <EmptyText>No training modes selected.</EmptyText>
               )}
             </div>
           )}
         </div>
-      </Section>
 
-      {/* ================================================================
-          COMMERCIAL INFORMATION
-      ================================================================= */}
+        <div className="mt-6">
+          <Label>Preferred Locations</Label>
 
-      <Section
-        title="Commercial Information"
-        description="Maintain your expected training rates."
-        icon={FiDollarSign}
-      >
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field
-            label="Online Rate"
-            name="hourlyRate"
-            value={form.hourlyRate}
-            type="number"
-            prefix="₹"
-            editing={editing}
-            onChange={handleChange}
-          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            {form.preferredLocations.map((location) => (
+              <Tag
+                key={location}
+                value={location}
+                removable={editing}
+                onRemove={() => removeItem("preferredLocations", location)}
+              />
+            ))}
 
-          <Field
-            label="Offline Rate"
-            name="dailyRate"
-            value={form.dailyRate}
-            type="number"
-            prefix="₹"
-            editing={editing}
-            onChange={handleChange}
-          />
+            {!form.preferredLocations.length && (
+              <EmptyText>No preferred locations added.</EmptyText>
+            )}
+          </div>
+
+          {editing && (
+            <AddItem
+              value={locationInput}
+              onChange={setLocationInput}
+              onAdd={() =>
+                addUniqueItem(
+                  "preferredLocations",
+                  locationInput,
+                  setLocationInput,
+                )
+              }
+              placeholder="e.g. Delhi, Gurgaon, Bangalore"
+            />
+          )}
+        </div>
+
+        <div className="mt-6">
+          <Label>Travel Preference</Label>
+
+          {editing ? (
+            <label className="mt-3 flex w-fit cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+              <input
+                type="checkbox"
+                name="willingToTravel"
+                checked={form.willingToTravel}
+                onChange={handleChange}
+                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+              />
+
+              <span className="text-sm font-medium text-slate-700">
+                I am willing to travel for classroom training.
+              </span>
+            </label>
+          ) : (
+            <p className="mt-2 text-sm font-medium text-slate-700">
+              {form.willingToTravel
+                ? "Willing to travel"
+                : "Not currently willing to travel"}
+            </p>
+          )}
         </div>
       </Section>
 
@@ -686,8 +945,8 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       <Section
-        title="Availability"
-        description="Tell Nxthack whether you are currently available for new requirements."
+        title="Current Availability"
+        description="Your high-level availability. Detailed dates are managed from the Availability page."
         icon={FiCheck}
       >
         {editing ? (
@@ -709,52 +968,16 @@ const TrainerProfilePage = () => {
       </Section>
 
       {/* ================================================================
-          PREFERRED LOCATIONS
-      ================================================================= */}
-
-      <Section
-        title="Preferred Locations"
-        description="Locations where you are willing to deliver training."
-        icon={FiMapPin}
-      >
-        <div className="flex flex-wrap gap-2">
-          {form.preferredLocations.map((location) => (
-            <Tag
-              key={location}
-              value={location}
-              removable={editing}
-              onRemove={() => removeLocation(location)}
-            />
-          ))}
-
-          {!form.preferredLocations.length && (
-            <span className="text-sm text-slate-400">
-              No preferred locations added.
-            </span>
-          )}
-        </div>
-
-        {editing && (
-          <AddItem
-            value={locationInput}
-            onChange={setLocationInput}
-            onAdd={addLocation}
-            placeholder="e.g. Delhi, Gurgaon, Bangalore"
-          />
-        )}
-      </Section>
-
-      {/* ================================================================
           PROFESSIONAL LINKS
       ================================================================= */}
 
       <Section
         title="Professional Links"
-        description="Add links that help Nxthack review your professional profile."
-        icon={FiBriefcase}
+        description="Links and documents Nxthack can use to review your professional background."
+        icon={FiLinkedin}
       >
         <div className="grid gap-5 md:grid-cols-2">
-          <Field
+          <LinkField
             label="Resume URL"
             name="resumeUrl"
             value={form.resumeUrl}
@@ -763,40 +986,65 @@ const TrainerProfilePage = () => {
             placeholder="https://..."
           />
 
-          <Field
-            label="LinkedIn URL"
+          <LinkField
+            label="LinkedIn"
             name="linkedinUrl"
             value={form.linkedinUrl}
             editing={editing}
             onChange={handleChange}
             placeholder="https://linkedin.com/in/..."
           />
+
+          <LinkField
+            label="Portfolio"
+            name="portfolioUrl"
+            value={form.portfolioUrl}
+            editing={editing}
+            onChange={handleChange}
+            placeholder="https://..."
+          />
+
+          <LinkField
+            label="GitHub"
+            name="githubUrl"
+            value={form.githubUrl}
+            editing={editing}
+            onChange={handleChange}
+            placeholder="https://github.com/..."
+          />
         </div>
       </Section>
 
       {/* ================================================================
-          BIO
+          PROFILE INFORMATION
       ================================================================= */}
 
       <Section
-        title="Professional Summary"
-        description="Provide a short summary of your expertise and training background."
+        title="Nxthack Profile"
+        description="Internal profile information used by the Nxthack platform."
         icon={FiUser}
       >
-        {editing ? (
-          <textarea
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            rows={5}
-            placeholder="Describe your technical expertise, training experience and industries you have worked with..."
-            className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm leading-6 text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+        <div className="grid gap-5 sm:grid-cols-3">
+          <ReadOnlyStat
+            label="Profile Completion"
+            value={`${form.profileCompletion}%`}
           />
-        ) : (
-          <p className="whitespace-pre-line text-sm leading-7 text-slate-600">
-            {form.bio || "No professional summary added."}
-          </p>
-        )}
+
+          <ReadOnlyStat
+            label="Verification"
+            value={form.profileVerified ? "Verified" : "Not Verified"}
+          />
+
+          <ReadOnlyStat
+            label="Profile ID"
+            value={form.vendorProfileCode || "Pending"}
+          />
+        </div>
+
+        <p className="mt-5 text-xs leading-5 text-slate-400">
+          Your private contact information is not intended to be included in the
+          vendor-facing profile generated by Nxthack.
+        </p>
       </Section>
     </div>
   );
@@ -818,7 +1066,7 @@ const Section = ({ title, description, icon: Icon, children }) => (
       <div>
         <h2 className="font-bold text-slate-900">{title}</h2>
 
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
+        <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>
       </div>
     </div>
 
@@ -839,7 +1087,6 @@ const Field = ({
   editing,
   onChange,
   type = "text",
-  prefix,
   suffix,
   placeholder,
 }) => (
@@ -847,34 +1094,59 @@ const Field = ({
     <Label>{label}</Label>
 
     {editing ? (
-      <div className="relative mt-2">
-        {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
-            {prefix}
-          </span>
-        )}
-
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          min={type === "number" ? "0" : undefined}
-          className={`w-full rounded-xl border border-slate-200 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 ${
-            prefix ? "pl-8 pr-3" : "px-3"
-          }`}
-        />
-      </div>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        min={type === "number" ? "0" : undefined}
+        step={type === "number" ? "0.5" : undefined}
+        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      />
     ) : (
       <p className="mt-2 text-sm font-medium text-slate-700">
-        {prefix}
         {value !== "" && value !== null && value !== undefined ? value : "—"}
 
         {suffix && value !== "" && value !== null && value !== undefined
           ? ` ${suffix}`
           : ""}
       </p>
+    )}
+  </div>
+);
+
+/*
+|--------------------------------------------------------------------------
+| Link Field
+|--------------------------------------------------------------------------
+*/
+
+const LinkField = ({ label, name, value, editing, onChange, placeholder }) => (
+  <div>
+    <Label>{label}</Label>
+
+    {editing ? (
+      <input
+        type="url"
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      />
+    ) : value ? (
+      <a
+        href={value}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-2 flex w-fit items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
+      >
+        View
+        <FiExternalLink size={13} />
+      </a>
+    ) : (
+      <p className="mt-2 text-sm text-slate-400">—</p>
     )}
   </div>
 );
@@ -906,6 +1178,7 @@ const Tag = ({ value, removable = false, onRemove }) => (
         type="button"
         onClick={onRemove}
         className="ml-1 text-blue-400 hover:text-red-500"
+        aria-label={`Remove ${value}`}
       >
         <FiTrash2 size={13} />
       </button>
@@ -971,6 +1244,61 @@ const AvailabilityBadge = ({ value }) => {
     </span>
   );
 };
+
+/*
+|--------------------------------------------------------------------------
+| Profile Completion
+|--------------------------------------------------------------------------
+*/
+
+const ProfileCompletion = ({ value }) => {
+  const percentage = Math.min(Math.max(Number(value) || 0, 0), 100);
+
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-xs">
+        <span className="font-medium text-slate-500">Profile</span>
+
+        <span className="font-bold text-slate-700">{percentage}%</span>
+      </div>
+
+      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full bg-blue-600 transition-all"
+          style={{
+            width: `${percentage}%`,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+/*
+|--------------------------------------------------------------------------
+| Read Only Stat
+|--------------------------------------------------------------------------
+*/
+
+const ReadOnlyStat = ({ label, value }) => (
+  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      {label}
+    </p>
+
+    <p className="mt-2 break-words text-sm font-bold text-slate-800">{value}</p>
+  </div>
+);
+
+/*
+|--------------------------------------------------------------------------
+| Empty Text
+|--------------------------------------------------------------------------
+*/
+
+const EmptyText = ({ children }) => (
+  <span className="text-sm text-slate-400">{children}</span>
+);
 
 /*
 |--------------------------------------------------------------------------
