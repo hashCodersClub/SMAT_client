@@ -7,16 +7,10 @@ import Navbar from "../components/layout/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { getNavigationConfig } from "../config/navigationConfig";
 
-const AdminLayout = () => {
+const TrainerLayout = () => {
   const { user } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  /*
-  |--------------------------------------------------------------------------
-  | Get navigation based on logged-in role
-  |--------------------------------------------------------------------------
-  */
 
   const config = getNavigationConfig(user?.role);
 
@@ -38,8 +32,6 @@ const AdminLayout = () => {
       ================================================================= */}
 
       <div className="min-h-screen lg:pl-72">
-        {/* Navbar */}
-
         <Navbar
           setSidebarOpen={setSidebarOpen}
           title={config.navbar.title}
@@ -49,8 +41,6 @@ const AdminLayout = () => {
           settingsPath={config.settingsPath}
         />
 
-        {/* Page Content */}
-
         <main className="p-4 md:p-6">
           <Outlet />
         </main>
@@ -59,4 +49,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default TrainerLayout;

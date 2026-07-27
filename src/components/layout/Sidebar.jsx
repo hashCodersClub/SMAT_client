@@ -1,66 +1,13 @@
 import { NavLink } from "react-router-dom";
-
-import {
-  FiGrid,
-  FiBriefcase,
-  FiUsers,
-  FiUserCheck,
-  FiClipboard,
-  FiSettings,
-  FiX,
-} from "react-icons/fi";
-
+import { FiX } from "react-icons/fi";
 import { Cpu } from "lucide-react";
 
-const navigation = [
-  {
-    title: "MAIN",
-    items: [
-      {
-        name: "Dashboard",
-        path: "/",
-        icon: FiGrid,
-      },
-    ],
-  },
-  {
-    title: "OPERATIONS",
-    items: [
-      {
-        name: "Requirements",
-        path: "/requirements",
-        icon: FiClipboard,
-      },
-      {
-        name: "Trainers",
-        path: "/trainers",
-        icon: FiUsers,
-      },
-      {
-        name: "Vendors",
-        path: "/vendors",
-        icon: FiBriefcase,
-      },
-      {
-        name: "Assignments",
-        path: "/assignments",
-        icon: FiUserCheck,
-      },
-    ],
-  },
-  {
-    title: "ACCOUNT",
-    items: [
-      {
-        name: "Settings",
-        path: "/settings",
-        icon: FiSettings,
-      },
-    ],
-  },
-];
-
-const Sidebar = ({ open, setOpen }) => {
+const Sidebar = ({
+  open,
+  setOpen,
+  navigation = [],
+  portalName = "Operations Portal",
+}) => {
   return (
     <>
       {/* Mobile Overlay */}
@@ -92,24 +39,21 @@ const Sidebar = ({ open, setOpen }) => {
 
         <div className="flex h-20 shrink-0 items-center justify-between border-b border-slate-800 px-5">
           <div className="flex items-center gap-3">
-            {/* Logo */}
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600">
               <Cpu size={20} strokeWidth={2} className="text-white" />
             </div>
 
-            {/* Brand Name */}
             <div>
               <h1 className="text-lg font-bold tracking-tight text-white">
                 NXTHACK
               </h1>
 
               <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Operations Portal
+                {portalName}
               </p>
             </div>
           </div>
 
-          {/* Mobile Close */}
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -127,12 +71,10 @@ const Sidebar = ({ open, setOpen }) => {
         <nav className="flex-1 overflow-y-auto px-3 py-5">
           {navigation.map((section) => (
             <div key={section.title} className="mb-7">
-              {/* Section Label */}
               <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
                 {section.title}
               </p>
 
-              {/* Navigation Items */}
               <div className="space-y-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
@@ -141,7 +83,11 @@ const Sidebar = ({ open, setOpen }) => {
                     <NavLink
                       key={item.name}
                       to={item.path}
-                      end={item.path === "/"}
+                      end={
+                        item.path === "/" ||
+                        item.path === "/vendor" ||
+                        item.path === "/trainer"
+                      }
                       onClick={() => setOpen(false)}
                       className={({ isActive }) =>
                         `
@@ -187,12 +133,10 @@ const Sidebar = ({ open, setOpen }) => {
         <div className="shrink-0 border-t border-slate-800 p-4">
           <div className="rounded-xl border border-slate-700 bg-slate-800/70 p-3.5">
             <div className="flex items-center gap-3">
-              {/* Company Icon */}
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-700">
                 <Cpu size={16} className="text-blue-400" />
               </div>
 
-              {/* Company Info */}
               <div className="min-w-0">
                 <p className="truncate text-xs font-semibold text-white">
                   Nxthack IT Solutions

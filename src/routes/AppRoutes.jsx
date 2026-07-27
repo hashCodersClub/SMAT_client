@@ -6,6 +6,7 @@ import AdminLayout from "../layouts/AdminLayout";
 import LoginPage from "../pages/auth/LoginPage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import VendorRegisterPage from "../pages/auth/VendorRegisterPage";
+import TrainerAcceptInvitePage from "../pages/auth/TrainerAcceptInvitePage";
 
 // Dashboard
 import DashboardPage from "../pages/admin/DashboardPage";
@@ -32,8 +33,8 @@ import VendorDetailsPage from "../pages/admin/vendors/VendorDetailsPage";
 import EditVendorPage from "../pages/admin/vendors/EditVendorPage";
 
 // Assignments
-import CreateAssignmentPage from "../pages/assignments/CreateAssignmentPage";
-import AssignmentsPage from "../pages/assignments/AssignmentsPage";
+import CreateAssignmentPage from "../pages/admin/assignments/CreateAssignmentPage";
+import AssignmentsPage from "../pages/admin/assignments/AssignmentsPage";
 
 // Settings
 import SettingsPage from "../pages/admin/SettingsPage";
@@ -46,6 +47,10 @@ import AddVendorRequirementPage from "../pages/vendor/requirements/AddVendorRequ
 import VendorRequirementDetailsPage from "../pages/vendor/requirements/VendorRequirementDetailsPage";
 import EditVendorRequirementPage from "../pages/vendor/requirements/EditVendorRequirementPage";
 
+//trainer layout
+import TrainerLayout from "../layouts/TrainerLayout";
+import TrainerDashboardPage from "../pages/trainer/dashboard/TrainerDashboardPage";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -55,6 +60,10 @@ const AppRoutes = () => {
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/vendor/register" element={<VendorRegisterPage />} />
+      <Route
+        path="/trainer/accept-invite"
+        element={<TrainerAcceptInvitePage />}
+      />
 
       {/* ================================================================
     PROTECTED VENDOR PORTAL
@@ -88,6 +97,18 @@ const AppRoutes = () => {
             path="/vendor/requirements/:id/edit"
             element={<EditVendorRequirementPage />}
           />
+        </Route>
+      </Route>
+
+      {/* ================================================================
+    PROTECTED TRAINER PORTAL
+================================================================= */}
+
+      <Route element={<ProtectedRoute allowedRoles={["TRAINER"]} />}>
+        <Route element={<TrainerLayout />}>
+          <Route path="/trainer" element={<TrainerDashboardPage />} />
+
+          <Route path="/trainer/dashboard" element={<TrainerDashboardPage />} />
         </Route>
       </Route>
 

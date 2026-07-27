@@ -9,7 +9,7 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-import { assignments } from "../../data/assignments";
+import { assignments } from "../../../data/assignments";
 
 const statusStyles = {
   UPCOMING: "bg-blue-50 text-blue-700",

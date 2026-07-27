@@ -1,24 +1,35 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import Sidebar from "../components/layout/Sidebar";
 import Navbar from "../components/layout/Navbar";
 
 import { useAuth } from "../context/AuthContext";
+
 import { getNavigationConfig } from "../config/navigationConfig";
 
-const AdminLayout = () => {
+const PortalLayout = () => {
   const { user } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   /*
   |--------------------------------------------------------------------------
-  | Get navigation based on logged-in role
+  | Authentication Guard
   |--------------------------------------------------------------------------
   */
 
-  const config = getNavigationConfig(user?.role);
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Role Configuration
+  |--------------------------------------------------------------------------
+  */
+
+  const config = getNavigationConfig(user.role);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -49,7 +60,7 @@ const AdminLayout = () => {
           settingsPath={config.settingsPath}
         />
 
-        {/* Page Content */}
+        {/* Page */}
 
         <main className="p-4 md:p-6">
           <Outlet />
@@ -59,4 +70,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default PortalLayout;

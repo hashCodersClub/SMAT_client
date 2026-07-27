@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FiPlus,
@@ -18,11 +18,42 @@ const ITEMS_PER_PAGE = 5;
 
 const TrainersPage = () => {
   const navigate = useNavigate();
+
+  /*
+  |--------------------------------------------------------------------------
+  | Data State
+  |--------------------------------------------------------------------------
+  */
+
   const [trainers, setTrainers] = useState([]);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
+
+  /*
+  |--------------------------------------------------------------------------
+  | Filter State
+  |--------------------------------------------------------------------------
+  */
+
+  const [search, setSearch] = useState("");
+  const [skill, setSkill] = useState("");
+  const [location, setLocation] = useState("");
+  const [availability, setAvailability] = useState("");
+  const [status, setStatus] = useState("");
+
+  /*
+  |--------------------------------------------------------------------------
+  | Pagination
+  |--------------------------------------------------------------------------
+  */
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load Trainers
+  |--------------------------------------------------------------------------
+  */
 
   useEffect(() => {
     const loadTrainers = async () => {
@@ -34,11 +65,21 @@ const TrainersPage = () => {
           limit: 100,
         });
 
-        setTrainers((data.trainers || []).map(mapTrainerFromApi));
+        console.log("Trainer API response:", data);
+
+        const apiTrainers = Array.isArray(data?.trainers) ? data.trainers : [];
+
+        const mappedTrainers = apiTrainers.map(mapTrainerFromApi);
+
+        console.log("Mapped trainers:", mappedTrainers);
+
+        setTrainers(mappedTrainers);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load trainers:", error);
 
         setError(error.response?.data?.message || "Unable to load trainers");
+
+        setTrainers([]);
       } finally {
         setLoading(false);
       }
@@ -46,41 +87,108 @@ const TrainersPage = () => {
 
     loadTrainers();
   }, []);
-  const [search, setSearch] = useState("");
-  const [skill, setSkill] = useState("");
-  const [location, setLocation] = useState("");
-  const [availability, setAvailability] = useState("");
-  const [status, setStatus] = useState("");
 
-  const [currentPage, setCurrentPage] = useState(1);
+  /*
+  |--------------------------------------------------------------------------
+  | Available Skills
+  |--------------------------------------------------------------------------
+  |
+  | IMPORTANT:
+  | trainers must be in the dependency array because trainer data arrives
+  | asynchronously after the first render.
+  |
+  */
 
-  const skills = useMemo(
-    () => [...new Set(trainers.flatMap((trainer) => trainer.skills))].sort(),
-    [],
-  );
+  const skills = useMemo(() => {
+    return [
+      ...new Set(trainers.flatMap((trainer) => trainer.skills || [])),
+    ].sort();
+  }, [trainers]);
 
-  const locations = useMemo(
-    () => [...new Set(trainers.map((trainer) => trainer.city))].sort(),
-    [],
-  );
+  /*
+  |--------------------------------------------------------------------------
+  | Available Locations
+  |--------------------------------------------------------------------------
+  */
+
+  const locations = useMemo(() => {
+    return [
+      ...new Set(trainers.map((trainer) => trainer.city).filter(Boolean)),
+    ].sort();
+  }, [trainers]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Filter Trainers
+  |--------------------------------------------------------------------------
+  |
+  | IMPORTANT:
+  | trainers must also be in this dependency array.
+  |
+  | Previously this memo ran while trainers = [] and did not run again
+  | after the API populated the trainers state.
+  |
+  */
 
   const filteredTrainers = useMemo(() => {
     const searchValue = search.toLowerCase().trim();
 
     return trainers.filter((trainer) => {
+      const trainerName = trainer.name?.toLowerCase().trim() || "";
+
+      const trainerEmail = trainer.email?.toLowerCase().trim() || "";
+
+      const trainerPhone = String(trainer.phone || "").toLowerCase();
+
+      const trainerCity = trainer.city || "";
+
+      const trainerSkills = Array.isArray(trainer.skills) ? trainer.skills : [];
+
+      /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        */
+
       const matchesSearch =
         !searchValue ||
-        trainer.name.toLowerCase().includes(searchValue) ||
-        trainer.email.toLowerCase().includes(searchValue) ||
-        trainer.phone.includes(searchValue) ||
-        trainer.skills.some((item) => item.toLowerCase().includes(searchValue));
+        trainerName.includes(searchValue) ||
+        trainerEmail.includes(searchValue) ||
+        trainerPhone.includes(searchValue) ||
+        trainerSkills.some((item) =>
+          String(item).toLowerCase().includes(searchValue),
+        );
 
-      const matchesSkill = !skill || trainer.skills.includes(skill);
+      /*
+        |--------------------------------------------------------------------------
+        | Skill
+        |--------------------------------------------------------------------------
+        */
 
-      const matchesLocation = !location || trainer.city === location;
+      const matchesSkill = !skill || trainerSkills.includes(skill);
+
+      /*
+        |--------------------------------------------------------------------------
+        | Location
+        |--------------------------------------------------------------------------
+        */
+
+      const matchesLocation = !location || trainerCity === location;
+
+      /*
+        |--------------------------------------------------------------------------
+        | Availability
+        |--------------------------------------------------------------------------
+        */
 
       const matchesAvailability =
         !availability || trainer.availability === availability;
+
+      /*
+        |--------------------------------------------------------------------------
+        | Status
+        |--------------------------------------------------------------------------
+        */
 
       const matchesStatus = !status || trainer.status === status;
 
@@ -92,7 +200,13 @@ const TrainersPage = () => {
         matchesStatus
       );
     });
-  }, [search, skill, location, availability, status]);
+  }, [trainers, search, skill, location, availability, status]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Pagination
+  |--------------------------------------------------------------------------
+  */
 
   const totalPages = Math.max(
     1,
@@ -103,8 +217,15 @@ const TrainersPage = () => {
 
   const paginatedTrainers = filteredTrainers.slice(
     (safeCurrentPage - 1) * ITEMS_PER_PAGE,
+
     safeCurrentPage * ITEMS_PER_PAGE,
   );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Reset Filters
+  |--------------------------------------------------------------------------
+  */
 
   const resetFilters = () => {
     setSearch("");
@@ -115,14 +236,58 @@ const TrainersPage = () => {
     setCurrentPage(1);
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Update Filter
+  |--------------------------------------------------------------------------
+  */
+
   const updateFilter = (setter) => (value) => {
     setter(value);
+
     setCurrentPage(1);
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Loading
+  |--------------------------------------------------------------------------
+  */
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="h-8 w-40 animate-pulse rounded-lg bg-slate-200" />
+
+          <div className="mt-2 h-4 w-80 max-w-full animate-pulse rounded bg-slate-200" />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((item) => (
+            <div
+              key={item}
+              className="h-28 animate-pulse rounded-2xl border border-slate-200 bg-white"
+            />
+          ))}
+        </div>
+
+        <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+      </div>
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Render
+  |--------------------------------------------------------------------------
+  */
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* ================================================================
+          HEADER
+      ================================================================= */}
 
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
@@ -153,11 +318,25 @@ const TrainersPage = () => {
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* ================================================================
+          ERROR
+      ================================================================= */}
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-semibold text-red-800">{error}</p>
+        </div>
+      )}
+
+      {/* ================================================================
+          STATISTICS
+      ================================================================= */}
 
       <TrainerStats trainers={trainers} />
 
-      {/* Filters */}
+      {/* ================================================================
+          FILTERS
+      ================================================================= */}
 
       <TrainerFilters
         search={search}
@@ -175,7 +354,9 @@ const TrainersPage = () => {
         resetFilters={resetFilters}
       />
 
-      {/* Result count */}
+      {/* ================================================================
+          RESULT COUNT
+      ================================================================= */}
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
@@ -191,11 +372,15 @@ const TrainersPage = () => {
         </p>
       </div>
 
-      {/* Table */}
+      {/* ================================================================
+          TABLE
+      ================================================================= */}
 
       <TrainerTable trainers={paginatedTrainers} />
 
-      {/* Pagination */}
+      {/* ================================================================
+          PAGINATION
+      ================================================================= */}
 
       {filteredTrainers.length > 0 && (
         <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 sm:flex-row">

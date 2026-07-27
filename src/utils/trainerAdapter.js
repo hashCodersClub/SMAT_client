@@ -3,22 +3,21 @@
 | Trainer Adapter
 |--------------------------------------------------------------------------
 |
-| The existing Trainer UI (TrainerForm, TrainerTable, TrainerStats,
-| TrainerDetailsPage) was built against the mock data shape in
-| `data/trainers.js`. The real backend (Trainer model / trainer.controller)
-| uses different field names.
+| Converts:
 |
-| Rather than rewrite every component, this adapter translates between
-| the two shapes so the existing UI keeps working unchanged while the
-| pages talk to the real API.
+| Backend Trainer
+|       ↕
+| Frontend Trainer
 |
-| Known limitations (backend has no matching field, so these do not
-| persist across a reload):
-|   - trainingExperienceYears
-|   - trainingTypes (currently folded into `tags` as a best-effort so the
-|     information isn't silently dropped, but it will merge with any
-|     other tags on the trainer)
+| This allows the existing UI components to use their current field names
+| without forcing the backend schema to match the UI exactly.
 |
+*/
+
+/*
+|--------------------------------------------------------------------------
+| Training Mode Mapping
+|--------------------------------------------------------------------------
 */
 
 const TRAINING_MODE_TO_API = {
@@ -34,75 +33,245 @@ const TRAINING_MODE_FROM_API = {
 
 /*
 |--------------------------------------------------------------------------
-| Map API Trainer -> Form / Table shape
+| API Trainer -> Frontend Trainer
 |--------------------------------------------------------------------------
 */
 
 export const mapTrainerFromApi = (trainer = {}) => {
   return {
+    /*
+    |--------------------------------------------------------------------------
+    | Identity
+    |--------------------------------------------------------------------------
+    */
+
     id: trainer._id || trainer.id || "",
 
     name: trainer.name || "",
+
     email: trainer.email || "",
+
     phone: trainer.phone || "",
 
+    /*
+    |--------------------------------------------------------------------------
+    | Location
+    |--------------------------------------------------------------------------
+    */
+
     city: trainer.city || "",
+
     state: trainer.state || "",
 
-    skills: trainer.skills || [],
+    /*
+    |--------------------------------------------------------------------------
+    | Skills
+    |--------------------------------------------------------------------------
+    */
+
+    skills: Array.isArray(trainer.skills) ? trainer.skills : [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Experience
+    |--------------------------------------------------------------------------
+    */
 
     experienceYears: trainer.experience ?? 0,
+
     trainingExperienceYears: trainer.trainingExperienceYears ?? 0,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rates
+    |--------------------------------------------------------------------------
+    */
+
     onlineRate: trainer.hourlyRate ?? 0,
+
     offlineRate: trainer.dailyRate ?? 0,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Availability
+    |--------------------------------------------------------------------------
+    */
+
     availability: trainer.availabilityStatus || "AVAILABLE",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status
+    |--------------------------------------------------------------------------
+    */
+
     status: trainer.status || "ACTIVE",
 
-    trainingTypes: trainer.trainingTypes || [],
+    /*
+    |--------------------------------------------------------------------------
+    | Training Types
+    |--------------------------------------------------------------------------
+    */
 
-    modes: (trainer.trainingModes || []).map(
-      (mode) => TRAINING_MODE_FROM_API[mode] || mode,
-    ),
+    trainingTypes: Array.isArray(trainer.trainingTypes)
+      ? trainer.trainingTypes
+      : [],
 
-    preferredLocations: trainer.preferredLocations || [],
+    /*
+    |--------------------------------------------------------------------------
+    | Training Modes
+    |--------------------------------------------------------------------------
+    */
+
+    modes: Array.isArray(trainer.trainingModes)
+      ? trainer.trainingModes.map(
+          (mode) => TRAINING_MODE_FROM_API[mode] || mode,
+        )
+      : [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Preferred Locations
+    |--------------------------------------------------------------------------
+    */
+
+    preferredLocations: Array.isArray(trainer.preferredLocations)
+      ? trainer.preferredLocations
+      : [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resume
+    |--------------------------------------------------------------------------
+    */
 
     cvUrl: trainer.resumeUrl || "",
 
+    /*
+    |--------------------------------------------------------------------------
+    | Performance
+    |--------------------------------------------------------------------------
+    */
+
     rating: trainer.rating ?? 0,
+
     assignmentsCompleted: trainer.totalTrainings ?? 0,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Portal Access
+    |--------------------------------------------------------------------------
+    |
+    | These fields are required by TrainerDetailsPage to determine whether
+    | the trainer has accepted the invitation and activated portal access.
+    |
+    */
+
+    portalEnabled: trainer.portalEnabled ?? false,
+
+    userId: trainer.userId || null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Metadata
+    |--------------------------------------------------------------------------
+    */
+
+    createdAt: trainer.createdAt || null,
+
+    updatedAt: trainer.updatedAt || null,
   };
 };
 
 /*
 |--------------------------------------------------------------------------
-| Map Form Submission -> API Payload
+| Frontend Trainer -> API Payload
 |--------------------------------------------------------------------------
 */
 
 export const mapTrainerToApi = (form = {}) => {
   return {
-    name: form.name,
-    email: form.email,
-    phone: form.phone,
+    /*
+    |--------------------------------------------------------------------------
+    | Identity
+    |--------------------------------------------------------------------------
+    */
 
-    city: form.city,
-    state: form.state,
+    name: form.name?.trim() || "",
 
-    skills: form.skills || [],
+    email: form.email?.trim().toLowerCase() || "",
+
+    phone: form.phone?.trim() || "",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Location
+    |--------------------------------------------------------------------------
+    */
+
+    city: form.city?.trim() || "",
+
+    state: form.state?.trim() || "",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Skills
+    |--------------------------------------------------------------------------
+    */
+
+    skills: Array.isArray(form.skills) ? form.skills : [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Experience
+    |--------------------------------------------------------------------------
+    */
 
     experience: Number(form.experienceYears) || 0,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rates
+    |--------------------------------------------------------------------------
+    */
+
     hourlyRate: Number(form.onlineRate) || 0,
+
     dailyRate: Number(form.offlineRate) || 0,
 
-    availabilityStatus: form.availability,
-    status: form.status,
+    /*
+    |--------------------------------------------------------------------------
+    | Availability
+    |--------------------------------------------------------------------------
+    */
 
-    trainingModes: (form.modes || []).map(
-      (mode) => TRAINING_MODE_TO_API[mode] || mode.toUpperCase(),
-    ),
+    availabilityStatus: form.availability || "AVAILABLE",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status
+    |--------------------------------------------------------------------------
+    */
+
+    status: form.status || "ACTIVE",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Training Modes
+    |--------------------------------------------------------------------------
+    */
+
+    trainingModes: Array.isArray(form.modes)
+      ? form.modes.map(
+          (mode) => TRAINING_MODE_TO_API[mode] || String(mode).toUpperCase(),
+        )
+      : [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Preferred Locations
+    |--------------------------------------------------------------------------
+    */
 
     preferredLocations: Array.isArray(form.preferredLocations)
       ? form.preferredLocations
@@ -111,9 +280,24 @@ export const mapTrainerToApi = (form = {}) => {
           .map((item) => item.trim())
           .filter(Boolean),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Resume
+    |--------------------------------------------------------------------------
+    */
+
     resumeUrl: form.cvUrl || "",
 
-    // Best-effort: training types have no dedicated backend field yet.
-    tags: form.trainingTypes || [],
+    /*
+    |--------------------------------------------------------------------------
+    | Training Types
+    |--------------------------------------------------------------------------
+    |
+    | Current backend does not have a dedicated trainingTypes field.
+    | Preserve them through tags for now.
+    |
+    */
+
+    tags: Array.isArray(form.trainingTypes) ? form.trainingTypes : [],
   };
 };

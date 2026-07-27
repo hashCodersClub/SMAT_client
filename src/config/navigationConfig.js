@@ -220,6 +220,9 @@ export const navigationConfig = {
 };
 
 export const getNavigationConfig = (role) => {
-  console.log(role);
+  if (["SUPER_ADMIN", "ADMIN", "OPERATIONS"].includes(role)) {
+    return navigationConfig.ADMIN;
+  }
+
   return navigationConfig[role] || navigationConfig.ADMIN;
 };

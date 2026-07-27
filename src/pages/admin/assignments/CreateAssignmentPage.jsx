@@ -8,8 +8,8 @@ import {
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { requirements } from "../../data/requirements";
-import { trainers } from "../../data/trainers";
+import { requirements } from "../../../data/requirements";
+import { trainers } from "../../../data/trainers";
 
 const calculateDays = (startDate, endDate) => {
   if (!startDate || !endDate) return 0;
