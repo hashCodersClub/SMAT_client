@@ -32,6 +32,23 @@ const trainersApi = {
 
     return response.data;
   },
+  /*
+|--------------------------------------------------------------------------
+| Trainer Self Profile
+|--------------------------------------------------------------------------
+*/
+
+  getMyProfile: async () => {
+    const response = await api.get("/trainers/me");
+
+    return response.data;
+  },
+
+  updateMyProfile: async (payload) => {
+    const response = await api.patch("/trainers/me", payload);
+
+    return response.data;
+  },
 };
 
 export default trainersApi;

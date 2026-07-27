@@ -15,6 +15,12 @@ import { useAuth } from "../../context/AuthContext";
 |
 | Central place for deciding where each user role lands after login.
 |
+| Portal URL convention:
+|
+| Admin / Operations -> /admin/*
+| Vendor             -> /vendor/*
+| Trainer            -> /trainer/*
+|
 */
 
 const getHomeRoute = (role) => {
@@ -22,7 +28,7 @@ const getHomeRoute = (role) => {
     case "SUPER_ADMIN":
     case "ADMIN":
     case "OPERATIONS":
-      return "/";
+      return "/admin/dashboard";
 
     case "VENDOR":
       return "/vendor/dashboard";
@@ -91,13 +97,11 @@ const LoginPage = () => {
 
     if (!normalizedEmail) {
       setError("Please enter your email address.");
-
       return;
     }
 
     if (!password) {
       setError("Please enter your password.");
-
       return;
     }
 
@@ -283,9 +287,9 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* ================================================================
+          {/* ============================================================
               LOGIN FORM
-          ================================================================= */}
+          ============================================================= */}
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             {/* Email */}

@@ -31,8 +31,8 @@ export const navigationConfig = {
       searchPlaceholder: "Search trainers, vendors...",
     },
 
-    profilePath: "/settings",
-    settingsPath: "/settings",
+    profilePath: "/admin/settings",
+    settingsPath: "/admin/settings",
 
     navigation: [
       {
@@ -40,7 +40,7 @@ export const navigationConfig = {
         items: [
           {
             name: "Dashboard",
-            path: "/",
+            path: "/admin/dashboard",
             icon: FiGrid,
           },
         ],
@@ -51,22 +51,22 @@ export const navigationConfig = {
         items: [
           {
             name: "Requirements",
-            path: "/requirements",
+            path: "/admin/requirements",
             icon: FiClipboard,
           },
           {
             name: "Trainers",
-            path: "/trainers",
+            path: "/admin/trainers",
             icon: FiUsers,
           },
           {
             name: "Vendors",
-            path: "/vendors",
+            path: "/admin/vendors",
             icon: FiBriefcase,
           },
           {
             name: "Assignments",
-            path: "/assignments",
+            path: "/admin/assignments",
             icon: FiUserCheck,
           },
         ],
@@ -77,7 +77,7 @@ export const navigationConfig = {
         items: [
           {
             name: "Settings",
-            path: "/settings",
+            path: "/admin/settings",
             icon: FiSettings,
           },
         ],
@@ -109,7 +109,7 @@ export const navigationConfig = {
         items: [
           {
             name: "Dashboard",
-            path: "/vendor",
+            path: "/vendor/dashboard",
             icon: FiGrid,
           },
         ],
@@ -173,7 +173,7 @@ export const navigationConfig = {
         items: [
           {
             name: "Dashboard",
-            path: "/trainer",
+            path: "/trainer/dashboard",
             icon: FiGrid,
           },
         ],
@@ -193,8 +193,8 @@ export const navigationConfig = {
             icon: FiUserCheck,
           },
           {
-            name: "Schedule",
-            path: "/trainer/schedule",
+            name: "Availability",
+            path: "/trainer/availability",
             icon: FiCalendar,
           },
         ],
@@ -218,6 +218,12 @@ export const navigationConfig = {
     ],
   },
 };
+
+/*
+|--------------------------------------------------------------------------
+| Get Navigation Configuration
+|--------------------------------------------------------------------------
+*/
 
 export const getNavigationConfig = (role) => {
   if (["SUPER_ADMIN", "ADMIN", "OPERATIONS"].includes(role)) {
