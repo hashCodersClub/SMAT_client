@@ -62,6 +62,45 @@ const vendorsApi = {
 
     return response.data;
   },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Get Vendor Portal Users
+  |--------------------------------------------------------------------------
+  */
+
+  getUsers: async (vendorId) => {
+    const response = await api.get(`/vendors/${vendorId}/users`);
+
+    return response.data;
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Create Vendor Portal User
+  |--------------------------------------------------------------------------
+  */
+
+  createUser: async (vendorId, data) => {
+    const response = await api.post(`/vendors/${vendorId}/users`, data);
+
+    return response.data;
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Update Vendor Portal User Status
+  |--------------------------------------------------------------------------
+  */
+
+  updateUserStatus: async (vendorId, userId, isActive) => {
+    const response = await api.patch(
+      `/vendors/${vendorId}/users/${userId}/status`,
+      { isActive },
+    );
+
+    return response.data;
+  },
 };
 
 export default vendorsApi;

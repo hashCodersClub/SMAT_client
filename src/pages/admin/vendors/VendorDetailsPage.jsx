@@ -17,6 +17,7 @@ import {
 } from "react-icons/fi";
 
 import vendorsApi from "../../../api/vendorsApi";
+import VendorPortalUsers from "../../../components/admin/vendors/VendorPortalUsers";
 
 /* ==========================================================================
    HELPERS
@@ -353,6 +354,13 @@ const VendorDetailsPage = () => {
         {/* RIGHT */}
 
         <div className="space-y-6">
+          {/* Portal Users */}
+
+          <VendorPortalUsers
+            vendorId={vendor._id}
+            portalEnabled={vendor.portalEnabled}
+          />
+
           {/* Activity */}
 
           <Section title="Activity">
