@@ -33,6 +33,12 @@ const assignmentsApi = {
     return response.data;
   },
 
+  submitFeedback: async (id, data) => {
+    const response = await api.patch(`/assignments/${id}/feedback`, data);
+
+    return response.data;
+  },
+
   remove: async (id) => {
     const response = await api.delete(`/assignments/${id}`);
 

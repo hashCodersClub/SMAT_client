@@ -17,6 +17,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 
 import assignmentsApi from "../../../api/assignmentsApi";
+import AssignmentFeedbackCard from "../../../components/admin/assignments/AssignmentFeedbackCard";
 
 const statusStyles = {
   PROPOSED: "bg-violet-50 text-violet-700 border-violet-200",
@@ -513,6 +514,17 @@ const AssignmentDetailsPage = () => {
                 {assignment.notes || "No notes added."}
               </p>
             </section>
+
+            {/* Feedback */}
+
+            <AssignmentFeedbackCard
+              assignment={assignment}
+              onSubmitted={(updatedAssignment) => {
+                setAssignment(updatedAssignment);
+                setSuccess("Feedback submitted successfully.");
+                setError("");
+              }}
+            />
 
             {/* Cancellation */}
 
