@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import {
   FiAlertCircle,
+  FiAward,
+  FiBookOpen,
   FiBriefcase,
   FiCheck,
   FiEdit2,
@@ -21,6 +23,9 @@ import {
 
 import trainersApi from "../../../api/trainersApi";
 import SkillDetailsEditor from "../../../components/trainer/profile/SkillDetailsEditor";
+import CertificationsEditor from "../../../components/trainer/profile/CertificationsEditor";
+import EmploymentHistoryEditor from "../../../components/trainer/profile/EmploymentHistoryEditor";
+import EducationEditor from "../../../components/trainer/profile/EducationEditor";
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +52,10 @@ const INITIAL_FORM = {
   // Legacy + structured skills
   skills: [],
   skillDetails: [],
+
+  certifications: [],
+  employmentHistory: [],
+  education: [],
 
   experience: 0,
   trainingExperience: 0,
@@ -128,6 +137,16 @@ const TrainerProfilePage = () => {
         skillDetails: Array.isArray(trainer.skillDetails)
           ? trainer.skillDetails
           : [],
+
+        certifications: Array.isArray(trainer.certifications)
+          ? trainer.certifications
+          : [],
+
+        employmentHistory: Array.isArray(trainer.employmentHistory)
+          ? trainer.employmentHistory
+          : [],
+
+        education: Array.isArray(trainer.education) ? trainer.education : [],
 
         experience: trainer.experience ?? 0,
 
@@ -285,6 +304,57 @@ const TrainerProfilePage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | Certifications
+  |--------------------------------------------------------------------------
+  */
+
+  const handleCertificationsChange = (certifications) => {
+    setForm((current) => ({
+      ...current,
+      certifications,
+    }));
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Employment History
+  |--------------------------------------------------------------------------
+  */
+
+  const handleEmploymentHistoryChange = (employmentHistory) => {
+    setForm((current) => ({
+      ...current,
+      employmentHistory,
+    }));
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Education
+  |--------------------------------------------------------------------------
+  */
+
+  const handleEducationChange = (education) => {
+    setForm((current) => ({
+      ...current,
+      education,
+    }));
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
   | Training Modes
   |--------------------------------------------------------------------------
   */
@@ -347,6 +417,66 @@ const TrainerProfilePage = () => {
         ...new Set(skillDetails.map((skill) => skill.name).filter(Boolean)),
       ];
 
+      /*
+      |--------------------------------------------------------------------------
+      | Normalize Certifications Before Sending
+      |--------------------------------------------------------------------------
+      */
+
+      const certifications = Array.isArray(form.certifications)
+        ? form.certifications
+            .filter((cert) => cert && String(cert.name || "").trim())
+            .map((cert) => ({
+              name: String(cert.name).trim(),
+              issuingOrganization: String(
+                cert.issuingOrganization || "",
+              ).trim(),
+              credentialId: String(cert.credentialId || "").trim(),
+              credentialUrl: String(cert.credentialUrl || "").trim(),
+              issueDate: cert.issueDate || null,
+              expiryDate: cert.doesNotExpire ? null : cert.expiryDate || null,
+              doesNotExpire: Boolean(cert.doesNotExpire),
+            }))
+        : [];
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normalize Employment History Before Sending
+      |--------------------------------------------------------------------------
+      */
+
+      const employmentHistory = Array.isArray(form.employmentHistory)
+        ? form.employmentHistory
+            .filter((job) => job && job.company && job.designation)
+            .map((job) => ({
+              company: String(job.company).trim(),
+              designation: String(job.designation).trim(),
+              location: String(job.location || "").trim(),
+              startDate: job.startDate || null,
+              endDate: job.currentlyWorking ? null : job.endDate || null,
+              currentlyWorking: Boolean(job.currentlyWorking),
+              description: String(job.description || "").trim(),
+            }))
+        : [];
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normalize Education Before Sending
+      |--------------------------------------------------------------------------
+      */
+
+      const education = Array.isArray(form.education)
+        ? form.education
+            .filter((item) => item && item.qualification && item.institution)
+            .map((item) => ({
+              qualification: String(item.qualification).trim(),
+              institution: String(item.institution).trim(),
+              fieldOfStudy: String(item.fieldOfStudy || "").trim(),
+              startYear: item.startYear ? Number(item.startYear) : null,
+              endYear: item.endYear ? Number(item.endYear) : null,
+            }))
+        : [];
+
       const payload = {
         name: form.name.trim(),
 
@@ -377,6 +507,12 @@ const TrainerProfilePage = () => {
         skills,
 
         skillDetails,
+
+        certifications,
+
+        employmentHistory,
+
+        education,
 
         experience: Number(form.experience) || 0,
 
@@ -831,6 +967,54 @@ const TrainerProfilePage = () => {
             </p>
           </div>
         )}
+      </Section>
+
+      {/* ================================================================
+          CERTIFICATIONS
+      ================================================================= */}
+
+      <Section
+        title="Certifications"
+        description="Add professional certifications that validate your expertise."
+        icon={FiAward}
+      >
+        <CertificationsEditor
+          certifications={form.certifications}
+          editing={editing}
+          onChange={handleCertificationsChange}
+        />
+      </Section>
+
+      {/* ================================================================
+          EMPLOYMENT HISTORY
+      ================================================================= */}
+
+      <Section
+        title="Employment History"
+        description="Add your past and current work experience."
+        icon={FiBriefcase}
+      >
+        <EmploymentHistoryEditor
+          employmentHistory={form.employmentHistory}
+          editing={editing}
+          onChange={handleEmploymentHistoryChange}
+        />
+      </Section>
+
+      {/* ================================================================
+          EDUCATION
+      ================================================================= */}
+
+      <Section
+        title="Education"
+        description="Add your academic qualifications."
+        icon={FiBookOpen}
+      >
+        <EducationEditor
+          education={form.education}
+          editing={editing}
+          onChange={handleEducationChange}
+        />
       </Section>
 
       {/* ================================================================
