@@ -181,7 +181,7 @@ const RequirementDetailsPage = () => {
       <div className="mx-auto max-w-3xl">
         <button
           type="button"
-          onClick={() => navigate("/requirements")}
+          onClick={() => navigate("/admin/requirements")}
           className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
         >
           <FiArrowLeft />
@@ -226,7 +226,7 @@ const RequirementDetailsPage = () => {
 
       <button
         type="button"
-        onClick={() => navigate("/requirements")}
+        onClick={() => navigate("/admin/requirements")}
         className="flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
       >
         <FiArrowLeft />
@@ -277,7 +277,7 @@ const RequirementDetailsPage = () => {
 
           <button
             type="button"
-            onClick={() => navigate(`/requirements/${id}/edit`)}
+            onClick={() => navigate(`/admin/requirements/${id}/edit`)}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             <FiEdit2 />
@@ -291,7 +291,9 @@ const RequirementDetailsPage = () => {
           ) && (
             <button
               type="button"
-              onClick={() => navigate(`/requirements/${id}/vendor-selection`)}
+              onClick={() =>
+                navigate(`/admin/requirements/${id}/vendor-selection`)
+              }
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               <FiUsers />

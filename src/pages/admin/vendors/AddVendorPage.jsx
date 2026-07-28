@@ -26,7 +26,7 @@ const AddVendorPage = () => {
 
       console.log("Vendor created:", response);
 
-      navigate("/vendors", {
+      navigate("/admin/vendors", {
         replace: true,
       });
     } catch (err) {
@@ -49,7 +49,7 @@ const AddVendorPage = () => {
 
       <button
         type="button"
-        onClick={() => navigate("/vendors")}
+        onClick={() => navigate("/admin/vendors")}
         disabled={submitting}
         className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
       >

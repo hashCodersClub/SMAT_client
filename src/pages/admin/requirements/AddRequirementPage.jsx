@@ -104,7 +104,7 @@ const AddRequirementPage = () => {
       */
 
       if (requirementId) {
-        navigate(`/requirements/${requirementId}`, {
+        navigate(`/admin/requirements/${requirementId}`, {
           replace: true,
         });
 
@@ -117,7 +117,7 @@ const AddRequirementPage = () => {
       |--------------------------------------------------------------------------
       */
 
-      navigate("/requirements", {
+      navigate("/admin/requirements", {
         replace: true,
       });
     } catch (error) {
@@ -137,7 +137,7 @@ const AddRequirementPage = () => {
 
       <button
         type="button"
-        onClick={() => navigate("/requirements")}
+        onClick={() => navigate("/admin/requirements")}
         className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
       >
         <FiArrowLeft />

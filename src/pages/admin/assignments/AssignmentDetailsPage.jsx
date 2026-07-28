@@ -207,7 +207,7 @@ const AssignmentDetailsPage = () => {
       <div className="mx-auto max-w-7xl space-y-5">
         <button
           type="button"
-          onClick={() => navigate("/assignments")}
+          onClick={() => navigate("/admin/assignments")}
           className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
         >
           <FiArrowLeft />
@@ -275,7 +275,7 @@ const AssignmentDetailsPage = () => {
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <button
             type="button"
-            onClick={() => navigate("/assignments")}
+            onClick={() => navigate("/admin/assignments")}
             className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
           >
             <FiArrowLeft />

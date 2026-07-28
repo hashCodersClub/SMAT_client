@@ -382,7 +382,7 @@ const AssignmentsPage = () => {
                         <button
                           type="button"
                           onClick={() =>
-                            navigate(`/assignments/${assignment._id}`)
+                            navigate(`/admin/assignments/${assignment._id}`)
                           }
                           className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
                         >

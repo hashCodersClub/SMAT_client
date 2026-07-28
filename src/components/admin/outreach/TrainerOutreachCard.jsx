@@ -77,7 +77,7 @@ const TrainerOutreachCard = ({
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => navigate(`/trainers/${trainer.id}`)}
+              onClick={() => navigate(`/admin/trainers/${trainer.id}`)}
               className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
             >
               <FiEye />

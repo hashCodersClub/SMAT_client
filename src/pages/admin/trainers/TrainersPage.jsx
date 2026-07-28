@@ -28,6 +28,7 @@ const TrainersPage = () => {
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
 
   /*
   |--------------------------------------------------------------------------
@@ -87,6 +88,39 @@ const TrainersPage = () => {
 
     loadTrainers();
   }, []);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Delete Trainer
+  |--------------------------------------------------------------------------
+  */
+
+  const handleDeleteTrainer = async (trainerId) => {
+    const confirmed = window.confirm(
+      "Delete this trainer? This cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(trainerId);
+      setError("");
+
+      await trainersApi.remove(trainerId);
+
+      setTrainers((previous) =>
+        previous.filter((trainer) => trainer.id !== trainerId),
+      );
+    } catch (err) {
+      console.error("Failed to delete trainer:", err);
+
+      setError(err.response?.data?.message || "Unable to delete trainer.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   /*
   |--------------------------------------------------------------------------
@@ -309,7 +343,7 @@ const TrainersPage = () => {
 
           <button
             type="button"
-            onClick={() => navigate("/trainers/add")}
+            onClick={() => navigate("/admin/trainers/add")}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
           >
             <FiPlus />
@@ -376,7 +410,11 @@ const TrainersPage = () => {
           TABLE
       ================================================================= */}
 
-      <TrainerTable trainers={paginatedTrainers} />
+      <TrainerTable
+        trainers={paginatedTrainers}
+        onDelete={handleDeleteTrainer}
+        deletingId={deletingId}
+      />
 
       {/* ================================================================
           PAGINATION

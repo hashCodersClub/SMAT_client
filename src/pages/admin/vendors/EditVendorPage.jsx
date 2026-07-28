@@ -71,7 +71,7 @@ const EditVendorPage = () => {
 
       await vendorsApi.update(id, data);
 
-      navigate(`/vendors/${id}`, {
+      navigate(`/admin/vendors/${id}`, {
         replace: true,
       });
     } catch (err) {
@@ -119,7 +119,7 @@ const EditVendorPage = () => {
       <div className="mx-auto max-w-5xl">
         <button
           type="button"
-          onClick={() => navigate("/vendors")}
+          onClick={() => navigate("/admin/vendors")}
           className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-600"
         >
           <FiArrowLeft />
@@ -159,7 +159,7 @@ const EditVendorPage = () => {
       <button
         type="button"
         disabled={submitting}
-        onClick={() => navigate(`/vendors/${id}`)}
+        onClick={() => navigate(`/admin/vendors/${id}`)}
         className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-950 disabled:opacity-50"
       >
         <FiArrowLeft />

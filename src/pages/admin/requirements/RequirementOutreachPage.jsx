@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FiArrowLeft,
   FiCheckCircle,
@@ -8,12 +8,12 @@ import {
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { requirements } from "../../data/requirements";
-import { trainers } from "../../data/trainers";
-import { outreachRecords } from "../../data/outreach";
-import { rankTrainers } from "../../utils/trainerMatching";
+import { requirements } from "../../../data/requirements";
+import { trainers } from "../../../data/trainers";
+import outreachApi from "../../../api/outreachApi";
+import { rankTrainers } from "../../../utils/trainerMatching";
 
-import TrainerOutreachCard from "../../components/outreach/TrainerOutreachCard";
+import TrainerOutreachCard from "../../../components/admin/outreach/TrainerOutreachCard";
 
 const RequirementOutreachPage = () => {
   const { id } = useParams();
@@ -35,27 +35,56 @@ const RequirementOutreachPage = () => {
     (trainer) => trainer.match.score >= 45,
   );
 
-  const initialRecords = {};
+  const [records, setRecords] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  shortlistedTrainers.forEach((trainer) => {
-    const existing = outreachRecords.find(
-      (record) =>
-        record.requirementId === id && record.trainerId === trainer.id,
-    );
+  useEffect(() => {
+    if (!requirement) return;
 
-    initialRecords[trainer.id] = existing || {
-      id: `TEMP-${trainer.id}`,
-      requirementId: id,
-      trainerId: trainer.id,
-      outreachStatus: "NOT_CONTACTED",
-      quotedRate: trainer.dailyRate || "",
-      negotiatedRate: "",
-      vendorStatus: "NOT_SENT",
-      notes: "",
+    let isCancelled = false;
+
+    const loadOutreach = async () => {
+      setLoading(true);
+
+      try {
+        const { outreach } = await outreachApi.getByRequirement(requirement.id);
+
+        if (isCancelled) return;
+
+        const byTrainerId = {};
+
+        shortlistedTrainers.forEach((trainer) => {
+          const existing = outreach.find(
+            (record) =>
+              (record.trainerId?._id || record.trainerId) === trainer.id,
+          );
+
+          byTrainerId[trainer.id] = existing || {
+            requirementId: requirement.id,
+            trainerId: trainer.id,
+            outreachStatus: "NOT_CONTACTED",
+            quotedRate: trainer.dailyRate || "",
+            negotiatedRate: "",
+            vendorStatus: "NOT_SENT",
+            notes: "",
+          };
+        });
+
+        setRecords(byTrainerId);
+      } catch (error) {
+        console.error("Failed to load outreach records:", error);
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
     };
-  });
 
-  const [records, setRecords] = useState(initialRecords);
+    loadOutreach();
+
+    return () => {
+      isCancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requirement?.id]);
 
   if (!requirement) {
     return (
@@ -75,35 +104,56 @@ const RequirementOutreachPage = () => {
     }));
   };
 
+  const persistOutreach = async (trainerId, changes) => {
+    try {
+      const { outreach } = await outreachApi.upsert({
+        requirementId: requirement.id,
+        trainerId,
+        ...changes,
+      });
+
+      updateRecord(trainerId, outreach);
+    } catch (error) {
+      console.error("Failed to save outreach record:", error);
+    }
+  };
+
   const updateStatus = (trainerId, status) => {
-    updateRecord(trainerId, {
-      outreachStatus: status,
+    updateRecord(trainerId, { outreachStatus: status });
 
-      contactedAt:
-        status !== "NOT_CONTACTED"
-          ? records[trainerId]?.contactedAt || new Date().toISOString()
-          : null,
-
-      respondedAt: ["INTERESTED", "DECLINED", "UNAVAILABLE"].includes(status)
-        ? new Date().toISOString()
-        : records[trainerId]?.respondedAt,
-    });
+    persistOutreach(trainerId, { outreachStatus: status });
   };
 
   const updateRate = (trainerId, field, value) => {
-    updateRecord(trainerId, {
-      [field]: value === "" ? "" : Number(value),
-    });
+    const parsed = value === "" ? "" : Number(value);
+
+    updateRecord(trainerId, { [field]: parsed });
+
+    if (parsed !== "") {
+      persistOutreach(trainerId, { [field]: parsed });
+    }
   };
 
-  const sendProfile = (trainerId) => {
-    updateRecord(trainerId, {
-      vendorStatus: "PROFILE_SENT",
-    });
+  const sendProfile = async (trainerId) => {
+    const record = records[trainerId];
 
-    console.log("Profile sent to vendor:", trainerId, requirement.id);
+    if (!record?._id) {
+      alert("Set an outreach status before sending the profile.");
 
-    alert("Trainer marked as profile sent.");
+      return;
+    }
+
+    try {
+      const { outreach } = await outreachApi.sendProfile(record._id);
+
+      updateRecord(trainerId, outreach);
+
+      alert("Trainer marked as profile sent.");
+    } catch (error) {
+      console.error("Failed to send profile:", error);
+
+      alert("Could not send the profile. Please try again.");
+    }
   };
 
   const values = Object.values(records);
@@ -124,7 +174,9 @@ const RequirementOutreachPage = () => {
     <div className="space-y-6">
       <button
         type="button"
-        onClick={() => navigate(`/requirements/${requirement.id}/matches`)}
+        onClick={() =>
+          navigate(`/admin/requirements/${requirement.id}/matches`)
+        }
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
       >
         <FiArrowLeft />
@@ -170,16 +222,22 @@ const RequirementOutreachPage = () => {
       </div>
 
       <div className="space-y-4">
-        {shortlistedTrainers.map((trainer) => (
-          <TrainerOutreachCard
-            key={trainer.id}
-            trainer={trainer}
-            record={records[trainer.id]}
-            onUpdateStatus={updateStatus}
-            onUpdateRate={updateRate}
-            onSendProfile={sendProfile}
-          />
-        ))}
+        {loading ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+            Loading outreach records…
+          </div>
+        ) : (
+          shortlistedTrainers.map((trainer) => (
+            <TrainerOutreachCard
+              key={trainer.id}
+              trainer={trainer}
+              record={records[trainer.id]}
+              onUpdateStatus={updateStatus}
+              onUpdateRate={updateRate}
+              onSendProfile={sendProfile}
+            />
+          ))
+        )}
       </div>
 
       {sentCount > 0 && (
@@ -187,7 +245,7 @@ const RequirementOutreachPage = () => {
           <button
             type="button"
             onClick={() =>
-              navigate(`/requirements/${requirement.id}/vendor-selection`)
+              navigate(`/admin/requirements/${requirement.id}/vendor-selection`)
             }
             className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-slate-800"
           >

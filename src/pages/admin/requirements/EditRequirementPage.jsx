@@ -144,7 +144,7 @@ const EditRequirementPage = () => {
       const requirementId =
         updatedRequirement?._id || updatedRequirement?.id || id;
 
-      navigate(`/requirements/${requirementId}`, {
+      navigate(`/admin/requirements/${requirementId}`, {
         replace: true,
       });
     } catch (error) {
@@ -190,7 +190,7 @@ const EditRequirementPage = () => {
       <div className="mx-auto max-w-3xl">
         <button
           type="button"
-          onClick={() => navigate("/requirements")}
+          onClick={() => navigate("/admin/requirements")}
           className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
         >
           <FiArrowLeft />
@@ -226,7 +226,7 @@ const EditRequirementPage = () => {
 
       <button
         type="button"
-        onClick={() => navigate(`/requirements/${id}`)}
+        onClick={() => navigate(`/admin/requirements/${id}`)}
         className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
       >
         <FiArrowLeft />

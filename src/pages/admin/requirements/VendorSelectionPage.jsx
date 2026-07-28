@@ -69,7 +69,7 @@ const VendorSelectionPage = () => {
     <div className="space-y-6">
       <button
         type="button"
-        onClick={() => navigate(`/requirements/${id}/outreach`)}
+        onClick={() => navigate(`/admin/requirements/${id}/outreach`)}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
       >
         <FiArrowLeft />

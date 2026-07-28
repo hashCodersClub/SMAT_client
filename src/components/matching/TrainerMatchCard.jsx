@@ -106,7 +106,7 @@ const TrainerMatchCard = ({ trainer, shortlisted, onShortlist }) => {
       <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:flex-row sm:justify-end">
         <button
           type="button"
-          onClick={() => navigate(`/trainers/${trainer.id}`)}
+          onClick={() => navigate(`/admin/trainers/${trainer.id}`)}
           className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
           <FiEye />

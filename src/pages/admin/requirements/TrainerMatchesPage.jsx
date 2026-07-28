@@ -71,7 +71,7 @@ const TrainerMatchesPage = () => {
 
       <button
         type="button"
-        onClick={() => navigate(`/requirements/${requirement.id}`)}
+        onClick={() => navigate(`/admin/requirements/${requirement.id}`)}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
       >
         <FiArrowLeft />

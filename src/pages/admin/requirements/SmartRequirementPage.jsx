@@ -97,7 +97,7 @@ const SmartRequirementPage = () => {
       "Requirement parsed successfully. Backend persistence will be added later.",
     );
 
-    navigate("/requirements");
+    navigate("/admin/requirements");
   };
 
   const loadExample = () => {
@@ -119,7 +119,7 @@ Please share relevant profiles ASAP.`,
     <div className="mx-auto max-w-7xl space-y-6">
       <button
         type="button"
-        onClick={() => navigate("/requirements")}
+        onClick={() => navigate("/admin/requirements")}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
       >
         <FiArrowLeft />

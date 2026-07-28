@@ -68,7 +68,7 @@ const TrainerCard = ({ trainer }) => {
 
       <button
         type="button"
-        onClick={() => navigate(`/trainers/${trainer.id}`)}
+        onClick={() => navigate(`/admin/trainers/${trainer.id}`)}
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
       >
         <FiEye />

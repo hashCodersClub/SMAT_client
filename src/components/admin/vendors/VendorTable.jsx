@@ -1,4 +1,12 @@
-import { FiEye, FiEdit2, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
+import {
+  FiEye,
+  FiEdit2,
+  FiMapPin,
+  FiPhone,
+  FiMail,
+  FiTrash2,
+  FiLoader,
+} from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
 
@@ -19,7 +27,7 @@ const formatCompanyType = (value = "") => {
    VENDOR TABLE
 ============================================================================ */
 
-const VendorTable = ({ vendors = [] }) => {
+const VendorTable = ({ vendors = [], onDelete, deletingId }) => {
   const navigate = useNavigate();
 
   /*
@@ -200,7 +208,7 @@ const VendorTable = ({ vendors = [] }) => {
                       <button
                         type="button"
                         title="View vendor"
-                        onClick={() => navigate(`/vendors/${vendor._id}`)}
+                        onClick={() => navigate(`/admin/vendors/${vendor._id}`)}
                         className="rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
                       >
                         <FiEye size={17} />
@@ -209,10 +217,26 @@ const VendorTable = ({ vendors = [] }) => {
                       <button
                         type="button"
                         title="Edit vendor"
-                        onClick={() => navigate(`/vendors/${vendor._id}/edit`)}
+                        onClick={() =>
+                          navigate(`/admin/vendors/${vendor._id}/edit`)
+                        }
                         className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
                       >
                         <FiEdit2 size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        title="Delete vendor"
+                        disabled={deletingId === vendor._id}
+                        onClick={() => onDelete?.(vendor._id)}
+                        className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {deletingId === vendor._id ? (
+                          <FiLoader size={16} className="animate-spin" />
+                        ) : (
+                          <FiTrash2 size={16} />
+                        )}
                       </button>
                     </div>
                   </td>

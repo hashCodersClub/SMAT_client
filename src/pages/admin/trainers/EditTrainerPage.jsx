@@ -51,7 +51,7 @@ const EditTrainerPage = () => {
 
       await trainersApi.update(id, mapTrainerToApi(trainerData));
 
-      navigate(`/trainers/${id}`, {
+      navigate(`/admin/trainers/${id}`, {
         replace: true,
       });
     } catch (err) {
@@ -87,7 +87,7 @@ const EditTrainerPage = () => {
       <div className="mx-auto max-w-5xl">
         <button
           type="button"
-          onClick={() => navigate("/trainers")}
+          onClick={() => navigate("/admin/trainers")}
           className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
         >
           <FiArrowLeft />
@@ -127,7 +127,7 @@ const EditTrainerPage = () => {
   return (
     <div className="mx-auto max-w-5xl">
       <button
-        onClick={() => navigate(`/trainers/${id}`)}
+        onClick={() => navigate(`/admin/trainers/${id}`)}
         disabled={submitting}
         className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
       >

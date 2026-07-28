@@ -356,7 +356,7 @@ const RequirementTable = ({ requirements = [] }) => {
                         type="button"
                         title="View requirement"
                         onClick={() =>
-                          navigate(`/requirements/${requirementId}`)
+                          navigate(`/admin/requirements/${requirementId}`)
                         }
                         className="rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
                       >
@@ -369,7 +369,7 @@ const RequirementTable = ({ requirements = [] }) => {
                         type="button"
                         title="Edit requirement"
                         onClick={() =>
-                          navigate(`/requirements/${requirementId}/edit`)
+                          navigate(`/admin/requirements/${requirementId}/edit`)
                         }
                         className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
                       >

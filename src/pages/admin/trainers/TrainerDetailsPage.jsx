@@ -17,6 +17,7 @@ import {
   FiLoader,
   FiUserCheck,
   FiClock,
+  FiTrash2,
 } from "react-icons/fi";
 
 import trainersApi from "../../../api/trainersApi";
@@ -34,6 +35,9 @@ const TrainerDetailsPage = () => {
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState("");
   const [inviteError, setInviteError] = useState("");
+
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   /*
   |--------------------------------------------------------------------------
@@ -110,6 +114,39 @@ const TrainerDetailsPage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | Delete Trainer
+  |--------------------------------------------------------------------------
+  */
+
+  const handleDeleteTrainer = async () => {
+    const confirmed = window.confirm(
+      "Delete this trainer? This cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setDeleteError("");
+
+      await trainersApi.remove(id);
+
+      navigate("/admin/trainers");
+    } catch (err) {
+      console.error("Failed to delete trainer:", err);
+
+      setDeleteError(
+        err.response?.data?.message || "Unable to delete trainer.",
+      );
+
+      setDeleting(false);
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
   | Loading
   |--------------------------------------------------------------------------
   */
@@ -148,7 +185,7 @@ const TrainerDetailsPage = () => {
         <div className="mt-4 flex items-center justify-center gap-3">
           <button
             type="button"
-            onClick={() => navigate("/trainers")}
+            onClick={() => navigate("/admin/trainers")}
             className="text-sm font-medium text-blue-600"
           >
             Return to trainers
@@ -191,7 +228,7 @@ const TrainerDetailsPage = () => {
 
       <button
         type="button"
-        onClick={() => navigate("/trainers")}
+        onClick={() => navigate("/admin/trainers")}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
       >
         <FiArrowLeft />
@@ -280,15 +317,37 @@ const TrainerDetailsPage = () => {
 
             <button
               type="button"
-              onClick={() => navigate(`/trainers/${trainer.id}/edit`)}
+              onClick={() => navigate(`/admin/trainers/${trainer.id}/edit`)}
               className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
             >
               <FiEdit2 />
               Edit Trainer
             </button>
+
+            <button
+              type="button"
+              onClick={handleDeleteTrainer}
+              disabled={deleting}
+              className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {deleting ? <FiLoader className="animate-spin" /> : <FiTrash2 />}
+              {deleting ? "Deleting..." : "Delete Trainer"}
+            </button>
           </div>
         </div>
       </div>
+
+      {deleteError && (
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <FiAlertCircle size={19} className="mt-0.5 shrink-0 text-red-600" />
+
+          <div>
+            <p className="text-sm font-bold text-red-800">Delete failed</p>
+
+            <p className="mt-1 text-sm text-red-700">{deleteError}</p>
+          </div>
+        </div>
+      )}
 
       {/* ================================================================
           INVITATION MESSAGES

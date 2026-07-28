@@ -43,6 +43,7 @@ const VendorsPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
 
   /*
   |--------------------------------------------------------------------------
@@ -82,6 +83,40 @@ const VendorsPage = () => {
       setLoading(false);
     }
   }, [search, status, pagination.page, pagination.limit]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Delete Vendor
+  |--------------------------------------------------------------------------
+  */
+
+  const handleDeleteVendor = async (vendorId) => {
+    const confirmed = window.confirm(
+      "Delete this vendor? This cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(vendorId);
+      setError("");
+
+      await vendorsApi.delete(vendorId);
+
+      await fetchVendors();
+    } catch (err) {
+      console.error("Failed to delete vendor:", err);
+
+      setError(
+        err?.response?.data?.message ||
+          "Unable to delete vendor. Please try again.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   /*
   |--------------------------------------------------------------------------
@@ -180,7 +215,7 @@ const VendorsPage = () => {
 
         <button
           type="button"
-          onClick={() => navigate("/vendors/add")}
+          onClick={() => navigate("/admin/vendors/add")}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
         >
           <FiPlus size={18} />
@@ -263,7 +298,11 @@ const VendorsPage = () => {
               VENDOR TABLE
           ============================================================= */}
 
-          <VendorTable vendors={vendors} />
+          <VendorTable
+            vendors={vendors}
+            onDelete={handleDeleteVendor}
+            deletingId={deletingId}
+          />
 
           {/* ============================================================
               PAGINATION

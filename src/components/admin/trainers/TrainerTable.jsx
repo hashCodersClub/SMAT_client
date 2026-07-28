@@ -3,7 +3,8 @@ import {
   FiEdit2,
   FiMapPin,
   FiStar,
-  FiMoreVertical,
+  FiTrash2,
+  FiLoader,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -13,7 +14,7 @@ const availabilityStyles = {
   UNAVAILABLE: "bg-red-50 text-red-700",
 };
 
-const TrainerTable = ({ trainers }) => {
+const TrainerTable = ({ trainers, onDelete, deletingId }) => {
   const navigate = useNavigate();
 
   if (trainers.length === 0) {
@@ -170,7 +171,7 @@ const TrainerTable = ({ trainers }) => {
                     <button
                       type="button"
                       title="View trainer"
-                      onClick={() => navigate(`/trainers/${trainer.id}`)}
+                      onClick={() => navigate(`/admin/trainers/${trainer.id}`)}
                       className="rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
                     >
                       <FiEye />
@@ -179,7 +180,9 @@ const TrainerTable = ({ trainers }) => {
                     <button
                       type="button"
                       title="Edit trainer"
-                      onClick={() => navigate(`/trainers/${trainer.id}/edit`)}
+                      onClick={() =>
+                        navigate(`/admin/trainers/${trainer.id}/edit`)
+                      }
                       className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                     >
                       <FiEdit2 />
@@ -187,9 +190,16 @@ const TrainerTable = ({ trainers }) => {
 
                     <button
                       type="button"
-                      className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100"
+                      title="Delete trainer"
+                      disabled={deletingId === trainer.id}
+                      onClick={() => onDelete?.(trainer.id)}
+                      className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <FiMoreVertical />
+                      {deletingId === trainer.id ? (
+                        <FiLoader className="animate-spin" />
+                      ) : (
+                        <FiTrash2 />
+                      )}
                     </button>
                   </div>
                 </td>

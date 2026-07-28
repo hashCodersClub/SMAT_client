@@ -12,6 +12,8 @@ import {
   FiGlobe,
   FiAlertCircle,
   FiRefreshCw,
+  FiTrash2,
+  FiLoader,
 } from "react-icons/fi";
 
 import vendorsApi from "../../../api/vendorsApi";
@@ -41,6 +43,9 @@ const VendorDetailsPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   /*
   |--------------------------------------------------------------------------
@@ -79,6 +84,39 @@ const VendorDetailsPage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | Delete Vendor
+  |--------------------------------------------------------------------------
+  */
+
+  const handleDeleteVendor = async () => {
+    const confirmed = window.confirm(
+      "Delete this vendor? This cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setDeleteError("");
+
+      await vendorsApi.delete(id);
+
+      navigate("/admin/vendors");
+    } catch (err) {
+      console.error("Failed to delete vendor:", err);
+
+      setDeleteError(
+        err?.response?.data?.message || "Unable to delete vendor.",
+      );
+
+      setDeleting(false);
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
   | Loading
   |--------------------------------------------------------------------------
   */
@@ -98,7 +136,7 @@ const VendorDetailsPage = () => {
       <div className="mx-auto max-w-3xl">
         <button
           type="button"
-          onClick={() => navigate("/vendors")}
+          onClick={() => navigate("/admin/vendors")}
           className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
         >
           <FiArrowLeft />
@@ -148,7 +186,7 @@ const VendorDetailsPage = () => {
 
       <button
         type="button"
-        onClick={() => navigate("/vendors")}
+        onClick={() => navigate("/admin/vendors")}
         className="flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-950"
       >
         <FiArrowLeft />
@@ -193,16 +231,40 @@ const VendorDetailsPage = () => {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => navigate(`/vendors/${vendor._id}/edit`)}
-            className="inline-flex h-fit items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
-            <FiEdit2 />
-            Edit Vendor
-          </button>
+          <div className="flex h-fit shrink-0 flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(`/admin/vendors/${vendor._id}/edit`)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              <FiEdit2 />
+              Edit Vendor
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDeleteVendor}
+              disabled={deleting}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {deleting ? <FiLoader className="animate-spin" /> : <FiTrash2 />}
+              {deleting ? "Deleting..." : "Delete Vendor"}
+            </button>
+          </div>
         </div>
       </div>
+
+      {deleteError && (
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <FiAlertCircle size={19} className="mt-0.5 shrink-0 text-red-600" />
+
+          <div>
+            <p className="text-sm font-bold text-red-800">Delete failed</p>
+
+            <p className="mt-1 text-sm text-red-700">{deleteError}</p>
+          </div>
+        </div>
+      )}
 
       {/* ================================================================
           CONTENT

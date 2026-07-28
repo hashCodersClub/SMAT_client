@@ -25,6 +25,8 @@ import AddRequirementPage from "../pages/admin/requirements/AddRequirementPage";
 import RequirementDetailsPage from "../pages/admin/requirements/RequirementDetailsPage";
 import EditRequirementPage from "../pages/admin/requirements/EditRequirementPage";
 import SmartRequirementPage from "../pages/admin/requirements/SmartRequirementPage";
+import TrainerMatchesPage from "../pages/admin/requirements/TrainerMatchesPage";
+import RequirementOutreachPage from "../pages/admin/requirements/RequirementOutreachPage";
 import VendorSelectionPage from "../pages/admin/requirements/VendorSelectionPage";
 
 // Admin - Vendors
@@ -143,6 +145,16 @@ const AppRoutes = () => {
           <Route
             path="/admin/requirements/:id/edit"
             element={<EditRequirementPage />}
+          />
+
+          <Route
+            path="/admin/requirements/:id/matches"
+            element={<TrainerMatchesPage />}
+          />
+
+          <Route
+            path="/admin/requirements/:id/outreach"
+            element={<RequirementOutreachPage />}
           />
 
           <Route
