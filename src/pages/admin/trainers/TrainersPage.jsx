@@ -284,6 +284,42 @@ const TrainersPage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | KPI Bar Interactions
+  |--------------------------------------------------------------------------
+  |
+  | KPI cards apply the same availability / status filters that the
+  | toolbar already supports. Clicking an already-active card toggles
+  | it back off; clicking "Total Trainers" clears every filter.
+  |
+  */
+
+  const handleSelectAvailability = updateFilter((value) =>
+    setAvailability((current) => (current === value ? "" : value)),
+  );
+
+  const handleSelectStatus = updateFilter((value) =>
+    setStatus((current) => (current === value ? "" : value)),
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Assign Trainer
+  |--------------------------------------------------------------------------
+  |
+  | Assignment always happens against a specific requirement, so this
+  | routes the ops exec into the existing Requirements workspace with the
+  | chosen trainer carried along as a query parameter. No new backend
+  | endpoint or route definition is introduced -- /admin/requirements
+  | already exists and is untouched.
+  |
+  */
+
+  const handleAssignTrainer = (trainer) => {
+    navigate(`/admin/requirements?assignTrainerId=${trainer.id}`);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
   | Loading
   |--------------------------------------------------------------------------
   */
@@ -318,35 +354,35 @@ const TrainersPage = () => {
   */
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* ================================================================
           HEADER
       ================================================================= */}
 
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+      <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Trainers</h1>
+          <h1 className="text-xl font-bold text-slate-900">Trainers</h1>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Manage your trainer network, skills, rates and availability.
+          <p className="text-sm text-slate-500">
+            Find, verify and assign trainers to requirements.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
-            <FiUpload />
+            <FiUpload size={15} />
             Import CSV
           </button>
 
           <button
             type="button"
             onClick={() => navigate("/admin/trainers/add")}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
           >
-            <FiPlus />
+            <FiPlus size={15} />
             Add Trainer
           </button>
         </div>
@@ -357,19 +393,26 @@ const TrainersPage = () => {
       ================================================================= */}
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
           <p className="text-sm font-semibold text-red-800">{error}</p>
         </div>
       )}
 
       {/* ================================================================
-          STATISTICS
+          OPERATIONAL KPI BAR (clickable -- applies filters)
       ================================================================= */}
 
-      <TrainerStats trainers={trainers} />
+      <TrainerStats
+        trainers={trainers}
+        availability={availability}
+        status={status}
+        onSelectAvailability={handleSelectAvailability}
+        onSelectStatus={handleSelectStatus}
+        onShowAll={resetFilters}
+      />
 
       {/* ================================================================
-          FILTERS
+          TOOLBAR: Search + Filters + Result Count
       ================================================================= */}
 
       <TrainerFilters
@@ -386,25 +429,9 @@ const TrainersPage = () => {
         skills={skills}
         locations={locations}
         resetFilters={resetFilters}
+        resultCount={filteredTrainers.length}
+        totalCount={trainers.length}
       />
-
-      {/* ================================================================
-          RESULT COUNT
-      ================================================================= */}
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">
-          Showing{" "}
-          <span className="font-semibold text-slate-700">
-            {paginatedTrainers.length}
-          </span>{" "}
-          of{" "}
-          <span className="font-semibold text-slate-700">
-            {filteredTrainers.length}
-          </span>{" "}
-          trainers
-        </p>
-      </div>
 
       {/* ================================================================
           TABLE
@@ -414,6 +441,7 @@ const TrainersPage = () => {
         trainers={paginatedTrainers}
         onDelete={handleDeleteTrainer}
         deletingId={deletingId}
+        onAssign={handleAssignTrainer}
       />
 
       {/* ================================================================
@@ -421,8 +449,8 @@ const TrainersPage = () => {
       ================================================================= */}
 
       {filteredTrainers.length > 0 && (
-        <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 sm:flex-row">
-          <p className="text-sm text-slate-500">
+        <div className="flex flex-col items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 sm:flex-row">
+          <p className="text-xs text-slate-500">
             Page {safeCurrentPage} of {totalPages}
           </p>
 
@@ -431,9 +459,9 @@ const TrainersPage = () => {
               type="button"
               disabled={safeCurrentPage === 1}
               onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <FiChevronLeft />
+              <FiChevronLeft size={14} />
               Previous
             </button>
 
@@ -443,10 +471,10 @@ const TrainersPage = () => {
               onClick={() =>
                 setCurrentPage((page) => Math.min(page + 1, totalPages))
               }
-              className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
-              <FiChevronRight />
+              <FiChevronRight size={14} />
             </button>
           </div>
         </div>

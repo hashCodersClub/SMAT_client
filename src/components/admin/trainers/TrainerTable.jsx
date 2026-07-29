@@ -1,26 +1,160 @@
+import { useEffect, useRef, useState } from "react";
 import {
   FiEye,
+  FiCalendar,
+  FiMoreVertical,
   FiEdit2,
-  FiMapPin,
-  FiStar,
   FiTrash2,
   FiLoader,
+  FiStar,
+  FiUserPlus,
+  FiMapPin,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-const availabilityStyles = {
-  AVAILABLE: "bg-emerald-50 text-emerald-700",
-  BUSY: "bg-amber-50 text-amber-700",
-  UNAVAILABLE: "bg-red-50 text-red-700",
+/*
+|--------------------------------------------------------------------------
+| Availability Presentation
+|--------------------------------------------------------------------------
+*/
+
+const availabilityConfig = {
+  AVAILABLE: {
+    label: "Available",
+    dot: "bg-emerald-500",
+    text: "text-emerald-700",
+    bg: "bg-emerald-50",
+  },
+  BUSY: {
+    label: "Busy",
+    dot: "bg-amber-500",
+    text: "text-amber-700",
+    bg: "bg-amber-50",
+  },
+  UNAVAILABLE: {
+    label: "Unavailable",
+    dot: "bg-rose-500",
+    text: "text-rose-700",
+    bg: "bg-rose-50",
+  },
 };
 
-const TrainerTable = ({ trainers, onDelete, deletingId }) => {
+/*
+|--------------------------------------------------------------------------
+| Reliability Presentation
+|--------------------------------------------------------------------------
+|
+| Turns rating into a quick "can I trust this trainer with this
+| requirement" signal instead of a bare number.
+|
+*/
+
+const getReliabilityTone = (rating) => {
+  if (rating >= 4.5) return "text-emerald-700";
+  if (rating >= 3.5) return "text-slate-700";
+  if (rating > 0) return "text-amber-700";
+  return "text-slate-400";
+};
+
+const getInitials = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+/*
+|--------------------------------------------------------------------------
+| Row Quick-Actions Menu (More)
+|--------------------------------------------------------------------------
+*/
+
+const RowMenu = ({
+  trainer,
+  onDelete,
+  deletingId,
+  openId,
+  setOpenId,
+  navigate,
+}) => {
+  const isOpen = openId === trainer.id;
+
+  return (
+    <div className="relative" data-trainer-menu>
+      <button
+        type="button"
+        title="More actions"
+        onClick={() => setOpenId(isOpen ? null : trainer.id)}
+        className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+      >
+        <FiMoreVertical size={16} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full z-10 mt-1 w-40 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+          <button
+            type="button"
+            onClick={() => {
+              setOpenId(null);
+              navigate(`/admin/trainers/${trainer.id}/edit`);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50"
+          >
+            <FiEdit2 size={14} />
+            Edit profile
+          </button>
+
+          <button
+            type="button"
+            disabled={deletingId === trainer.id}
+            onClick={() => {
+              setOpenId(null);
+              onDelete?.(trainer.id);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deletingId === trainer.id ? (
+              <FiLoader className="animate-spin" size={14} />
+            ) : (
+              <FiTrash2 size={14} />
+            )}
+            Delete trainer
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TrainerTable = ({ trainers, onDelete, deletingId, onAssign }) => {
   const navigate = useNavigate();
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const containerRef = useRef(null);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Close the "more" menu on outside click
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    const handleClick = (event) => {
+      if (!event.target.closest("[data-trainer-menu]")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   if (trainers.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-800">
+      <div className="rounded-lg border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-800">
           No trainers found
         </h3>
 
@@ -32,179 +166,205 @@ const TrainerTable = ({ trainers, onDelete, deletingId }) => {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div
+      ref={containerRef}
+      className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+    >
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1000px]">
-          <thead className="border-b border-slate-200 bg-slate-50">
-            <tr>
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <table className="w-full min-w-[880px] border-collapse">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50">
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                 Trainer
               </th>
 
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Skills
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Primary Expertise
               </th>
 
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Location
-              </th>
-
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Experience
-              </th>
-
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Rating
-              </th>
-
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                 Availability
               </th>
 
-              <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Actions
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Reliability
+              </th>
+
+              <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Quick Actions
               </th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100">
-            {trainers.map((trainer) => (
-              <tr key={trainer.id} className="transition hover:bg-slate-50">
-                {/* Trainer */}
+            {trainers.map((trainer) => {
+              const availabilityMeta =
+                availabilityConfig[trainer.availability] ||
+                availabilityConfig.UNAVAILABLE;
 
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 font-semibold text-white">
-                      {trainer.name
-                        .split(" ")
-                        .map((word) => word[0])
-                        .slice(0, 2)
-                        .join("")}
+              const canAssign =
+                trainer.availability === "AVAILABLE" &&
+                trainer.status === "ACTIVE";
+
+              return (
+                <tr
+                  key={trainer.id}
+                  className="align-top transition hover:bg-slate-50/80"
+                >
+                  {/* Trainer Identity (secondary info folded in) */}
+
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-600 text-xs font-semibold text-white">
+                        {getInitials(trainer.name)}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate text-sm font-semibold text-slate-800">
+                            {trainer.name}
+                          </p>
+
+                          {trainer.status === "INACTIVE" && (
+                            <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-0.5 truncate text-xs text-slate-400">
+                          {trainer.email}
+                        </p>
+
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-slate-500">
+                          {trainer.city && (
+                            <span className="inline-flex items-center gap-1">
+                              <FiMapPin size={11} />
+                              {trainer.city}
+                            </span>
+                          )}
+
+                          <span>{trainer.experienceYears} yrs exp</span>
+                        </div>
+                      </div>
                     </div>
+                  </td>
 
-                    <div>
-                      <p className="font-semibold text-slate-800">
-                        {trainer.name}
-                      </p>
+                  {/* Primary Expertise */}
 
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {trainer.id} • {trainer.email}
-                      </p>
-                    </div>
-                  </div>
-                </td>
+                  <td className="px-4 py-2.5">
+                    <div className="flex max-w-[240px] flex-wrap gap-1">
+                      {trainer.skills.slice(0, 2).map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700"
+                        >
+                          {skill}
+                        </span>
+                      ))}
 
-                {/* Skills */}
-
-                <td className="px-5 py-4">
-                  <div className="flex max-w-[260px] flex-wrap gap-1.5">
-                    {trainer.skills.slice(0, 3).map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-
-                    {trainer.skills.length > 3 && (
-                      <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                        +{trainer.skills.length - 3}
-                      </span>
-                    )}
-                  </div>
-                </td>
-
-                {/* Location */}
-
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                    <FiMapPin size={14} />
-                    {trainer.city}
-                  </div>
-                </td>
-
-                {/* Experience */}
-
-                <td className="px-5 py-4">
-                  <p className="text-sm font-medium text-slate-700">
-                    {trainer.experienceYears} years
-                  </p>
-
-                  <p className="text-xs text-slate-400">
-                    {trainer.trainingExperienceYears} yrs training
-                  </p>
-                </td>
-
-                {/* Rating */}
-
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-1.5">
-                    <FiStar className="text-amber-500" />
-
-                    <span className="text-sm font-semibold text-slate-700">
-                      {trainer.rating}
-                    </span>
-                  </div>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    {trainer.assignmentsCompleted} assignments
-                  </p>
-                </td>
-
-                {/* Availability */}
-
-                <td className="px-5 py-4">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      availabilityStyles[trainer.availability]
-                    }`}
-                  >
-                    {trainer.availability}
-                  </span>
-                </td>
-
-                {/* Actions */}
-
-                <td className="px-5 py-4">
-                  <div className="flex justify-end gap-1">
-                    <button
-                      type="button"
-                      title="View trainer"
-                      onClick={() => navigate(`/admin/trainers/${trainer.id}`)}
-                      className="rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
-                    >
-                      <FiEye />
-                    </button>
-
-                    <button
-                      type="button"
-                      title="Edit trainer"
-                      onClick={() =>
-                        navigate(`/admin/trainers/${trainer.id}/edit`)
-                      }
-                      className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
-                    >
-                      <FiEdit2 />
-                    </button>
-
-                    <button
-                      type="button"
-                      title="Delete trainer"
-                      disabled={deletingId === trainer.id}
-                      onClick={() => onDelete?.(trainer.id)}
-                      className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {deletingId === trainer.id ? (
-                        <FiLoader className="animate-spin" />
-                      ) : (
-                        <FiTrash2 />
+                      {trainer.skills.length > 2 && (
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                          +{trainer.skills.length - 2}
+                        </span>
                       )}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+
+                      {trainer.skills.length === 0 && (
+                        <span className="text-xs text-slate-400">
+                          No skills listed
+                        </span>
+                      )}
+                    </div>
+
+                    {trainer.modes.length > 0 && (
+                      <p className="mt-1 text-xs text-slate-400">
+                        {trainer.modes.join(" / ")}
+                      </p>
+                    )}
+                  </td>
+
+                  {/* Availability */}
+
+                  <td className="px-4 py-2.5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${availabilityMeta.bg} ${availabilityMeta.text}`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${availabilityMeta.dot}`}
+                      />
+                      {availabilityMeta.label}
+                    </span>
+                  </td>
+
+                  {/* Reliability */}
+
+                  <td className="px-4 py-2.5">
+                    <div
+                      className={`flex items-center gap-1 text-sm font-semibold ${getReliabilityTone(trainer.rating)}`}
+                    >
+                      <FiStar size={13} className="text-amber-500" />
+                      {trainer.rating > 0 ? trainer.rating.toFixed(1) : "—"}
+                    </div>
+
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {trainer.assignmentsCompleted} assignments
+                    </p>
+                  </td>
+
+                  {/* Quick Actions */}
+
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        title={
+                          canAssign
+                            ? "Assign to a requirement"
+                            : "Trainer is not currently available for assignment"
+                        }
+                        disabled={!canAssign}
+                        onClick={() => onAssign?.(trainer)}
+                        className="flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                      >
+                        <FiUserPlus size={13} />
+                        Assign
+                      </button>
+
+                      <button
+                        type="button"
+                        title="View trainer"
+                        onClick={() =>
+                          navigate(`/admin/trainers/${trainer.id}`)
+                        }
+                        className="rounded-md p-1.5 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
+                      >
+                        <FiEye size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        title="View availability"
+                        onClick={() =>
+                          navigate(`/admin/trainers/${trainer.id}/availability`)
+                        }
+                        className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                      >
+                        <FiCalendar size={16} />
+                      </button>
+
+                      <RowMenu
+                        trainer={trainer}
+                        onDelete={onDelete}
+                        deletingId={deletingId}
+                        openId={openMenuId}
+                        setOpenId={setOpenMenuId}
+                        navigate={navigate}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

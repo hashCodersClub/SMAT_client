@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 
 import {
   FiAlertCircle,
+  FiArrowRight,
   FiAward,
   FiBookOpen,
   FiBriefcase,
   FiCheck,
+  FiCheckCircle,
   FiEdit2,
   FiExternalLink,
   FiGlobe,
@@ -16,7 +18,7 @@ import {
   FiPhone,
   FiPlus,
   FiSave,
-  FiTrash2,
+  FiShield,
   FiUser,
   FiX,
 } from "react-icons/fi";
@@ -575,16 +577,72 @@ const TrainerProfilePage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | Completion Checklist
+  |--------------------------------------------------------------------------
+  |
+  | Purely derived from form state already loaded above -- does not touch
+  | the save/load logic. Powers the LinkedIn-style "finish your profile"
+  | nudge on the hero card.
+  |
+  */
+
+  const checklist = [
+    {
+      id: "section-identity",
+      label: "Add a professional summary",
+      done: Boolean(form.professionalSummary.trim()),
+    },
+    {
+      id: "section-skills",
+      label: "Add your core skills",
+      done: form.skillDetails.length > 0,
+    },
+    {
+      id: "section-certifications",
+      label: "Add a certification",
+      done: form.certifications.length > 0,
+    },
+    {
+      id: "section-employment",
+      label: "Add your employment history",
+      done: form.employmentHistory.length > 0,
+    },
+    {
+      id: "section-links",
+      label: "Link your resume or LinkedIn",
+      done: Boolean(form.resumeUrl.trim() || form.linkedinUrl.trim()),
+    },
+  ];
+
+  const nextChecklistItems = checklist.filter((item) => !item.done);
+
+  const goToSection = (id) => {
+    setEditing(true);
+
+    requestAnimationFrame(() => {
+      document
+        .getElementById(id)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  /*
+  |--------------------------------------------------------------------------
   | Loading
   |--------------------------------------------------------------------------
   */
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200" />
-
-        <div className="h-52 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="h-24 animate-pulse bg-slate-200" />
+          <div className="px-6 pb-6">
+            <div className="-mt-10 h-20 w-20 animate-pulse rounded-2xl border-4 border-white bg-slate-300" />
+            <div className="mt-4 h-5 w-48 animate-pulse rounded bg-slate-200" />
+            <div className="mt-2 h-4 w-64 animate-pulse rounded bg-slate-100" />
+          </div>
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white" />
@@ -596,18 +654,17 @@ const TrainerProfilePage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 pb-16">
       {/* ================================================================
-          HEADER
+          PAGE TITLE + STICKY ACTION BAR
       ================================================================= */}
 
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="sticky top-0 z-20 -mx-4 flex flex-col justify-between gap-3 border-b border-transparent bg-slate-50/95 px-4 py-3 backdrop-blur sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
+          <h1 className="text-xl font-bold text-slate-900">My Profile</h1>
 
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-            Build a complete professional profile so Nxthack can match you with
-            relevant corporate training opportunities.
+          <p className="text-sm text-slate-500">
+            This is what Nxthack sees when matching you to opportunities.
           </p>
         </div>
 
@@ -619,10 +676,10 @@ const TrainerProfilePage = () => {
               setSuccess("");
               setError("");
             }}
-            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
           >
-            <FiEdit2 />
-            Edit Profile
+            <FiEdit2 size={15} />
+            Edit profile
           </button>
         ) : (
           <div className="flex gap-2">
@@ -630,9 +687,9 @@ const TrainerProfilePage = () => {
               type="button"
               onClick={handleCancel}
               disabled={saving}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
             >
-              <FiX />
+              <FiX size={15} />
               Cancel
             </button>
 
@@ -640,11 +697,15 @@ const TrainerProfilePage = () => {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? <FiLoader className="animate-spin" /> : <FiSave />}
+              {saving ? (
+                <FiLoader size={15} className="animate-spin" />
+              ) : (
+                <FiSave size={15} />
+              )}
 
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
         )}
@@ -661,70 +722,111 @@ const TrainerProfilePage = () => {
       )}
 
       {success && (
-        <Message type="success" icon={FiCheck}>
+        <Message type="success" icon={FiCheckCircle}>
           {success}
         </Message>
       )}
 
       {/* ================================================================
-          PROFILE SUMMARY
+          HERO -- banner + overlapping avatar, LinkedIn-style
       ================================================================= */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-2xl font-bold text-white">
-            {getInitials(form.name)}
-          </div>
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="h-24 bg-gradient-to-r from-blue-600 to-blue-500 sm:h-28" />
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-900">
-                {form.name || "Trainer"}
-              </h2>
+        <div className="px-6 pb-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div className="-mt-10 flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-blue-600 text-2xl font-bold text-white shadow-sm sm:h-24 sm:w-24">
+                {getInitials(form.name)}
+              </div>
 
-              {form.profileVerified && (
-                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-                  Verified
-                </span>
-              )}
+              <div className="min-w-0 pt-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+                    {form.name || "Trainer"}
+                  </h2>
+
+                  {form.profileVerified && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                      <FiShield size={11} />
+                      Verified
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-0.5 text-sm font-medium text-slate-600">
+                  {form.professionalHeadline ||
+                    form.currentDesignation ||
+                    "Professional Trainer"}
+                </p>
+
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-500">
+                  <span className="flex items-center gap-1.5">
+                    <FiMail size={12} />
+                    {form.email || "—"}
+                  </span>
+
+                  <span className="flex items-center gap-1.5">
+                    <FiPhone size={12} />
+                    {form.phone || "—"}
+                  </span>
+
+                  <span className="flex items-center gap-1.5">
+                    <FiMapPin size={12} />
+                    {[form.city, form.state, form.country]
+                      .filter(Boolean)
+                      .join(", ") || "—"}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <p className="mt-1 text-sm font-medium text-slate-600">
-              {form.professionalHeadline ||
-                form.currentDesignation ||
-                "Professional Trainer"}
-            </p>
+            <div className="flex items-center gap-4 pt-1 sm:pt-0">
+              <AvailabilityBadge value={form.availabilityStatus} />
 
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
-              <span className="flex items-center gap-2">
-                <FiMail />
-
-                {form.email || "—"}
-              </span>
-
-              <span className="flex items-center gap-2">
-                <FiPhone />
-
-                {form.phone || "—"}
-              </span>
-
-              <span className="flex items-center gap-2">
-                <FiMapPin />
-
-                {[form.city, form.state, form.country]
-                  .filter(Boolean)
-                  .join(", ") || "—"}
-              </span>
+              <ProfileStrengthRing value={form.profileCompletion} />
             </div>
-          </div>
-
-          <div className="flex min-w-[190px] flex-col gap-3">
-            <AvailabilityBadge value={form.availabilityStatus} />
-
-            <ProfileCompletion value={form.profileCompletion} />
           </div>
         </div>
       </section>
+
+      {/* ================================================================
+          COMPLETE-YOUR-PROFILE NUDGE
+      ================================================================= */}
+
+      {nextChecklistItems.length > 0 && (
+        <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-blue-900">
+              Finish setting up your profile
+            </p>
+
+            <p className="text-xs font-medium text-blue-700">
+              {checklist.length - nextChecklistItems.length}/{checklist.length}{" "}
+              complete
+            </p>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {nextChecklistItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => goToSection(item.id)}
+                className="group flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-white px-3.5 py-2.5 text-left text-sm font-medium text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+              >
+                {item.label}
+
+                <FiArrowRight
+                  size={14}
+                  className="shrink-0 text-blue-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600"
+                />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ================================================================
           PERSONAL INFORMATION
@@ -804,6 +906,7 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       <Section
+        id="section-identity"
         title="Professional Identity"
         description="This information forms the foundation of your Nxthack professional profile."
         icon={FiBriefcase}
@@ -934,6 +1037,7 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       <Section
+        id="section-skills"
         title="Skills & Expertise"
         description="Add your core technologies and subjects with proficiency and experience. This information helps Nxthack match you with relevant training requirements."
         icon={FiBriefcase}
@@ -974,6 +1078,7 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       <Section
+        id="section-certifications"
         title="Certifications"
         description="Add professional certifications that validate your expertise."
         icon={FiAward}
@@ -990,6 +1095,7 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       <Section
+        id="section-employment"
         title="Employment History"
         description="Add your past and current work experience."
         icon={FiBriefcase}
@@ -1156,6 +1262,7 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       <Section
+        id="section-links"
         title="Professional Links"
         description="Links and documents Nxthack can use to review your professional background."
         icon={FiLinkedin}
@@ -1240,11 +1347,14 @@ const TrainerProfilePage = () => {
 |--------------------------------------------------------------------------
 */
 
-const Section = ({ title, description, icon: Icon, children }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+const Section = ({ id, title, description, icon: Icon, children }) => (
+  <section
+    id={id}
+    className="scroll-mt-20 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
+  >
     <div className="mb-5 flex items-start gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-        <Icon />
+        <Icon size={18} />
       </div>
 
       <div>
@@ -1286,10 +1396,10 @@ const Field = ({
         placeholder={placeholder}
         min={type === "number" ? "0" : undefined}
         step={type === "number" ? "0.5" : undefined}
-        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+        className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
       />
     ) : (
-      <p className="mt-2 text-sm font-medium text-slate-700">
+      <p className="mt-1.5 text-sm font-medium text-slate-800">
         {value !== "" && value !== null && value !== undefined ? value : "—"}
 
         {suffix && value !== "" && value !== null && value !== undefined
@@ -1317,20 +1427,20 @@ const LinkField = ({ label, name, value, editing, onChange, placeholder }) => (
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+        className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
       />
     ) : value ? (
       <a
         href={value}
         target="_blank"
         rel="noreferrer"
-        className="mt-2 flex w-fit items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
+        className="mt-1.5 flex w-fit items-center gap-1.5 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
       >
         View
         <FiExternalLink size={13} />
       </a>
     ) : (
-      <p className="mt-2 text-sm text-slate-400">—</p>
+      <p className="mt-1.5 text-sm text-slate-400">—</p>
     )}
   </div>
 );
@@ -1354,17 +1464,17 @@ const Label = ({ children }) => (
 */
 
 const Tag = ({ value, removable = false, onRemove }) => (
-  <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700">
+  <span className="group inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 py-1.5 pl-3 pr-1.5 text-sm font-medium text-blue-700 transition hover:border-blue-200">
     {value}
 
     {removable && (
       <button
         type="button"
         onClick={onRemove}
-        className="ml-1 text-blue-400 hover:text-red-500"
+        className="flex h-4 w-4 items-center justify-center rounded-full text-blue-400 transition hover:bg-red-100 hover:text-red-600"
         aria-label={`Remove ${value}`}
       >
-        <FiTrash2 size={13} />
+        <FiX size={11} />
       </button>
     )}
   </span>
@@ -1377,7 +1487,7 @@ const Tag = ({ value, removable = false, onRemove }) => (
 */
 
 const AddItem = ({ value, onChange, onAdd, placeholder }) => (
-  <div className="mt-3 flex max-w-lg gap-2">
+  <div className="mt-3 flex max-w-lg items-center gap-2">
     <input
       value={value}
       onChange={(event) => onChange(event.target.value)}
@@ -1389,16 +1499,16 @@ const AddItem = ({ value, onChange, onAdd, placeholder }) => (
         }
       }}
       placeholder={placeholder}
-      className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
     />
 
     <button
       type="button"
       onClick={onAdd}
-      className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+      aria-label="Add"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
     >
-      <FiPlus />
-      Add
+      <FiPlus size={15} />
     </button>
   </div>
 );
@@ -1411,19 +1521,26 @@ const AddItem = ({ value, onChange, onAdd, placeholder }) => (
 
 const AvailabilityBadge = ({ value }) => {
   const styles = {
-    AVAILABLE: "bg-emerald-50 text-emerald-700",
+    AVAILABLE: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      dot: "bg-emerald-500",
+    },
+    BUSY: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
+    UNAVAILABLE: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
+  };
 
-    BUSY: "bg-amber-50 text-amber-700",
-
-    UNAVAILABLE: "bg-red-50 text-red-700",
+  const meta = styles[value] || {
+    bg: "bg-slate-100",
+    text: "text-slate-600",
+    dot: "bg-slate-400",
   };
 
   return (
     <span
-      className={`inline-flex w-fit rounded-full px-3 py-1.5 text-xs font-bold ${
-        styles[value] || "bg-slate-100 text-slate-600"
-      }`}
+      className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${meta.bg} ${meta.text}`}
     >
+      <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
       {formatEnum(value)}
     </span>
   );
@@ -1431,29 +1548,65 @@ const AvailabilityBadge = ({ value }) => {
 
 /*
 |--------------------------------------------------------------------------
-| Profile Completion
+| Profile Strength Ring
 |--------------------------------------------------------------------------
 */
 
-const ProfileCompletion = ({ value }) => {
+const ProfileStrengthRing = ({ value }) => {
   const percentage = Math.min(Math.max(Number(value) || 0, 0), 100);
 
+  const size = 56;
+  const stroke = 4;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  const tone =
+    percentage >= 80 ? "#2563eb" : percentage >= 40 ? "#d97706" : "#dc2626";
+
+  const strengthLabel =
+    percentage >= 80 ? "Strong" : percentage >= 40 ? "Fair" : "Weak";
+
   return (
-    <div>
-      <div className="mb-1.5 flex items-center justify-between text-xs">
-        <span className="font-medium text-slate-500">Profile</span>
+    <div className="flex flex-col items-center gap-1">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          className="-rotate-90"
+        >
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth={stroke}
+          />
 
-        <span className="font-bold text-slate-700">{percentage}%</span>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={tone}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transition: "stroke-dashoffset 0.4s ease" }}
+          />
+        </svg>
+
+        <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-800">
+          {percentage}%
+        </div>
       </div>
 
-      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-        <div
-          className="h-full rounded-full bg-blue-600 transition-all"
-          style={{
-            width: `${percentage}%`,
-          }}
-        />
-      </div>
+      <span className="text-[11px] font-medium text-slate-500">
+        {strengthLabel} profile
+      </span>
     </div>
   );
 };
@@ -1465,12 +1618,14 @@ const ProfileCompletion = ({ value }) => {
 */
 
 const ReadOnlyStat = ({ label, value }) => (
-  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
       {label}
     </p>
 
-    <p className="mt-2 break-words text-sm font-bold text-slate-800">{value}</p>
+    <p className="mt-1.5 break-words text-sm font-bold text-slate-800">
+      {value}
+    </p>
   </div>
 );
 
@@ -1493,16 +1648,16 @@ const EmptyText = ({ children }) => (
 const Message = ({ type, icon: Icon, children }) => {
   const style =
     type === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : "border-red-200 bg-red-50 text-red-700";
+      ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+      : "border-red-500 bg-red-50 text-red-800";
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${style}`}
+      className={`flex items-start gap-3 rounded-lg border-l-4 bg-white px-4 py-3 text-sm shadow-sm ${style}`}
     >
-      <Icon className="mt-0.5 shrink-0" />
+      <Icon size={17} className="mt-0.5 shrink-0" />
 
-      <span>{children}</span>
+      <span className="font-medium">{children}</span>
     </div>
   );
 };

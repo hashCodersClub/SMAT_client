@@ -1,128 +1,131 @@
-import { FiUsers, FiUserCheck, FiCheckCircle, FiLayers } from "react-icons/fi";
+import { FiCheckCircle, FiClock, FiSlash, FiUsers } from "react-icons/fi";
 
-const TrainerStats = ({ trainers }) => {
+/*
+|--------------------------------------------------------------------------
+| Operational KPI Bar
+|--------------------------------------------------------------------------
+|
+| Replaces the previous decorative stat cards. Every KPI here maps to a
+| real operational question an ops executive asks while triaging the
+| trainer bench, and every card is clickable -- clicking applies (or
+| clears) the matching filter on the table below.
+|
+| No new backend fields are required: these are derived entirely from
+| the trainer list already loaded by TrainersPage, and they drive the
+| exact same `availability` / `status` filter state that TrainerFilters
+| already exposes.
+|
+*/
+
+const TrainerStats = ({
+  trainers,
+  availability,
+  status,
+  onSelectAvailability,
+  onSelectStatus,
+  onShowAll,
+}) => {
   const total = trainers.length;
-  const active = trainers.filter((t) => t.status === "ACTIVE").length;
-  const available = trainers.filter(
-    (t) => t.availability === "AVAILABLE",
-  ).length;
-  const skills = new Set(trainers.flatMap((t) => t.skills)).size;
 
-  const stats = [
+  const available = trainers.filter(
+    (t) => t.availability === "AVAILABLE" && t.status === "ACTIVE",
+  ).length;
+
+  const busy = trainers.filter((t) => t.availability === "BUSY").length;
+
+  const inactive = trainers.filter((t) => t.status === "INACTIVE").length;
+
+  const isAllActive = !availability && !status;
+
+  const cards = [
     {
+      key: "all",
       label: "Total Trainers",
       value: total,
-      description: "Trainer profiles",
+      description: "In your bench",
       icon: FiUsers,
-      gradient: "from-blue-500 to-cyan-400",
-      delay: "0ms",
+      accent: "text-slate-500",
+      iconBg: "bg-slate-100 text-slate-500",
+      active: isAllActive,
+      onClick: onShowAll,
     },
     {
-      label: "Active Trainers",
-      value: active,
-      description: "Currently active",
-      icon: FiUserCheck,
-      gradient: "from-emerald-500 to-teal-400",
-      delay: "100ms",
-    },
-    {
-      label: "Available",
+      key: "available",
+      label: "Available Now",
       value: available,
-      description: "Ready for requirements",
+      description: "Ready to assign",
       icon: FiCheckCircle,
-      gradient: "from-purple-500 to-pink-400",
-      delay: "200ms",
+      accent: "text-emerald-600",
+      iconBg: "bg-emerald-50 text-emerald-600",
+      active: availability === "AVAILABLE",
+      onClick: () => onSelectAvailability("AVAILABLE"),
     },
     {
-      label: "Skills",
-      value: skills,
-      description: "Unique technologies",
-      icon: FiLayers,
-      gradient: "from-amber-500 to-orange-400",
-      delay: "300ms",
+      key: "busy",
+      label: "On Assignment",
+      value: busy,
+      description: "Currently busy",
+      icon: FiClock,
+      accent: "text-amber-600",
+      iconBg: "bg-amber-50 text-amber-600",
+      active: availability === "BUSY",
+      onClick: () => onSelectAvailability("BUSY"),
+    },
+    {
+      key: "inactive",
+      label: "Needs Attention",
+      value: inactive,
+      description: "Inactive profiles",
+      icon: FiSlash,
+      accent: "text-rose-600",
+      iconBg: "bg-rose-50 text-rose-600",
+      active: status === "INACTIVE",
+      onClick: () => onSelectStatus("INACTIVE"),
     },
   ];
 
   return (
-    <>
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(24px) scale(0.96);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {cards.map((card) => {
+        const Icon = card.icon;
 
-        .stat-card {
-          animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-          opacity: 0;
-          transition: transform 0.3s ease, box-shadow 0.4s ease, border-color 0.3s ease;
-          will-change: transform, box-shadow;
-        }
-
-        .stat-card:hover {
-          transform: translateY(-6px) scale(1.01);
-          box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
-        }
-
-        .stat-card .icon-wrap {
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .stat-card:hover .icon-wrap {
-          transform: scale(1.08) rotate(-3deg);
-          box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.2);
-        }
-
-        .stat-value {
-          font-feature-settings: "tnum";
-        }
-      `}</style>
-
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
+        return (
+          <button
+            key={card.key}
+            type="button"
+            onClick={card.onClick}
+            aria-pressed={card.active}
+            className={`group flex items-center gap-3 rounded-lg border bg-white px-3.5 py-3 text-left shadow-sm transition ${
+              card.active
+                ? "border-blue-300 ring-1 ring-blue-100"
+                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+            }`}
+          >
             <div
-              key={stat.label}
-              className="stat-card rounded-2xl border border-white/20 bg-white/70 backdrop-blur-xl p-6 shadow-xl shadow-slate-200/50"
-              style={{
-                animationDelay: stat.delay,
-                borderColor: "rgba(255,255,255,0.3)",
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%)",
-              }}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${card.iconBg}`}
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium uppercase tracking-wider text-slate-400/80">
-                    {stat.label}
-                  </p>
-                  <h3
-                    className={`stat-value mt-2 text-4xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
-                  >
-                    {stat.value}
-                  </h3>
-                  <p className="mt-1 text-xs font-light text-slate-400">
-                    {stat.description}
-                  </p>
-                </div>
+              <Icon size={16} strokeWidth={2} />
+            </div>
 
-                <div
-                  className={`icon-wrap rounded-2xl bg-gradient-to-br ${stat.gradient} p-3.5 text-white shadow-lg`}
-                >
-                  <Icon size={22} strokeWidth={1.8} />
-                </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                {card.label}
+              </p>
+
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-bold leading-none text-slate-800">
+                  {card.value}
+                </span>
+
+                <span className="truncate text-[11px] text-slate-400">
+                  {card.description}
+                </span>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </>
+          </button>
+        );
+      })}
+    </div>
   );
 };
 

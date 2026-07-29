@@ -1,4 +1,10 @@
-import { FiCalendar, FiEdit2, FiEye, FiMapPin } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiEdit2,
+  FiEye,
+  FiMapPin,
+  FiUserCheck,
+} from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
 
@@ -110,7 +116,7 @@ const getVendorName = (requirement) => {
 |--------------------------------------------------------------------------
 */
 
-const RequirementTable = ({ requirements = [] }) => {
+const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
   const navigate = useNavigate();
 
   /*
@@ -349,7 +355,27 @@ const RequirementTable = ({ requirements = [] }) => {
                     ===================================================== */}
 
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-end gap-1">
+                      {/* Select for assignment -- only shown when the page
+                          was reached from the Trainer Directory's Assign
+                          action */}
+
+                      {assignTrainerId && (
+                        <button
+                          type="button"
+                          title="Assign this requirement to the selected trainer"
+                          onClick={() =>
+                            navigate(
+                              `/admin/requirements/${requirementId}/create-assignment/${assignTrainerId}`,
+                            )
+                          }
+                          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                        >
+                          <FiUserCheck size={14} />
+                          Select
+                        </button>
+                      )}
+
                       {/* View */}
 
                       <button
