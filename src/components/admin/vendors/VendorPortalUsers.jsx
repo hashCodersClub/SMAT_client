@@ -41,9 +41,7 @@ const VendorPortalUsers = ({ vendorId, portalEnabled }) => {
     } catch (err) {
       console.error("Failed to fetch vendor portal users:", err);
 
-      setError(
-        err?.response?.data?.message || "Unable to load portal users.",
-      );
+      setError(err?.response?.data?.message || "Unable to load portal users.");
     } finally {
       setLoading(false);
     }

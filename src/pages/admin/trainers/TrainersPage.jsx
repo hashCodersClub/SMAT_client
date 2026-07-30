@@ -562,10 +562,11 @@ const TrainerStats = ({
 };
 
 // ============================================================
-// COMPONENT: Trainer Row (Table Row)
+// COMPONENT: Trainer Row (Table Row) - FIXED
 // ============================================================
 
 const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
+  const navigate = useNavigate(); // ✅ FIX: added this line
   const [showMenu, setShowMenu] = useState(false);
 
   const renderStars = (rating) => {
@@ -668,7 +669,7 @@ const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
             <FiPlus size={16} />
           </button>
           <button
-            onClick={() => navigate(`/admin/trainers/edit/${trainer.id}`)}
+            onClick={() => navigate(`/admin/trainers/${trainer.id}/edit`)} // ✅ now works
             className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100/50 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white"
           >
             <FiEdit size={16} />

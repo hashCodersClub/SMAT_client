@@ -49,10 +49,10 @@ const StatusDot = ({ status = "online" }) => {
 };
 
 // ============================================================
-// SIDEBAR COMPONENT (now accepts grouped sections)
+// SIDEBAR COMPONENT (accepts user & logout as props)
 // ============================================================
 
-const Sidebar = ({ open, setOpen, navigation, portalName }) => {
+const Sidebar = ({ open, setOpen, navigation, portalName, user, logout }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
@@ -213,7 +213,7 @@ const Sidebar = ({ open, setOpen, navigation, portalName }) => {
             >
               <div className="relative flex-shrink-0">
                 <img
-                  src={useAuth().user.avatar}
+                  src={user?.avatar || "/default-avatar.png"}
                   alt="User"
                   className="h-10 w-10 rounded-xl object-cover ring-2 ring-white/10 transition-all duration-300 group-hover:ring-indigo-400/50"
                 />
@@ -227,9 +227,9 @@ const Sidebar = ({ open, setOpen, navigation, portalName }) => {
                 }`}
               >
                 <p className="text-sm font-medium text-white leading-tight">
-                  {useAuth().user.name}
+                  {user?.name || "User"}
                 </p>
-                <p className="text-xs text-slate-400">{useAuth().user.email}</p>
+                <p className="text-xs text-slate-400">{user?.email || ""}</p>
               </div>
               <button
                 className={`transition-all duration-300 text-slate-500 hover:text-white ${
@@ -247,12 +247,12 @@ const Sidebar = ({ open, setOpen, navigation, portalName }) => {
 };
 
 // ============================================================
-// NAV ITEM COMPONENT (works with react-icons/fi)
+// NAV ITEM COMPONENT
 // ============================================================
 
 const NavItem = ({ item, isCollapsed, onNavigate }) => {
-  const Icon = item.icon; // This is a react-icons/fi component
-  const isActive = location.pathname === item.path;
+  const Icon = item.icon;
+  const isActive = window.location.pathname === item.path;
 
   return (
     <button
@@ -298,7 +298,7 @@ const NavItem = ({ item, isCollapsed, onNavigate }) => {
 };
 
 // ============================================================
-// NAVBAR COMPONENT (uses config values)
+// NAVBAR COMPONENT (accepts user & logout as props)
 // ============================================================
 
 const Navbar = ({
@@ -308,6 +308,8 @@ const Navbar = ({
   searchPlaceholder,
   profilePath,
   settingsPath,
+  user,
+  logout,
 }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -349,6 +351,16 @@ const Navbar = ({
   ];
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      navigate("/login");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-white/70 backdrop-blur-2xl dark:bg-slate-900/70">
@@ -497,7 +509,7 @@ const Navbar = ({
             >
               <div className="relative flex-shrink-0">
                 <img
-                  src={useAuth().user.avatar}
+                  src={user?.avatar || "/default-avatar.png"}
                   alt="User"
                   className="h-9 w-9 rounded-xl object-cover ring-2 ring-transparent transition-all duration-300 group-hover:ring-indigo-400/50"
                 />
@@ -528,16 +540,16 @@ const Navbar = ({
               <div className="p-3 border-b border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-3">
                   <img
-                    src={useAuth().user.avatar}
+                    src={user?.avatar || "/default-avatar.png"}
                     alt="User"
                     className="h-10 w-10 rounded-xl object-cover"
                   />
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {useAuth().user.name}
+                      {user?.name || "User"}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {useAuth().user.email}
+                      {user?.email || ""}
                     </p>
                   </div>
                 </div>
@@ -567,10 +579,7 @@ const Navbar = ({
                 <DropdownItem
                   icon={LogOut}
                   label="Logout"
-                  onClick={() => {
-                    useAuth().logout();
-                    navigate("/login");
-                  }}
+                  onClick={handleLogout}
                   className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                 />
               </div>
@@ -603,7 +612,7 @@ const DropdownItem = ({ icon: Icon, label, onClick, className = "" }) => (
 // ============================================================
 
 const AdminLayout = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth(); // ✅ destructure logout here
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -629,6 +638,8 @@ const AdminLayout = () => {
         setOpen={setSidebarOpen}
         navigation={config.navigation}
         portalName={config.portalName}
+        user={user}
+        logout={logout}
       />
 
       <div
@@ -645,6 +656,8 @@ const AdminLayout = () => {
           searchPlaceholder={config.navbar.searchPlaceholder}
           profilePath={config.profilePath}
           settingsPath={config.settingsPath}
+          user={user}
+          logout={logout}
         />
 
         <main className="relative p-4 md:p-6 lg:p-8">
