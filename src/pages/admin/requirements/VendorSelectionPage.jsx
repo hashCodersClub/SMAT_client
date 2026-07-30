@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FiArrowLeft,
   FiCheck,
@@ -10,58 +10,170 @@ import {
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { requirements } from "../../../data/requirements";
-import { trainers } from "../../../data/trainers";
+import requirementsApi from "../../../api/requirementsApi";
+import trainersApi from "../../../api/trainersApi";
+import outreachApi from "../../../api/outreachApi";
+
 import { rankTrainers } from "../../../utils/trainerMatching";
+import {
+  normalizeRequirement,
+  normalizeTrainer,
+} from "../../../utils/requirementDisplay";
 
 const VendorSelectionPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const requirement = requirements.find((item) => item.id === id);
+  const [requirement, setRequirement] = useState(null);
+  const [allTrainers, setAllTrainers] = useState([]);
+  const [records, setRecords] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [savingId, setSavingId] = useState("");
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadData = async () => {
+      setLoading(true);
+      setLoadError("");
+
+      try {
+        const [{ requirement: req }, { trainers: trainerList }, { outreach }] =
+          await Promise.all([
+            requirementsApi.getById(id),
+            trainersApi.getAll({ status: "ACTIVE", limit: 100 }),
+            outreachApi.getByRequirement(id),
+          ]);
+
+        if (isCancelled) return;
+
+        setRequirement(normalizeRequirement(req));
+        setAllTrainers(trainerList.map(normalizeTrainer));
+
+        const byTrainerId = {};
+
+        outreach
+          .filter((record) => record.vendorStatus !== "NOT_SENT")
+          .forEach((record) => {
+            const trainerId = record.trainerId?._id || record.trainerId;
+
+            byTrainerId[trainerId] = record;
+          });
+
+        setRecords(byTrainerId);
+      } catch (error) {
+        console.error("Failed to load vendor selection data:", error);
+
+        if (!isCancelled) {
+          setLoadError(
+            error?.response?.data?.message ||
+              "Failed to load vendor selection for this requirement.",
+          );
+        }
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [id]);
 
   const rankedTrainers = useMemo(() => {
     if (!requirement) return [];
 
-    return rankTrainers(trainers, requirement).filter(
-      (trainer) => trainer.match.score >= 45,
-    );
-  }, [requirement]);
+    return rankTrainers(allTrainers, requirement);
+  }, [requirement, allTrainers]);
 
-  const [vendorStatuses, setVendorStatuses] = useState(() => {
-    const initial = {};
+  const sentTrainers = useMemo(
+    () => rankedTrainers.filter((trainer) => Boolean(records[trainer.id])),
+    [rankedTrainers, records],
+  );
 
-    rankedTrainers.forEach((trainer) => {
-      initial[trainer.id] = "PROFILE_SENT";
-    });
+  const updateStatus = async (trainerId, vendorStatus) => {
+    const record = records[trainerId];
 
-    return initial;
-  });
+    if (!record?._id) return;
 
-  if (!requirement) {
+    setSavingId(trainerId);
+
+    try {
+      const { outreach } = await outreachApi.updateVendorStatus(record._id, {
+        vendorStatus,
+      });
+
+      setRecords((previous) => ({
+        ...previous,
+        [trainerId]: outreach,
+      }));
+    } catch (error) {
+      console.error("Failed to update vendor decision:", error);
+
+      alert("Could not save the vendor's decision. Please try again.");
+    } finally {
+      setSavingId("");
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-        Requirement not found.
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+        Loading vendor selection…
       </div>
     );
   }
 
-  const updateStatus = (trainerId, status) => {
-    setVendorStatuses((previous) => ({
-      ...previous,
-      [trainerId]: status,
-    }));
-  };
+  if (loadError || !requirement) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+        {loadError || "Requirement not found."}
+      </div>
+    );
+  }
 
-  const selectedCount = Object.values(vendorStatuses).filter(
+  if (!sentTrainers.length) {
+    return (
+      <div className="space-y-6">
+        <button
+          type="button"
+          onClick={() => navigate(`/admin/requirements/${id}/outreach`)}
+          className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
+        >
+          <FiArrowLeft />
+          Back to Outreach
+        </button>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+          <FiUser size={28} className="mx-auto text-slate-300" />
+
+          <h3 className="mt-3 font-semibold text-slate-800">
+            No profiles sent to the vendor yet
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Send at least one interested trainer's profile from the Outreach
+            page before recording vendor feedback.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const statuses = Object.values(records).map((record) => record.vendorStatus);
+
+  const selectedCount = statuses.filter(
     (status) => status === "SELECTED",
   ).length;
 
-  const shortlistedCount = Object.values(vendorStatuses).filter(
+  const shortlistedCount = statuses.filter(
     (status) => status === "SHORTLISTED",
   ).length;
 
-  const rejectedCount = Object.values(vendorStatuses).filter(
+  const rejectedCount = statuses.filter(
     (status) => status === "REJECTED",
   ).length;
 
@@ -100,8 +212,9 @@ const VendorSelectionPage = () => {
       </div>
 
       <div className="space-y-4">
-        {rankedTrainers.map((trainer) => {
-          const status = vendorStatuses[trainer.id];
+        {sentTrainers.map((trainer) => {
+          const record = records[trainer.id];
+          const status = record?.vendorStatus || "PROFILE_SENT";
 
           return (
             <div
@@ -166,8 +279,9 @@ const VendorSelectionPage = () => {
 
                     <select
                       value={status}
+                      disabled={savingId === trainer.id}
                       onChange={(e) => updateStatus(trainer.id, e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 disabled:opacity-60"
                     >
                       <option value="PROFILE_SENT">Awaiting Feedback</option>
 
@@ -192,7 +306,7 @@ const VendorSelectionPage = () => {
                     type="button"
                     onClick={() =>
                       navigate(
-                        `/requirements/${id}/create-assignment/${trainer.id}`,
+                        `/admin/requirements/${id}/create-assignment/${trainer.id}`,
                       )
                     }
                     className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"

@@ -42,8 +42,6 @@ a {
   text-decoration: none;
 }
 
-@import "tailwindcss";
-
 /* ===== Custom scrollbar (used in Sidebar) ===== */
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;

@@ -291,9 +291,7 @@ const RequirementDetailsPage = () => {
           ) && (
             <button
               type="button"
-              onClick={() =>
-                navigate(`/admin/requirements/${id}/vendor-selection`)
-              }
+              onClick={() => navigate(`/admin/requirements/${id}/matches`)}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               <FiUsers />

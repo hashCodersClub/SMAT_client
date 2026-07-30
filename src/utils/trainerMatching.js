@@ -53,12 +53,12 @@ const isTrainerAvailable = (trainer) => {
     return trainer.available;
   }
 
-  if (trainer.availability) {
-    return normalize(trainer.availability) === "available";
+  if (trainer.availabilityStatus) {
+    return normalize(trainer.availabilityStatus) === "available";
   }
 
-  if (trainer.status) {
-    return normalize(trainer.status) === "available";
+  if (trainer.availability) {
+    return normalize(trainer.availability) === "available";
   }
 
   return true;

@@ -8,10 +8,15 @@ import {
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { requirements } from "../../../data/requirements";
-import { trainers } from "../../../data/trainers";
+import requirementsApi from "../../../api/requirementsApi";
+import trainersApi from "../../../api/trainersApi";
 import outreachApi from "../../../api/outreachApi";
+
 import { rankTrainers } from "../../../utils/trainerMatching";
+import {
+  normalizeRequirement,
+  normalizeTrainer,
+} from "../../../utils/requirementDisplay";
 
 import TrainerOutreachCard from "../../../components/admin/outreach/TrainerOutreachCard";
 
@@ -19,60 +24,50 @@ const RequirementOutreachPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const requirement = requirements.find((item) => item.id === id);
-
-  const rankedTrainers = useMemo(() => {
-    if (!requirement) return [];
-
-    return rankTrainers(trainers, requirement);
-  }, [requirement]);
-
-  /*
-   * For now we treat >= 45% as shortlisted candidates.
-   * Later these IDs will come from the backend shortlist table.
-   */
-  const shortlistedTrainers = rankedTrainers.filter(
-    (trainer) => trainer.match.score >= 45,
-  );
-
+  const [requirement, setRequirement] = useState(null);
+  const [allTrainers, setAllTrainers] = useState([]);
   const [records, setRecords] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    if (!requirement) return;
-
     let isCancelled = false;
 
     const loadOutreach = async () => {
       setLoading(true);
+      setLoadError("");
 
       try {
-        const { outreach } = await outreachApi.getByRequirement(requirement.id);
+        const [{ requirement: req }, { trainers: trainerList }, { outreach }] =
+          await Promise.all([
+            requirementsApi.getById(id),
+            trainersApi.getAll({ status: "ACTIVE", limit: 100 }),
+            outreachApi.getByRequirement(id),
+          ]);
 
         if (isCancelled) return;
 
+        setRequirement(normalizeRequirement(req));
+        setAllTrainers(trainerList.map(normalizeTrainer));
+
         const byTrainerId = {};
 
-        shortlistedTrainers.forEach((trainer) => {
-          const existing = outreach.find(
-            (record) =>
-              (record.trainerId?._id || record.trainerId) === trainer.id,
-          );
+        outreach.forEach((record) => {
+          const trainerId = record.trainerId?._id || record.trainerId;
 
-          byTrainerId[trainer.id] = existing || {
-            requirementId: requirement.id,
-            trainerId: trainer.id,
-            outreachStatus: "NOT_CONTACTED",
-            quotedRate: trainer.dailyRate || "",
-            negotiatedRate: "",
-            vendorStatus: "NOT_SENT",
-            notes: "",
-          };
+          byTrainerId[trainerId] = record;
         });
 
         setRecords(byTrainerId);
       } catch (error) {
         console.error("Failed to load outreach records:", error);
+
+        if (!isCancelled) {
+          setLoadError(
+            error?.response?.data?.message ||
+              "Failed to load the outreach pipeline for this requirement.",
+          );
+        }
       } finally {
         if (!isCancelled) setLoading(false);
       }
@@ -83,13 +78,49 @@ const RequirementOutreachPage = () => {
     return () => {
       isCancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requirement?.id]);
+  }, [id]);
 
-  if (!requirement) {
+  const rankedTrainers = useMemo(() => {
+    if (!requirement) return [];
+
+    return rankTrainers(allTrainers, requirement);
+  }, [requirement, allTrainers]);
+
+  /*
+   * Candidates are trainers that were explicitly shortlisted from the
+   * Matches page, i.e. they already have an outreach record for this
+   * requirement.
+   */
+
+  const shortlistedTrainers = useMemo(
+    () => rankedTrainers.filter((trainer) => Boolean(records[trainer.id])),
+    [rankedTrainers, records],
+  );
+
+  if (!loading && !loadError && requirement && !shortlistedTrainers.length) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-        Requirement not found.
+      <div className="space-y-6">
+        <button
+          type="button"
+          onClick={() => navigate(`/admin/requirements/${id}/matches`)}
+          className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
+        >
+          <FiArrowLeft />
+          Back to Matching
+        </button>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+          <FiUsers size={28} className="mx-auto text-slate-300" />
+
+          <h3 className="mt-3 font-semibold text-slate-800">
+            No trainers shortlisted yet
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Go to Trainer Matching and shortlist candidates before starting
+            outreach.
+          </p>
+        </div>
       </div>
     );
   }
@@ -107,7 +138,7 @@ const RequirementOutreachPage = () => {
   const persistOutreach = async (trainerId, changes) => {
     try {
       const { outreach } = await outreachApi.upsert({
-        requirementId: requirement.id,
+        requirementId: id,
         trainerId,
         ...changes,
       });
@@ -156,6 +187,22 @@ const RequirementOutreachPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+        Loading outreach records…
+      </div>
+    );
+  }
+
+  if (loadError || !requirement) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+        {loadError || "Requirement not found."}
+      </div>
+    );
+  }
+
   const values = Object.values(records);
 
   const contactedCount = values.filter(
@@ -174,9 +221,7 @@ const RequirementOutreachPage = () => {
     <div className="space-y-6">
       <button
         type="button"
-        onClick={() =>
-          navigate(`/admin/requirements/${requirement.id}/matches`)
-        }
+        onClick={() => navigate(`/admin/requirements/${id}/matches`)}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800"
       >
         <FiArrowLeft />
@@ -222,22 +267,16 @@ const RequirementOutreachPage = () => {
       </div>
 
       <div className="space-y-4">
-        {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-            Loading outreach records…
-          </div>
-        ) : (
-          shortlistedTrainers.map((trainer) => (
-            <TrainerOutreachCard
-              key={trainer.id}
-              trainer={trainer}
-              record={records[trainer.id]}
-              onUpdateStatus={updateStatus}
-              onUpdateRate={updateRate}
-              onSendProfile={sendProfile}
-            />
-          ))
-        )}
+        {shortlistedTrainers.map((trainer) => (
+          <TrainerOutreachCard
+            key={trainer.id}
+            trainer={trainer}
+            record={records[trainer.id]}
+            onUpdateStatus={updateStatus}
+            onUpdateRate={updateRate}
+            onSendProfile={sendProfile}
+          />
+        ))}
       </div>
 
       {sentCount > 0 && (
@@ -245,7 +284,7 @@ const RequirementOutreachPage = () => {
           <button
             type="button"
             onClick={() =>
-              navigate(`/admin/requirements/${requirement.id}/vendor-selection`)
+              navigate(`/admin/requirements/${id}/vendor-selection`)
             }
             className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-slate-800"
           >
