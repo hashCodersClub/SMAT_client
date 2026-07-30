@@ -51,7 +51,6 @@ const INITIAL_FORM = {
   currentDesignation: "",
   currentOrganization: "",
 
-  // Legacy + structured skills
   skills: [],
   skillDetails: [],
 
@@ -273,16 +272,6 @@ const TrainerProfilePage = () => {
   */
 
   const handleSkillDetailsChange = (skillDetails) => {
-    /*
-    |--------------------------------------------------------------------------
-    | Synchronize Legacy Skills
-    |--------------------------------------------------------------------------
-    |
-    | Existing requirement matching / admin UI may still read trainer.skills.
-    | We therefore maintain both representations.
-    |
-    */
-
     const legacySkills = [
       ...new Set(
         skillDetails
@@ -392,12 +381,6 @@ const TrainerProfilePage = () => {
       setError("");
       setSuccess("");
 
-      /*
-      |--------------------------------------------------------------------------
-      | Normalize Skills Before Sending
-      |--------------------------------------------------------------------------
-      */
-
       const skillDetails = Array.isArray(form.skillDetails)
         ? form.skillDetails
             .filter((skill) => skill && String(skill.name || "").trim())
@@ -419,12 +402,6 @@ const TrainerProfilePage = () => {
         ...new Set(skillDetails.map((skill) => skill.name).filter(Boolean)),
       ];
 
-      /*
-      |--------------------------------------------------------------------------
-      | Normalize Certifications Before Sending
-      |--------------------------------------------------------------------------
-      */
-
       const certifications = Array.isArray(form.certifications)
         ? form.certifications
             .filter((cert) => cert && String(cert.name || "").trim())
@@ -441,12 +418,6 @@ const TrainerProfilePage = () => {
             }))
         : [];
 
-      /*
-      |--------------------------------------------------------------------------
-      | Normalize Employment History Before Sending
-      |--------------------------------------------------------------------------
-      */
-
       const employmentHistory = Array.isArray(form.employmentHistory)
         ? form.employmentHistory
             .filter((job) => job && job.company && job.designation)
@@ -460,12 +431,6 @@ const TrainerProfilePage = () => {
               description: String(job.description || "").trim(),
             }))
         : [];
-
-      /*
-      |--------------------------------------------------------------------------
-      | Normalize Education Before Sending
-      |--------------------------------------------------------------------------
-      */
 
       const education = Array.isArray(form.education)
         ? form.education
@@ -499,12 +464,6 @@ const TrainerProfilePage = () => {
         currentDesignation: form.currentDesignation.trim(),
 
         currentOrganization: form.currentOrganization.trim(),
-
-        /*
-        |--------------------------------------------------------------------------
-        | Skills
-        |--------------------------------------------------------------------------
-        */
 
         skills,
 
@@ -579,11 +538,6 @@ const TrainerProfilePage = () => {
   |--------------------------------------------------------------------------
   | Completion Checklist
   |--------------------------------------------------------------------------
-  |
-  | Purely derived from form state already loaded above -- does not touch
-  | the save/load logic. Powers the LinkedIn-style "finish your profile"
-  | nudge on the hero card.
-  |
   */
 
   const checklist = [
@@ -634,36 +588,37 @@ const TrainerProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="h-24 animate-pulse bg-slate-200" />
-          <div className="px-6 pb-6">
-            <div className="-mt-10 h-20 w-20 animate-pulse rounded-2xl border-4 border-white bg-slate-300" />
-            <div className="mt-4 h-5 w-48 animate-pulse rounded bg-slate-200" />
-            <div className="mt-2 h-4 w-64 animate-pulse rounded bg-slate-100" />
+      <div className="mx-auto max-w-5xl space-y-6 animate-fade-in">
+        <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 shadow-xl backdrop-blur-sm">
+          <div className="h-28 animate-pulse bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200" />
+          <div className="px-8 pb-8">
+            <div className="-mt-12 h-24 w-24 animate-pulse rounded-2xl border-4 border-white bg-slate-300 shadow-lg" />
+            <div className="mt-4 h-6 w-56 animate-pulse rounded bg-slate-200" />
+            <div className="mt-2 h-4 w-72 animate-pulse rounded bg-slate-100" />
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white" />
-
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+          <div className="h-80 animate-pulse rounded-3xl border border-slate-200/80 bg-white/80 shadow-xl" />
+          <div className="h-80 animate-pulse rounded-3xl border border-slate-200/80 bg-white/80 shadow-xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-16">
+    <div className="mx-auto max-w-5xl space-y-8 pb-20 animate-fade-in">
       {/* ================================================================
-          PAGE TITLE + STICKY ACTION BAR
+          PAGE TITLE + STICKY ACTION BAR (Glassmorphism)
       ================================================================= */}
 
-      <div className="sticky top-0 z-20 -mx-4 flex flex-col justify-between gap-3 border-b border-transparent bg-slate-50/95 px-4 py-3 backdrop-blur sm:flex-row sm:items-center">
+      <div className="sticky top-0 z-20 -mx-4 flex flex-col justify-between gap-3 border-b border-white/20 bg-white/70 px-6 py-4 backdrop-blur-xl shadow-xl shadow-slate-200/40 sm:flex-row sm:items-center rounded-2xl">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">My Profile</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            My Profile
+          </h1>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm font-medium text-slate-500/80">
             This is what Nxthack sees when matching you to opportunities.
           </p>
         </div>
@@ -676,9 +631,12 @@ const TrainerProfilePage = () => {
               setSuccess("");
               setError("");
             }}
-            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-600/40 active:scale-95"
           >
-            <FiEdit2 size={15} />
+            <FiEdit2
+              size={16}
+              className="transition-transform group-hover:rotate-6"
+            />
             Edit profile
           </button>
         ) : (
@@ -687,7 +645,7 @@ const TrainerProfilePage = () => {
               type="button"
               onClick={handleCancel}
               disabled={saving}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:bg-slate-50/80 hover:shadow-md disabled:opacity-50"
             >
               <FiX size={15} />
               Cancel
@@ -697,7 +655,7 @@ const TrainerProfilePage = () => {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-600/40 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
             >
               {saving ? (
                 <FiLoader size={15} className="animate-spin" />
@@ -731,49 +689,51 @@ const TrainerProfilePage = () => {
           HERO -- banner + overlapping avatar, LinkedIn-style
       ================================================================= */}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="h-24 bg-gradient-to-r from-blue-600 to-blue-500 sm:h-28" />
+      <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 shadow-2xl shadow-slate-200/40 backdrop-blur-sm transition-all hover:shadow-slate-300/50">
+        <div className="relative h-32 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 sm:h-36">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-20" />
+        </div>
 
-        <div className="px-6 pb-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="px-8 pb-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="-mt-10 flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-blue-600 text-2xl font-bold text-white shadow-sm sm:h-24 sm:w-24">
+              <div className="-mt-12 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-blue-600 to-indigo-600 text-3xl font-bold text-white shadow-xl shadow-blue-600/30 ring-2 ring-white/50 transition-all hover:scale-105">
                 {getInitials(form.name)}
               </div>
 
               <div className="min-w-0 pt-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+                  <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
                     {form.name || "Trainer"}
                   </h2>
 
                   {form.profileVerified && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-                      <FiShield size={11} />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 px-3 py-1 text-xs font-bold text-emerald-700 backdrop-blur-sm border border-emerald-200/50 shadow-sm">
+                      <FiShield size={12} />
                       Verified
                     </span>
                   )}
                 </div>
 
-                <p className="mt-0.5 text-sm font-medium text-slate-600">
+                <p className="mt-0.5 text-base font-semibold text-slate-600">
                   {form.professionalHeadline ||
                     form.currentDesignation ||
                     "Professional Trainer"}
                 </p>
 
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-500">
+                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-500">
                   <span className="flex items-center gap-1.5">
-                    <FiMail size={12} />
+                    <FiMail size={14} className="text-slate-400" />
                     {form.email || "—"}
                   </span>
 
                   <span className="flex items-center gap-1.5">
-                    <FiPhone size={12} />
+                    <FiPhone size={14} className="text-slate-400" />
                     {form.phone || "—"}
                   </span>
 
                   <span className="flex items-center gap-1.5">
-                    <FiMapPin size={12} />
+                    <FiMapPin size={14} className="text-slate-400" />
                     {[form.city, form.state, form.country]
                       .filter(Boolean)
                       .join(", ") || "—"}
@@ -782,7 +742,7 @@ const TrainerProfilePage = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 pt-1 sm:pt-0">
+            <div className="flex items-center gap-5 pt-1 sm:pt-0">
               <AvailabilityBadge value={form.availabilityStatus} />
 
               <ProfileStrengthRing value={form.profileCompletion} />
@@ -796,31 +756,31 @@ const TrainerProfilePage = () => {
       ================================================================= */}
 
       {nextChecklistItems.length > 0 && (
-        <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
+        <section className="rounded-3xl border border-blue-100/80 bg-gradient-to-br from-blue-50/80 via-white/80 to-indigo-50/80 p-6 shadow-lg shadow-blue-100/40 backdrop-blur-sm transition-all hover:shadow-blue-200/50">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-blue-900">
-              Finish setting up your profile
+            <p className="text-sm font-bold text-slate-800">
+              ✨ Finish setting up your profile
             </p>
 
-            <p className="text-xs font-medium text-blue-700">
+            <p className="text-xs font-semibold text-blue-600">
               {checklist.length - nextChecklistItems.length}/{checklist.length}{" "}
               complete
             </p>
           </div>
 
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {nextChecklistItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => goToSection(item.id)}
-                className="group flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-white px-3.5 py-2.5 text-left text-sm font-medium text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                className="group flex items-center justify-between gap-2 rounded-xl border border-blue-200/70 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-sm transition-all hover:border-blue-300 hover:bg-blue-50/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
               >
                 {item.label}
 
                 <FiArrowRight
-                  size={14}
-                  className="shrink-0 text-blue-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600"
+                  size={15}
+                  className="shrink-0 text-blue-400 transition-all group-hover:translate-x-0.5 group-hover:text-blue-600"
                 />
               </button>
             ))}
@@ -837,7 +797,7 @@ const TrainerProfilePage = () => {
         description="Your basic contact and location information."
         icon={FiUser}
       >
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <Field
             label="Full Name"
             name="name"
@@ -895,7 +855,7 @@ const TrainerProfilePage = () => {
         </div>
 
         {editing && (
-          <p className="mt-4 text-xs text-slate-400">
+          <p className="mt-5 text-xs font-medium text-slate-400/80">
             Your login email cannot be changed from your trainer profile.
           </p>
         )}
@@ -911,7 +871,7 @@ const TrainerProfilePage = () => {
         description="This information forms the foundation of your Nxthack professional profile."
         icon={FiBriefcase}
       >
-        <div className="space-y-5">
+        <div className="space-y-6">
           <Field
             label="Professional Headline"
             name="professionalHeadline"
@@ -921,7 +881,7 @@ const TrainerProfilePage = () => {
             placeholder="e.g. AWS & DevOps Corporate Trainer"
           />
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             <Field
               label="Current Designation"
               name="currentDesignation"
@@ -953,16 +913,16 @@ const TrainerProfilePage = () => {
                   rows={6}
                   maxLength={3000}
                   placeholder="Describe your technical expertise, corporate training experience, industries and the types of programs you deliver..."
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm leading-6 text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  className="mt-2 w-full rounded-xl border border-slate-200/80 bg-white/50 px-4 py-3 text-sm leading-relaxed text-slate-700 outline-none transition-all focus:border-blue-500/80 focus:ring-4 focus:ring-blue-500/10 focus:bg-white/80 backdrop-blur-sm"
                 />
 
-                <p className="mt-1 text-right text-xs text-slate-400">
+                <p className="mt-1 text-right text-xs font-medium text-slate-400">
                   {form.professionalSummary.length}
                   /3000
                 </p>
               </>
             ) : (
-              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-600">
+              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-600">
                 {form.professionalSummary || "No professional summary added."}
               </p>
             )}
@@ -979,7 +939,7 @@ const TrainerProfilePage = () => {
         description="Your professional and corporate training experience."
         icon={FiBriefcase}
       >
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <Field
             label="Industry Experience"
             name="experience"
@@ -1049,8 +1009,8 @@ const TrainerProfilePage = () => {
         />
 
         {form.skillDetails.length > 0 && (
-          <div className="mt-6 border-t border-slate-100 pt-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div className="mt-6 border-t border-slate-200/60 pt-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400/80">
               Matching Skills
             </p>
 
@@ -1058,14 +1018,14 @@ const TrainerProfilePage = () => {
               {form.skillDetails.map((skill, index) => (
                 <span
                   key={skill._id || `${skill.name}-${index}`}
-                  className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600"
+                  className="rounded-xl bg-slate-100/80 px-3 py-1.5 text-sm font-semibold text-slate-600 backdrop-blur-sm"
                 >
                   {skill.name}
                 </span>
               ))}
             </div>
 
-            <p className="mt-3 text-xs leading-5 text-slate-400">
+            <p className="mt-3 text-xs leading-relaxed text-slate-400/80">
               These skills are synchronized with your trainer profile and can
               later be used by the requirement matching engine.
             </p>
@@ -1145,10 +1105,10 @@ const TrainerProfilePage = () => {
                     key={mode}
                     type="button"
                     onClick={() => toggleMode(mode)}
-                    className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+                    className={`rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
                       selected
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        ? "border-blue-500/80 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 text-blue-700 shadow-sm shadow-blue-200/50 scale-[1.02]"
+                        : "border-slate-200/80 bg-white/50 text-slate-600 hover:bg-slate-50/80 hover:shadow-md"
                     }`}
                   >
                     {formatEnum(mode)}
@@ -1207,21 +1167,21 @@ const TrainerProfilePage = () => {
           <Label>Travel Preference</Label>
 
           {editing ? (
-            <label className="mt-3 flex w-fit cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+            <label className="mt-3 flex w-fit cursor-pointer items-center gap-3 rounded-xl border border-slate-200/80 bg-white/50 px-5 py-3 backdrop-blur-sm transition-all hover:bg-slate-50/80 hover:shadow-md">
               <input
                 type="checkbox"
                 name="willingToTravel"
                 checked={form.willingToTravel}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
               />
 
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-semibold text-slate-700">
                 I am willing to travel for classroom training.
               </span>
             </label>
           ) : (
-            <p className="mt-2 text-sm font-medium text-slate-700">
+            <p className="mt-2 text-sm font-semibold text-slate-700">
               {form.willingToTravel
                 ? "Willing to travel"
                 : "Not currently willing to travel"}
@@ -1244,7 +1204,7 @@ const TrainerProfilePage = () => {
             name="availabilityStatus"
             value={form.availabilityStatus}
             onChange={handleChange}
-            className="w-full max-w-sm rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+            className="w-full max-w-sm rounded-xl border border-slate-200/80 bg-white/50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-blue-500/80 focus:ring-4 focus:ring-blue-500/10 focus:bg-white/80 backdrop-blur-sm"
           >
             <option value="AVAILABLE">Available</option>
 
@@ -1267,7 +1227,7 @@ const TrainerProfilePage = () => {
         description="Links and documents Nxthack can use to review your professional background."
         icon={FiLinkedin}
       >
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <LinkField
             label="Resume URL"
             name="resumeUrl"
@@ -1332,7 +1292,7 @@ const TrainerProfilePage = () => {
           />
         </div>
 
-        <p className="mt-5 text-xs leading-5 text-slate-400">
+        <p className="mt-5 text-xs leading-relaxed text-slate-400/80">
           Your private contact information is not intended to be included in the
           vendor-facing profile generated by Nxthack.
         </p>
@@ -1350,17 +1310,21 @@ const TrainerProfilePage = () => {
 const Section = ({ id, title, description, icon: Icon, children }) => (
   <section
     id={id}
-    className="scroll-mt-20 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
+    className="scroll-mt-24 rounded-3xl border border-slate-200/80 bg-white/80 p-8 shadow-xl shadow-slate-200/40 backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:shadow-slate-300/50 hover:scale-[1.005]"
   >
-    <div className="mb-5 flex items-start gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-        <Icon size={18} />
+    <div className="mb-6 flex items-start gap-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 text-blue-600 shadow-inner">
+        <Icon size={20} />
       </div>
 
       <div>
-        <h2 className="font-bold text-slate-900">{title}</h2>
+        <h2 className="text-xl font-extrabold tracking-tight text-slate-900">
+          {title}
+        </h2>
 
-        <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>
+        <p className="mt-1 text-sm leading-relaxed text-slate-500/80">
+          {description}
+        </p>
       </div>
     </div>
 
@@ -1396,10 +1360,10 @@ const Field = ({
         placeholder={placeholder}
         min={type === "number" ? "0" : undefined}
         step={type === "number" ? "0.5" : undefined}
-        className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+        className="mt-1.5 w-full rounded-xl border border-slate-200/80 bg-white/50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400/60 hover:border-slate-300/80 focus:border-blue-500/80 focus:ring-4 focus:ring-blue-500/10 focus:bg-white/80 backdrop-blur-sm"
       />
     ) : (
-      <p className="mt-1.5 text-sm font-medium text-slate-800">
+      <p className="mt-1.5 text-sm font-semibold text-slate-800">
         {value !== "" && value !== null && value !== undefined ? value : "—"}
 
         {suffix && value !== "" && value !== null && value !== undefined
@@ -1427,20 +1391,20 @@ const LinkField = ({ label, name, value, editing, onChange, placeholder }) => (
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+        className="mt-1.5 w-full rounded-xl border border-slate-200/80 bg-white/50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400/60 hover:border-slate-300/80 focus:border-blue-500/80 focus:ring-4 focus:ring-blue-500/10 focus:bg-white/80 backdrop-blur-sm"
       />
     ) : value ? (
       <a
         href={value}
         target="_blank"
         rel="noreferrer"
-        className="mt-1.5 flex w-fit items-center gap-1.5 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+        className="mt-1.5 flex w-fit items-center gap-1.5 text-sm font-bold text-blue-600 transition-all hover:text-blue-700 hover:scale-105"
       >
         View
-        <FiExternalLink size={13} />
+        <FiExternalLink size={14} />
       </a>
     ) : (
-      <p className="mt-1.5 text-sm text-slate-400">—</p>
+      <p className="mt-1.5 text-sm text-slate-400/60">—</p>
     )}
   </div>
 );
@@ -1452,7 +1416,7 @@ const LinkField = ({ label, name, value, editing, onChange, placeholder }) => (
 */
 
 const Label = ({ children }) => (
-  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+  <p className="text-xs font-bold uppercase tracking-wider text-slate-400/80">
     {children}
   </p>
 );
@@ -1464,17 +1428,17 @@ const Label = ({ children }) => (
 */
 
 const Tag = ({ value, removable = false, onRemove }) => (
-  <span className="group inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 py-1.5 pl-3 pr-1.5 text-sm font-medium text-blue-700 transition hover:border-blue-200">
+  <span className="group inline-flex items-center gap-1.5 rounded-full border border-blue-200/60 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 px-3 py-1.5 text-sm font-semibold text-blue-700 shadow-sm backdrop-blur-sm transition-all hover:shadow-md hover:scale-105">
     {value}
 
     {removable && (
       <button
         type="button"
         onClick={onRemove}
-        className="flex h-4 w-4 items-center justify-center rounded-full text-blue-400 transition hover:bg-red-100 hover:text-red-600"
+        className="flex h-4 w-4 items-center justify-center rounded-full text-blue-400 transition-all hover:bg-red-100/80 hover:text-red-600 hover:scale-110"
         aria-label={`Remove ${value}`}
       >
-        <FiX size={11} />
+        <FiX size={12} />
       </button>
     )}
   </span>
@@ -1499,16 +1463,16 @@ const AddItem = ({ value, onChange, onAdd, placeholder }) => (
         }
       }}
       placeholder={placeholder}
-      className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      className="min-w-0 flex-1 rounded-xl border border-slate-200/80 bg-white/50 px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400/60 hover:border-slate-300/80 focus:border-blue-500/80 focus:ring-4 focus:ring-blue-500/10 focus:bg-white/80 backdrop-blur-sm"
     />
 
     <button
       type="button"
       onClick={onAdd}
       aria-label="Add"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200/80 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 text-blue-700 shadow-sm transition-all hover:shadow-md hover:scale-105 active:scale-95"
     >
-      <FiPlus size={15} />
+      <FiPlus size={16} />
     </button>
   </div>
 );
@@ -1522,25 +1486,37 @@ const AddItem = ({ value, onChange, onAdd, placeholder }) => (
 const AvailabilityBadge = ({ value }) => {
   const styles = {
     AVAILABLE: {
-      bg: "bg-emerald-50",
+      bg: "bg-emerald-50/90",
       text: "text-emerald-700",
       dot: "bg-emerald-500",
+      glow: "shadow-emerald-200/50",
     },
-    BUSY: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
-    UNAVAILABLE: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
+    BUSY: {
+      bg: "bg-amber-50/90",
+      text: "text-amber-700",
+      dot: "bg-amber-500",
+      glow: "shadow-amber-200/50",
+    },
+    UNAVAILABLE: {
+      bg: "bg-red-50/90",
+      text: "text-red-700",
+      dot: "bg-red-500",
+      glow: "shadow-red-200/50",
+    },
   };
 
   const meta = styles[value] || {
-    bg: "bg-slate-100",
+    bg: "bg-slate-100/90",
     text: "text-slate-600",
     dot: "bg-slate-400",
+    glow: "shadow-slate-200/50",
   };
 
   return (
     <span
-      className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${meta.bg} ${meta.text}`}
+      className={`inline-flex w-fit items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-xs font-bold backdrop-blur-sm shadow-lg ${meta.bg} ${meta.text} ${meta.glow} transition-all hover:scale-105`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+      <span className={`h-2 w-2 rounded-full ${meta.dot} animate-pulse`} />
       {formatEnum(value)}
     </span>
   );
@@ -1555,8 +1531,8 @@ const AvailabilityBadge = ({ value }) => {
 const ProfileStrengthRing = ({ value }) => {
   const percentage = Math.min(Math.max(Number(value) || 0, 0), 100);
 
-  const size = 56;
-  const stroke = 4;
+  const size = 64;
+  const stroke = 5;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
@@ -1568,13 +1544,13 @@ const ProfileStrengthRing = ({ value }) => {
     percentage >= 80 ? "Strong" : percentage >= 40 ? "Fair" : "Weak";
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1 transition-all hover:scale-105">
       <div className="relative" style={{ width: size, height: size }}>
         <svg
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          className="-rotate-90"
+          className="-rotate-90 drop-shadow-sm"
         >
           <circle
             cx={size / 2}
@@ -1595,16 +1571,16 @@ const ProfileStrengthRing = ({ value }) => {
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.4s ease" }}
+            style={{ transition: "stroke-dashoffset 0.8s ease" }}
           />
         </svg>
 
-        <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-800">
+        <div className="absolute inset-0 flex items-center justify-center text-sm font-extrabold text-slate-800">
           {percentage}%
         </div>
       </div>
 
-      <span className="text-[11px] font-medium text-slate-500">
+      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500/80">
         {strengthLabel} profile
       </span>
     </div>
@@ -1618,12 +1594,12 @@ const ProfileStrengthRing = ({ value }) => {
 */
 
 const ReadOnlyStat = ({ label, value }) => (
-  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+  <div className="rounded-xl border border-slate-200/60 bg-gradient-to-br from-slate-50/80 to-white/80 p-5 shadow-inner transition-all hover:shadow-md hover:scale-[1.02]">
+    <p className="text-xs font-bold uppercase tracking-wider text-slate-400/80">
       {label}
     </p>
 
-    <p className="mt-1.5 break-words text-sm font-bold text-slate-800">
+    <p className="mt-1.5 break-words text-base font-extrabold text-slate-800">
       {value}
     </p>
   </div>
@@ -1636,7 +1612,7 @@ const ReadOnlyStat = ({ label, value }) => (
 */
 
 const EmptyText = ({ children }) => (
-  <span className="text-sm text-slate-400">{children}</span>
+  <span className="text-sm font-medium text-slate-400/70">{children}</span>
 );
 
 /*
@@ -1648,16 +1624,16 @@ const EmptyText = ({ children }) => (
 const Message = ({ type, icon: Icon, children }) => {
   const style =
     type === "success"
-      ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-      : "border-red-500 bg-red-50 text-red-800";
+      ? "border-emerald-500/80 bg-gradient-to-r from-emerald-50/90 to-emerald-100/50 text-emerald-800 shadow-emerald-200/30"
+      : "border-red-500/80 bg-gradient-to-r from-red-50/90 to-red-100/50 text-red-800 shadow-red-200/30";
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg border-l-4 bg-white px-4 py-3 text-sm shadow-sm ${style}`}
+      className={`flex items-start gap-3 rounded-xl border-l-4 bg-white/80 px-5 py-4 text-sm font-semibold shadow-lg backdrop-blur-sm ${style}`}
     >
-      <Icon size={17} className="mt-0.5 shrink-0" />
+      <Icon size={18} className="mt-0.5 shrink-0" />
 
-      <span className="font-medium">{children}</span>
+      <span>{children}</span>
     </div>
   );
 };

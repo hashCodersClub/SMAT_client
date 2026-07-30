@@ -24,6 +24,18 @@ const outreachApi = {
 
     return response.data;
   },
+
+  getMine: async () => {
+    const response = await api.get("/outreach/mine");
+
+    return response.data;
+  },
+
+  respond: async (id, data) => {
+    const response = await api.patch(`/outreach/${id}/respond`, data);
+
+    return response.data;
+  },
 };
 
 export default outreachApi;

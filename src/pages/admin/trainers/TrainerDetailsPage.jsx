@@ -21,6 +21,7 @@ import {
 } from "react-icons/fi";
 
 import trainersApi from "../../../api/trainersApi";
+import trainerInvitationApi from "../../../api/trainerInvitationApi"; // <-- added import
 import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
 
 const TrainerDetailsPage = () => {
@@ -87,7 +88,8 @@ const TrainerDetailsPage = () => {
       setInviteSuccess("");
       setInviteError("");
 
-      const response = await trainersApi.inviteToPortal(trainer.id);
+      // Use the correct invitation API
+      const response = await trainerInvitationApi.invite(trainer.id);
 
       setInviteSuccess(
         response?.message || "Trainer portal invitation sent successfully.",

@@ -9,6 +9,12 @@ const assignmentsApi = {
     return response.data;
   },
 
+  getMine: async () => {
+    const response = await api.get("/assignments/mine");
+
+    return response.data;
+  },
+
   getById: async (id) => {
     const response = await api.get(`/assignments/${id}`);
 

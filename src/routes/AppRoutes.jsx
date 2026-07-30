@@ -56,6 +56,8 @@ import TrainerLayout from "../layouts/TrainerLayout";
 import TrainerDashboardPage from "../pages/trainer/dashboard/TrainerDashboardPage";
 import TrainerProfilePage from "../pages/trainer/profile/TrainerProfilePage";
 import TrainerAvailabilityPage from "../pages/trainer/availability/TrainerAvailabilityPage";
+import TrainerOpportunitiesPage from "../pages/trainer/opportunities/TrainerOpportunitiesPage";
+import TrainerAssignmentsPage from "../pages/trainer/assignments/TrainerAssignmentsPage";
 
 const AppRoutes = () => {
   return (
@@ -245,6 +247,16 @@ const AppRoutes = () => {
           />
 
           <Route path="/trainer/dashboard" element={<TrainerDashboardPage />} />
+
+          <Route
+            path="/trainer/opportunities"
+            element={<TrainerOpportunitiesPage />}
+          />
+
+          <Route
+            path="/trainer/assignments"
+            element={<TrainerAssignmentsPage />}
+          />
 
           <Route path="/trainer/profile" element={<TrainerProfilePage />} />
 

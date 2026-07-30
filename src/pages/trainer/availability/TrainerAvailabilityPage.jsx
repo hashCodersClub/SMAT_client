@@ -11,6 +11,9 @@ import {
   FiSave,
   FiTrash2,
   FiX,
+  FiUser,
+  FiBriefcase,
+  FiSlash,
 } from "react-icons/fi";
 
 import trainerAvailabilityApi from "../../../api/trainerAvailabilityApi";
@@ -34,16 +37,22 @@ const STATUS_OPTIONS = [
     value: "AVAILABLE",
     label: "Available",
     description: "You are available for training assignments.",
+    icon: FiCheck,
+    color: "emerald",
   },
   {
     value: "BUSY",
     label: "Busy",
     description: "You already have a commitment during this period.",
+    icon: FiBriefcase,
+    color: "amber",
   },
   {
     value: "UNAVAILABLE",
     label: "Unavailable",
     description: "You are not available for assignments during this period.",
+    icon: FiSlash,
+    color: "red",
   },
 ];
 
@@ -55,25 +64,15 @@ const STATUS_OPTIONS = [
 
 const TrainerAvailabilityPage = () => {
   const [availability, setAvailability] = useState([]);
-
   const [overallStatus, setOverallStatus] = useState("AVAILABLE");
-
   const [loading, setLoading] = useState(true);
-
   const [saving, setSaving] = useState(false);
-
   const [statusSaving, setStatusSaving] = useState(false);
-
   const [deletingId, setDeletingId] = useState(null);
-
   const [error, setError] = useState("");
-
   const [success, setSuccess] = useState("");
-
   const [formOpen, setFormOpen] = useState(false);
-
   const [editingId, setEditingId] = useState(null);
-
   const [form, setForm] = useState(EMPTY_FORM);
 
   /*
@@ -96,7 +95,6 @@ const TrainerAvailabilityPage = () => {
       setOverallStatus(response?.overallStatus || "AVAILABLE");
     } catch (error) {
       console.error("Failed to load availability:", error);
-
       setError(error.response?.data?.message || "Unable to load availability.");
     } finally {
       setLoading(false);
@@ -151,13 +149,9 @@ const TrainerAvailabilityPage = () => {
 
     setForm({
       startDate: toDateInput(record.startDate),
-
       endDate: toDateInput(record.endDate),
-
       status: record.status || "AVAILABLE",
-
       reason: record.reason || "",
-
       notes: record.notes || "",
     });
 
@@ -167,10 +161,7 @@ const TrainerAvailabilityPage = () => {
   };
 
   const closeForm = () => {
-    if (saving) {
-      return;
-    }
-
+    if (saving) return;
     setFormOpen(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
@@ -187,13 +178,11 @@ const TrainerAvailabilityPage = () => {
 
     if (!form.startDate || !form.endDate) {
       setError("Start date and end date are required.");
-
       return;
     }
 
     if (new Date(form.endDate) < new Date(form.startDate)) {
       setError("End date cannot be before start date.");
-
       return;
     }
 
@@ -204,13 +193,9 @@ const TrainerAvailabilityPage = () => {
 
       const payload = {
         startDate: form.startDate,
-
         endDate: form.endDate,
-
         status: form.status,
-
         reason: form.reason.trim(),
-
         notes: form.notes.trim(),
       };
 
@@ -238,7 +223,6 @@ const TrainerAvailabilityPage = () => {
       setSuccess(response?.message || "Availability saved successfully.");
     } catch (error) {
       console.error("Failed to save availability:", error);
-
       setError(error.response?.data?.message || "Unable to save availability.");
     } finally {
       setSaving(false);
@@ -253,14 +237,10 @@ const TrainerAvailabilityPage = () => {
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm("Remove this availability record?");
-
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
       setDeletingId(id);
-
       setError("");
       setSuccess("");
 
@@ -273,7 +253,6 @@ const TrainerAvailabilityPage = () => {
       setSuccess(response?.message || "Availability removed successfully.");
     } catch (error) {
       console.error("Failed to remove availability:", error);
-
       setError(
         error.response?.data?.message || "Unable to remove availability.",
       );
@@ -289,13 +268,10 @@ const TrainerAvailabilityPage = () => {
   */
 
   const handleOverallStatus = async (status) => {
-    if (status === overallStatus) {
-      return;
-    }
+    if (status === overallStatus) return;
 
     try {
       setStatusSaving(true);
-
       setError("");
       setSuccess("");
 
@@ -306,7 +282,6 @@ const TrainerAvailabilityPage = () => {
       setSuccess(response?.message || "Overall availability updated.");
     } catch (error) {
       console.error("Failed to update overall availability:", error);
-
       setError(
         error.response?.data?.message ||
           "Unable to update overall availability.",
@@ -324,12 +299,10 @@ const TrainerAvailabilityPage = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-56 animate-pulse rounded bg-slate-200" />
-
-        <div className="h-44 animate-pulse rounded-2xl border border-slate-200 bg-white" />
-
-        <div className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+      <div className="space-y-8">
+        <div className="h-10 w-64 animate-pulse rounded-lg bg-slate-200" />
+        <div className="h-56 animate-pulse rounded-2xl bg-slate-100" />
+        <div className="h-80 animate-pulse rounded-2xl bg-slate-100" />
       </div>
     );
   }
@@ -341,37 +314,34 @@ const TrainerAvailabilityPage = () => {
   */
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
-
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Availability</h1>
-
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Availability
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
             Keep your availability updated so Nxthack can match you with
             suitable training requirements.
           </p>
         </div>
-
         <button
           type="button"
           onClick={openCreateForm}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
-          <FiPlus />
+          <FiPlus className="h-4 w-4" />
           Add Availability
         </button>
       </div>
 
       {/* Messages */}
-
       {error && (
         <Message type="error" icon={FiAlertCircle}>
           {error}
         </Message>
       )}
-
       {success && (
         <Message type="success" icon={FiCheck}>
           {success}
@@ -379,45 +349,53 @@ const TrainerAvailabilityPage = () => {
       )}
 
       {/* Overall Status */}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div>
-          <h2 className="font-bold text-slate-900">Overall Availability</h2>
-
-          <p className="mt-1 text-sm text-slate-500">
+      <section className="rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm shadow-sm transition hover:shadow-md">
+        <div className="border-b border-slate-100 px-6 py-5">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Overall Availability
+          </h2>
+          <p className="text-sm text-slate-500">
             Set your general availability for new training opportunities.
           </p>
         </div>
-
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-3">
           {STATUS_OPTIONS.map((option) => {
             const selected = overallStatus === option.value;
-
+            const Icon = option.icon;
             return (
               <button
                 key={option.value}
                 type="button"
                 disabled={statusSaving}
                 onClick={() => handleOverallStatus(option.value)}
-                className={`rounded-xl border p-4 text-left transition ${
+                className={`group relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all duration-200 ${
                   selected
-                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
-                    : "border-slate-200 bg-white hover:bg-slate-50"
+                    ? "border-indigo-500 bg-indigo-50/80 ring-2 ring-indigo-500/20"
+                    : "border-slate-200 bg-white hover:bg-slate-50 hover:shadow-sm"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`font-semibold ${
-                      selected ? "text-blue-700" : "text-slate-800"
-                    }`}
-                  >
-                    {option.label}
-                  </span>
-
-                  {selected && <FiCheck className="text-blue-600" />}
+                <div className="flex w-full items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`rounded-lg p-1.5 ${
+                        selected
+                          ? "bg-indigo-100 text-indigo-600"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <span
+                      className={`font-semibold ${
+                        selected ? "text-indigo-700" : "text-slate-800"
+                      }`}
+                    >
+                      {option.label}
+                    </span>
+                  </div>
+                  {selected && <FiCheck className="h-4 w-4 text-indigo-600" />}
                 </div>
-
-                <p className="mt-2 text-xs leading-5 text-slate-500">
+                <p className="text-xs leading-5 text-slate-500">
                   {option.description}
                 </p>
               </button>
@@ -426,38 +404,35 @@ const TrainerAvailabilityPage = () => {
         </div>
       </section>
 
-      {/* Date Availability */}
-
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* Availability Schedule */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm shadow-sm transition hover:shadow-md">
         <div className="border-b border-slate-100 px-6 py-5">
-          <h2 className="font-bold text-slate-900">Availability Schedule</h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Add date ranges when you are available, busy or unavailable.
+          <h2 className="text-lg font-semibold text-slate-900">
+            Availability Schedule
+          </h2>
+          <p className="text-sm text-slate-500">
+            Add date ranges when you are available, busy, or unavailable.
           </p>
         </div>
 
         {sortedAvailability.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-              <FiCalendar size={24} />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <FiCalendar className="h-6 w-6" />
             </div>
-
-            <h3 className="mt-4 font-semibold text-slate-800">
+            <h3 className="mt-4 text-lg font-semibold text-slate-800">
               No availability schedule yet
             </h3>
-
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
               Add date-specific availability to help Nxthack determine whether
               you are free for upcoming training requirements.
             </p>
-
             <button
               type="button"
               onClick={openCreateForm}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
             >
-              <FiPlus />
+              <FiPlus className="h-4 w-4" />
               Add Availability
             </button>
           </div>
@@ -476,8 +451,7 @@ const TrainerAvailabilityPage = () => {
         )}
       </section>
 
-      {/* Form Modal */}
-
+      {/* Modal */}
       {formOpen && (
         <AvailabilityModal
           form={form}
@@ -500,54 +474,50 @@ const TrainerAvailabilityPage = () => {
 
 const AvailabilityRow = ({ record, deleting, onEdit, onDelete }) => {
   return (
-    <div className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center">
+    <div className="flex flex-col gap-4 px-6 py-5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-          <FiCalendar />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-500">
+          <FiCalendar className="h-5 w-5" />
         </div>
-
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-semibold text-slate-800">
               {formatDate(record.startDate)}
-              {" — "}
+              <span className="mx-1.5 text-slate-300">—</span>
               {formatDate(record.endDate)}
             </p>
-
             <StatusBadge status={record.status} />
           </div>
-
           {record.reason && (
-            <p className="mt-2 text-sm font-medium text-slate-600">
+            <p className="mt-1 text-sm font-medium text-slate-600">
               {record.reason}
             </p>
           )}
-
           {record.notes && (
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              {record.notes}
-            </p>
+            <p className="mt-0.5 text-sm text-slate-500">{record.notes}</p>
           )}
         </div>
       </div>
-
-      <div className="flex gap-2 self-end lg:self-auto">
+      <div className="flex gap-2 self-end sm:self-auto">
         <button
           type="button"
           onClick={onEdit}
-          className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
         >
-          <FiEdit2 />
+          <FiEdit2 className="h-3.5 w-3.5" />
           Edit
         </button>
-
         <button
           type="button"
           onClick={onDelete}
           disabled={deleting}
-          className="flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
         >
-          {deleting ? <FiLoader className="animate-spin" /> : <FiTrash2 />}
+          {deleting ? (
+            <FiLoader className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <FiTrash2 className="h-3.5 w-3.5" />
+          )}
           Remove
         </button>
       </div>
@@ -570,64 +540,59 @@ const AvailabilityModal = ({
   onClose,
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-      <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm transition-opacity">
+      <div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-300 rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div>
-            <h2 className="font-bold text-slate-900">
+            <h2 className="text-xl font-semibold text-slate-900">
               {editing ? "Edit Availability" : "Add Availability"}
             </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-0.5 text-sm text-slate-500">
               Define your availability for a specific date range.
             </p>
           </div>
-
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
-            <FiX />
+            <FiX className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-5 p-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Start Date">
+        <form onSubmit={onSubmit} className="space-y-6 p-6">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Start Date" required>
               <input
                 type="date"
                 name="startDate"
                 value={form.startDate}
                 onChange={onChange}
-                className="input"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               />
             </Field>
-
-            <Field label="End Date">
+            <Field label="End Date" required>
               <input
                 type="date"
                 name="endDate"
                 value={form.endDate}
                 onChange={onChange}
                 min={form.startDate || undefined}
-                className="input"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               />
             </Field>
           </div>
 
-          <Field label="Status">
+          <Field label="Status" required>
             <select
               name="status"
               value={form.status}
               onChange={onChange}
-              className="input"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
               <option value="AVAILABLE">Available</option>
-
               <option value="BUSY">Busy</option>
-
               <option value="UNAVAILABLE">Unavailable</option>
             </select>
           </Field>
@@ -638,7 +603,7 @@ const AvailabilityModal = ({
               value={form.reason}
               onChange={onChange}
               placeholder="e.g. Available for online training"
-              className="input"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
           </Field>
 
@@ -649,7 +614,7 @@ const AvailabilityModal = ({
               onChange={onChange}
               rows={4}
               placeholder="Add any additional availability information..."
-              className="input resize-none"
+              className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
           </Field>
 
@@ -658,18 +623,20 @@ const AvailabilityModal = ({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
             >
               Cancel
             </button>
-
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
             >
-              {saving ? <FiLoader className="animate-spin" /> : <FiSave />}
-
+              {saving ? (
+                <FiLoader className="h-4 w-4 animate-spin" />
+              ) : (
+                <FiSave className="h-4 w-4" />
+              )}
               {saving
                 ? "Saving..."
                 : editing
@@ -689,16 +656,15 @@ const AvailabilityModal = ({
 |--------------------------------------------------------------------------
 */
 
-const Field = ({ label, optional, children }) => (
+const Field = ({ label, optional, required, children }) => (
   <div>
-    <label className="mb-2 block text-sm font-semibold text-slate-700">
+    <label className="mb-1.5 block text-sm font-medium text-slate-700">
       {label}
-
+      {required && <span className="ml-0.5 text-red-500">*</span>}
       {optional && (
         <span className="ml-1 font-normal text-slate-400">(optional)</span>
       )}
     </label>
-
     {children}
   </div>
 );
@@ -711,19 +677,18 @@ const Field = ({ label, optional, children }) => (
 
 const StatusBadge = ({ status }) => {
   const styles = {
-    AVAILABLE: "bg-emerald-50 text-emerald-700",
-
-    BUSY: "bg-amber-50 text-amber-700",
-
-    UNAVAILABLE: "bg-red-50 text-red-700",
+    AVAILABLE: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
+    BUSY: "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20",
+    UNAVAILABLE: "bg-red-50 text-red-700 ring-1 ring-red-600/20",
   };
 
   return (
     <span
-      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
         styles[status] || "bg-slate-100 text-slate-600"
       }`}
     >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {formatEnum(status)}
     </span>
   );
@@ -745,8 +710,7 @@ const Message = ({ type, icon: Icon, children }) => {
     <div
       className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${styles}`}
     >
-      <Icon className="mt-0.5 shrink-0" />
-
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" />
       <span>{children}</span>
     </div>
   );
@@ -759,10 +723,7 @@ const Message = ({ type, icon: Icon, children }) => {
 */
 
 const formatDate = (value) => {
-  if (!value) {
-    return "—";
-  }
-
+  if (!value) return "—";
   return new Date(value).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -771,28 +732,18 @@ const formatDate = (value) => {
 };
 
 const toDateInput = (value) => {
-  if (!value) {
-    return "";
-  }
-
+  if (!value) return "";
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
+  if (Number.isNaN(date.getTime())) return "";
   return date.toISOString().slice(0, 10);
 };
 
 const formatEnum = (value) => {
-  if (!value) {
-    return "—";
-  }
-
+  if (!value) return "—";
   return String(value)
     .replaceAll("_", " ")
     .toLowerCase()
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 export default TrainerAvailabilityPage;
