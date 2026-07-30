@@ -5,6 +5,8 @@ import {
   FiBriefcase,
   FiArrowUpRight,
   FiClock,
+  FiTrendingUp,
+  FiMoreHorizontal,
 } from "react-icons/fi";
 
 const stats = [
@@ -15,6 +17,8 @@ const stats = [
     icon: FiClipboard,
     trend: "+2 from last week",
     color: "from-blue-500 to-cyan-400",
+    bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/20",
   },
   {
     title: "Active Trainers",
@@ -23,6 +27,8 @@ const stats = [
     icon: FiUsers,
     trend: "+12 this month",
     color: "from-violet-500 to-purple-400",
+    bgColor: "bg-violet-500/10",
+    borderColor: "border-violet-500/20",
   },
   {
     title: "Active Assignments",
@@ -31,6 +37,8 @@ const stats = [
     icon: FiUserCheck,
     trend: "+3 pending",
     color: "from-emerald-500 to-teal-400",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/20",
   },
   {
     title: "Active Vendors",
@@ -39,149 +47,176 @@ const stats = [
     icon: FiBriefcase,
     trend: "2 new this month",
     color: "from-amber-500 to-orange-400",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/20",
   },
 ];
 
 const DashboardPage = () => {
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8">
+      {/* ============================================================
+          PAGE HEADER (animated entrance)
+      ============================================================ */}
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center animate-fade-in-up">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Dashboard
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Overview of your trainer sourcing operations.
           </p>
         </div>
-        <button className="mt-3 flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-105 hover:shadow-blue-500/50 sm:mt-0">
-          <FiClock size={16} />
+
+        <button className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:scale-105 hover:shadow-blue-500/50 hover:shadow-xl active:scale-95">
+          <FiClock className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
           <span>Refresh Data</span>
+          <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
         </button>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
+      {/* ============================================================
+          STATS GRID (with staggered entrance)
+      ============================================================ */}
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat, index) => {
           const Icon = stat.icon;
 
           return (
             <div
               key={stat.title}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 shadow-xl shadow-black/20 transition-all duration-300 hover:scale-[1.02] hover:border-white/20 hover:shadow-2xl"
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/70 backdrop-blur-xl dark:bg-slate-800/70 p-6 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-500 hover:scale-[1.02] hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/10"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              {/* Background glow */}
-              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br from-blue-500/10 to-cyan-500/10 blur-2xl group-hover:from-blue-500/20 group-hover:to-cyan-500/20" />
+              {/* Animated gradient background */}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+              {/* Subtle glow */}
+              <div
+                className={`absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${stat.color} opacity-0 blur-2xl transition-opacity duration-700 group-hover:opacity-20`}
+              />
 
               <div className="relative flex items-start justify-between">
                 <div
-                  className={`rounded-xl bg-gradient-to-br ${stat.color} p-3 shadow-lg shadow-blue-500/20`}
+                  className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${stat.color} shadow-lg shadow-blue-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
                 >
-                  <Icon size={20} className="text-white" />
+                  <Icon className="h-6 w-6 text-white" strokeWidth={2} />
                 </div>
-                <span className="flex items-center gap-1 text-xs text-emerald-400">
-                  <FiArrowUpRight size={14} />
+
+                <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 dark:bg-emerald-500/20">
+                  <FiArrowUpRight className="h-3 w-3" />
                   {stat.trend}
                 </span>
               </div>
 
-              <p className="relative mt-4 text-sm font-medium text-slate-400">
+              <p className="relative mt-4 text-sm font-medium text-slate-500 dark:text-slate-400">
                 {stat.title}
               </p>
 
-              <h2 className="relative mt-1 text-3xl font-bold text-white">
+              <h2 className="relative mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {stat.value}
               </h2>
 
-              <p className="relative mt-2 text-xs text-slate-500">
+              <p className="relative mt-2 text-xs text-slate-400 dark:text-slate-500">
                 {stat.description}
               </p>
+
+              {/* Decorative progress bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden rounded-b-2xl bg-slate-100 dark:bg-slate-700">
+                <div
+                  className={`h-full w-0 bg-gradient-to-r ${stat.color} transition-all duration-1000 group-hover:w-full`}
+                />
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Bottom section: Recent Requirements + Pipeline */}
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      {/* ============================================================
+          BOTTOM SECTION: Recent Requirements + Pipeline
+      ============================================================ */}
+      <div className="grid gap-6 xl:grid-cols-3">
         {/* Recent Requirements - spans 2 columns */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 shadow-xl shadow-black/20 xl:col-span-2">
-          <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Recent Requirements
-              </h2>
-              <p className="text-sm text-slate-400">
-                Latest training requirements received
-              </p>
+        <div className="xl:col-span-2">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/70 backdrop-blur-xl dark:bg-slate-800/70 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+            <div className="flex flex-col items-start justify-between gap-3 border-b border-slate-200/20 p-6 dark:border-white/5 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Recent Requirements
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Latest training requirements received
+                </p>
+              </div>
+
+              <button className="inline-flex items-center gap-1 rounded-lg bg-blue-500/10 px-3 py-1.5 text-sm font-medium text-blue-500 transition-all duration-300 hover:bg-blue-500/20 hover:scale-105 active:scale-95 dark:bg-blue-500/20">
+                View all
+                <FiArrowUpRight className="h-4 w-4" />
+              </button>
             </div>
 
-            <button className="mt-2 flex items-center gap-1 text-sm font-medium text-blue-400 transition-colors hover:text-blue-300 sm:mt-0">
-              View all
-              <FiArrowUpRight size={16} />
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <Requirement
-              title="Python + Data Analytics Trainer"
-              vendor="ABC Training Solutions"
-              location="Noida"
-              status="Open"
-            />
-
-            <Requirement
-              title="Power BI Corporate Trainer"
-              vendor="XYZ Technologies"
-              location="Gurgaon"
-              status="Sourcing"
-            />
-
-            <Requirement
-              title="Java Full Stack Trainer"
-              vendor="Tech Learning Pvt Ltd"
-              location="Delhi"
-              status="Shortlisted"
-            />
+            <div className="divide-y divide-slate-200/20 dark:divide-white/5">
+              <Requirement
+                title="Python + Data Analytics Trainer"
+                vendor="ABC Training Solutions"
+                location="Noida"
+                status="Open"
+              />
+              <Requirement
+                title="Power BI Corporate Trainer"
+                vendor="XYZ Technologies"
+                location="Gurgaon"
+                status="Sourcing"
+              />
+              <Requirement
+                title="Java Full Stack Trainer"
+                vendor="Tech Learning Pvt Ltd"
+                location="Delhi"
+                status="Shortlisted"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Pipeline */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 shadow-xl shadow-black/20">
-          <h2 className="text-lg font-semibold text-white">
-            Requirement Pipeline
-          </h2>
+        {/* Pipeline - 1 column */}
+        <div>
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/70 backdrop-blur-xl dark:bg-slate-800/70 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/5">
+            <div className="border-b border-slate-200/20 p-6 dark:border-white/5">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Requirement Pipeline
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Current sourcing activity
+              </p>
+            </div>
 
-          <p className="mt-1 text-sm text-slate-400">
-            Current sourcing activity
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <Pipeline
-              name="Open"
-              value={12}
-              color="from-blue-500 to-cyan-400"
-            />
-            <Pipeline
-              name="Sourcing"
-              value={8}
-              color="from-violet-500 to-purple-400"
-            />
-            <Pipeline
-              name="Profiles Sent"
-              value={6}
-              color="from-amber-500 to-orange-400"
-            />
-            <Pipeline
-              name="Shortlisted"
-              value={4}
-              color="from-emerald-500 to-teal-400"
-            />
-            <Pipeline
-              name="Confirmed"
-              value={3}
-              color="from-rose-500 to-pink-400"
-            />
+            <div className="p-6 space-y-4">
+              <Pipeline
+                name="Open"
+                value={12}
+                color="from-blue-500 to-cyan-400"
+              />
+              <Pipeline
+                name="Sourcing"
+                value={8}
+                color="from-violet-500 to-purple-400"
+              />
+              <Pipeline
+                name="Profiles Sent"
+                value={6}
+                color="from-amber-500 to-orange-400"
+              />
+              <Pipeline
+                name="Shortlisted"
+                value={4}
+                color="from-emerald-500 to-teal-400"
+              />
+              <Pipeline
+                name="Confirmed"
+                value={3}
+                color="from-rose-500 to-pink-400"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -189,9 +224,11 @@ const DashboardPage = () => {
   );
 };
 
-// Requirement item component
+// ============================================================
+// COMPONENT: Requirement Item
+// ============================================================
+
 const Requirement = ({ title, vendor, location, status }) => {
-  // Status color mapping
   const statusColors = {
     Open: "from-blue-500 to-cyan-400",
     Sourcing: "from-amber-500 to-orange-400",
@@ -202,18 +239,20 @@ const Requirement = ({ title, vendor, location, status }) => {
   const statusColor = statusColors[status] || "from-gray-500 to-gray-400";
 
   return (
-    <div className="group flex flex-col justify-between gap-3 rounded-xl border border-white/5 bg-white/5 p-4 transition-all duration-300 hover:border-white/20 hover:bg-white/10 sm:flex-row sm:items-center">
-      <div>
-        <p className="font-medium text-white group-hover:text-blue-200">
+    <div className="group flex flex-col justify-between gap-3 p-5 transition-all duration-300 hover:bg-slate-50/50 dark:hover:bg-white/5 sm:flex-row sm:items-center">
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
           {title}
         </p>
-        <p className="mt-1 text-sm text-slate-400">
-          {vendor} • {location}
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+          <span>{vendor}</span>
+          <span className="hidden sm:inline">•</span>
+          <span>{location}</span>
+        </div>
       </div>
 
       <span
-        className={`w-fit rounded-full bg-gradient-to-r ${statusColor} px-3 py-1 text-xs font-medium text-white shadow-lg shadow-blue-500/20`}
+        className={`inline-flex w-fit items-center rounded-full bg-gradient-to-r ${statusColor} px-3.5 py-1.5 text-xs font-medium text-white shadow-lg shadow-blue-500/20 transition-transform duration-300 group-hover:scale-105`}
       >
         {status}
       </span>
@@ -221,21 +260,37 @@ const Requirement = ({ title, vendor, location, status }) => {
   );
 };
 
-// Pipeline item component
-const Pipeline = ({ name, value, color }) => {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-slate-300">{name}</span>
+// ============================================================
+// COMPONENT: Pipeline Item
+// ============================================================
 
-      <div className="flex items-center gap-2">
-        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
+const Pipeline = ({ name, value, color }) => {
+  const percentage = Math.min((value / 12) * 100, 100);
+
+  return (
+    <div className="group flex items-center justify-between gap-4 transition-all duration-300 hover:scale-[1.02]">
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        {name}
+      </span>
+
+      <div className="flex flex-1 items-center gap-3">
+        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
           <div
-            className={`h-full rounded-full bg-gradient-to-r ${color}`}
-            style={{ width: `${Math.min((value / 12) * 100, 100)}%` }}
+            className={`h-full rounded-full bg-gradient-to-r ${color} transition-all duration-1000 ease-out group-hover:scale-x-100`}
+            style={{
+              width: `${percentage}%`,
+              transformOrigin: "left",
+            }}
+          />
+          {/* Animated shimmer */}
+          <div
+            className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full"
+            style={{ width: "50%" }}
           />
         </div>
+
         <span
-          className={`rounded-md bg-gradient-to-r ${color} bg-opacity-20 px-2.5 py-1 text-sm font-semibold text-white`}
+          className={`min-w-[2rem] rounded-md bg-gradient-to-r ${color} bg-opacity-20 px-2.5 py-1 text-center text-sm font-semibold text-white shadow-sm shadow-blue-500/10`}
         >
           {value}
         </span>

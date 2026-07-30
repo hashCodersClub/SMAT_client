@@ -1,73 +1,41 @@
-// features/notifications/api/notificationApi.js
+import api from "./axios";
 
-import axios from "axios";
+const notificationApi = {
+  getMine: async ({ page = 1, limit = 20, unreadOnly = false } = {}) => {
+    const response = await api.get("/notifications", {
+      params: {
+        page,
+        limit,
+        ...(unreadOnly && { unreadOnly: "true" }),
+      },
+    });
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "/api";
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Request interceptor to add auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-// Response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // You can add global error handling here (e.g., logout on 401)
-    return Promise.reject(error);
-  },
-);
-
-export const notificationApi = {
-  // Get notifications with pagination, filters, search, sort
-  getNotifications: (params) => {
-    return apiClient.get("/notifications", { params });
+    return response.data;
   },
 
-  // Mark a single notification as read
-  markAsRead: (id) => {
-    return apiClient.patch(`/notifications/${id}/read`);
+  getUnreadCount: async () => {
+    const response = await api.get("/notifications/unread-count");
+
+    return response.data;
   },
 
-  // Mark all notifications as read for a specific tab/role
-  markAllAsRead: (data) => {
-    return apiClient.patch("/notifications/read-all", data);
+  markAsRead: async (id) => {
+    const response = await api.patch(`/notifications/${id}/read`);
+
+    return response.data;
   },
 
-  // Archive a notification
-  archiveNotification: (id) => {
-    return apiClient.patch(`/notifications/${id}/archive`);
+  markAllAsRead: async () => {
+    const response = await api.patch("/notifications/read-all");
+
+    return response.data;
   },
 
-  // Delete a notification
-  deleteNotification: (id) => {
-    return apiClient.delete(`/notifications/${id}`);
-  },
+  remove: async (id) => {
+    const response = await api.delete(`/notifications/${id}`);
 
-  // Get user settings
-  getSettings: () => {
-    return apiClient.get("/notifications/settings");
+    return response.data;
   },
-
-  // Update user settings
-  updateSettings: (settings) => {
-    return apiClient.put("/notifications/settings", settings);
-  },
-
-  // (Optional) Socket.IO integration can be added here
-  // For real-time updates, you might listen to 'new-notification' events.
 };
+
+export default notificationApi;
