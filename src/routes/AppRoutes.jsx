@@ -66,7 +66,7 @@ const AppRoutes = () => {
           PUBLIC ROUTES
       ================================================================= */}
 
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<LoginPage />} />
 
       <Route path="/vendor/register" element={<VendorRegisterPage />} />
 
