@@ -12,7 +12,7 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
           <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
 
           <p className="mt-4 text-sm font-medium text-slate-500">
-            Loading Nxthack...
+            Loading Trainexus...
           </p>
         </div>
       </div>

@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 // Authentication
 import LoginPage from "../pages/auth/LoginPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import VendorRegisterPage from "../pages/auth/VendorRegisterPage";
 import TrainerAcceptInvitePage from "../pages/auth/TrainerAcceptInvitePage";
@@ -78,6 +80,10 @@ const AppRoutes = () => {
         so any logged-out or session-expired visit hit a blank screen.
       */}
       <Route path="/login" element={<LoginPage />} />
+
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route path="/vendor/register" element={<VendorRegisterPage />} />
 

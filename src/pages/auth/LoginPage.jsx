@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FiAlertCircle, FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 // Import your logos (adjust the path as needed)
@@ -104,7 +104,7 @@ const LoginPage = () => {
           <div className="flex items-center gap-4">
             <img
               src={logoDark}
-              alt="Tranexus"
+              alt="Trainexus"
               className="h-20 w-auto object-contain"
             />
           </div>
@@ -121,7 +121,7 @@ const LoginPage = () => {
           <p className="mt-6 max-w-lg text-base leading-relaxed text-slate-400">
             Vendors post training requirements, and our AI‑powered engine
             shortlists the best‑matched, pre‑evaluated trainers from the
-            Tranexus network. Streamline your entire training operations.
+            Trainexus network. Streamline your entire training operations.
           </p>
 
           {/* Role indicators */}
@@ -140,7 +140,7 @@ const LoginPage = () => {
         {/* Footer */}
         <div className="relative z-10">
           <p className="text-xs font-light text-slate-600">
-            Tranexus – AI Powered Training OS
+            Trainexus – AI Powered Training OS
           </p>
         </div>
       </div>
@@ -154,7 +154,7 @@ const LoginPage = () => {
           <div className="mb-9 lg:hidden">
             <img
               src={logoLight}
-              alt="Tranexus"
+              alt="Trainexus"
               className="h-10 w-auto object-contain"
             />
           </div>
@@ -166,7 +166,7 @@ const LoginPage = () => {
               Sign in to your account
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Access your Tranexus workspace using your credentials.
+              Access your Trainexus workspace using your credentials.
             </p>
           </div>
 
@@ -221,6 +221,12 @@ const LoginPage = () => {
                 >
                   Password
                 </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <FiLock
@@ -266,12 +272,12 @@ const LoginPage = () => {
           <div className="mt-7 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-center text-xs text-slate-500">
               Vendor and trainer accounts are activated through an invitation
-              from Tranexus.
+              from Trainexus.
             </p>
           </div>
 
           <p className="mt-6 text-center text-xs font-light text-slate-400">
-            Secure Tranexus platform access
+            Secure Trainexus platform access
           </p>
         </div>
       </div>
