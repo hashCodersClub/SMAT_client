@@ -72,7 +72,8 @@ const AppRoutes = () => {
           PUBLIC ROUTES
       ================================================================= */}
 
-      <Route path="/" element={<LoginPage />} />
+      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/login" element={<LoginPage />} />
 
       {/*
         ProtectedRoute and Navbar's logout handler both redirect to
