@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  Sparkles,
   UserCircle,
   CreditCard,
   Gift,
@@ -23,6 +22,9 @@ import {
 // Import your actual navigation config
 import { getNavigationConfig } from "../config/navigationConfig";
 import { useAuth } from "../context/AuthContext";
+
+// Brand mark — dark variant renders correctly on the sidebar's dark background
+import trainexusMark from "../assets/logos/trainexus.dark.png";
 
 // ============================================================
 // UTILITY COMPONENTS
@@ -116,8 +118,12 @@ const Sidebar = ({ open, setOpen, navigation, portalName, user, logout }) => {
                 isCollapsed ? "justify-center w-full" : ""
               }`}
             >
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
-                <Sparkles className="h-5 w-5 text-white" strokeWidth={2.5} />
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 overflow-hidden">
+                <img
+                  src={trainexusMark}
+                  alt="Trainexus"
+                  className="h-6 w-6 object-contain relative z-10"
+                />
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/50 to-purple-600/50 blur-xl" />
               </div>
               <span

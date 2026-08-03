@@ -1,143 +1,140 @@
-// features/notifications/hooks/useNotifications.js
+import { useCallback, useState } from "react";
 
-import { useState, useEffect, useCallback } from "react";
-import { notificationApi } from "../api/notificationApi";
-import { DEFAULT_PAGE_SIZE } from "../utils/constants";
-import { toast } from "react-toastify"; // optional, but you can replace with your own toast
+import notificationApi from "../api/notificationApi";
 
-const useNotifications = (role = "student") => {
+/*
+|--------------------------------------------------------------------------
+| useNotifications
+|--------------------------------------------------------------------------
+|
+| Matches the ACTUAL backend contract (GET/PATCH/DELETE /api/notifications)
+| and the real notificationApi module — no assumptions about endpoints
+| that don't exist (archive, per-category/priority filtering, settings).
+| No third-party toast dependency; callers read `error` and show their
+| own feedback.
+|--------------------------------------------------------------------------
+*/
+
+const PAGE_SIZE = 20;
+
+const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [totalUnread, setTotalUnread] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [settings, setSettings] = useState({});
 
-  // Build query params
-  const buildParams = (filters) => {
-    const params = {
-      page: filters.reset ? 1 : page,
-      limit: DEFAULT_PAGE_SIZE,
-      tab: filters.tab || "all",
-      search: filters.search || "",
-      category: filters.category || "",
-      priority: filters.priority || "",
-      sort: filters.sort || "newest",
-      role, // pass role to API
-    };
-    if (filters.reset) {
-      params.page = 1;
-    }
-    return params;
-  };
+  /*
+  |--------------------------------------------------------------------------
+  | Fetch Notifications
+  |--------------------------------------------------------------------------
+  |
+  | { unreadOnly, reset } — reset=true replaces the list (new filter or
+  | initial load), reset=false appends the next page ("Load more").
+  |--------------------------------------------------------------------------
+  */
 
   const fetchNotifications = useCallback(
-    async (filters = {}) => {
-      try {
-        setLoading(true);
-        setError(null);
-        const params = buildParams(filters);
-        const response = await notificationApi.getNotifications(params);
-        const { data, pagination, stats } = response.data;
+    async ({ unreadOnly = false, reset = true } = {}) => {
+      const targetPage = reset ? 1 : page + 1;
 
-        // Update state
-        if (filters.reset) {
-          setNotifications(data);
-          setPage(1);
-        } else {
-          setNotifications((prev) => [...prev, ...data]);
-        }
-        setHasMore(pagination.hasMore);
-        setPage((prev) => (filters.reset ? 1 : prev + 1));
-        setTotalUnread(stats.unreadCount);
-        setTotalCount(stats.totalCount);
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await notificationApi.getMine({
+          page: targetPage,
+          limit: PAGE_SIZE,
+          unreadOnly,
+        });
+
+        setNotifications((previous) =>
+          reset
+            ? data.notifications || []
+            : [...previous, ...(data.notifications || [])],
+        );
+
+        setTotalUnread(data.unreadCount || 0);
+        setTotalCount(data.pagination?.total || 0);
+        setHasMore(targetPage < (data.pagination?.pages || 0));
+        setPage(targetPage);
       } catch (err) {
         setError(err);
-        toast.error("Failed to load notifications");
       } finally {
         setLoading(false);
       }
     },
-    [role, page],
+    [page],
   );
 
-  // Mark as read
+  /*
+  |--------------------------------------------------------------------------
+  | Mark One As Read
+  |--------------------------------------------------------------------------
+  */
+
   const markAsRead = useCallback(async (id) => {
     try {
       await notificationApi.markAsRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+
+      setNotifications((previous) =>
+        previous.map((item) =>
+          item._id === id ? { ...item, isRead: true } : item,
+        ),
       );
-      setTotalUnread((prev) => Math.max(prev - 1, 0));
-      toast.success("Marked as read");
+
+      setTotalUnread((previous) => Math.max(previous - 1, 0));
     } catch (err) {
-      toast.error("Failed to mark as read");
+      setError(err);
     }
   }, []);
 
-  // Mark all read
-  const markAllAsRead = useCallback(
-    async (tab = "all") => {
-      try {
-        await notificationApi.markAllAsRead({ tab, role });
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        setTotalUnread(0);
-        toast.success("All notifications marked as read");
-      } catch (err) {
-        toast.error("Failed to mark all as read");
-      }
-    },
-    [role],
-  );
+  /*
+  |--------------------------------------------------------------------------
+  | Mark All As Read
+  |--------------------------------------------------------------------------
+  */
 
-  // Archive
-  const archiveNotification = useCallback(async (id) => {
+  const markAllAsRead = useCallback(async () => {
     try {
-      await notificationApi.archiveNotification(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isArchived: true } : n)),
+      await notificationApi.markAllAsRead();
+
+      setNotifications((previous) =>
+        previous.map((item) => ({ ...item, isRead: true })),
       );
-      toast.info("Archived");
+
+      setTotalUnread(0);
     } catch (err) {
-      toast.error("Failed to archive");
+      setError(err);
     }
   }, []);
 
-  // Delete
+  /*
+  |--------------------------------------------------------------------------
+  | Delete
+  |--------------------------------------------------------------------------
+  */
+
   const deleteNotification = useCallback(async (id) => {
     try {
-      await notificationApi.deleteNotification(id);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      toast.success("Deleted");
-    } catch (err) {
-      toast.error("Failed to delete");
-    }
-  }, []);
+      await notificationApi.remove(id);
 
-  // Settings
-  const updateSettings = useCallback(async (newSettings) => {
-    try {
-      await notificationApi.updateSettings(newSettings);
-      setSettings(newSettings);
-      toast.success("Settings updated");
-    } catch (err) {
-      toast.error("Failed to update settings");
-    }
-  }, []);
+      setNotifications((previous) => {
+        const removed = previous.find((item) => item._id === id);
 
-  // Fetch settings on mount
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await notificationApi.getSettings();
-        setSettings(res.data);
-      } catch (err) {
-        // ignore
-      }
-    };
-    loadSettings();
+        if (removed && !removed.isRead) {
+          setTotalUnread((count) => Math.max(count - 1, 0));
+        }
+
+        return previous.filter((item) => item._id !== id);
+      });
+
+      setTotalCount((previous) => Math.max(previous - 1, 0));
+    } catch (err) {
+      setError(err);
+    }
   }, []);
 
   return {
@@ -150,10 +147,7 @@ const useNotifications = (role = "student") => {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    archiveNotification,
     deleteNotification,
-    updateSettings,
-    settings,
   };
 };
 

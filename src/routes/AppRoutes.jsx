@@ -6,6 +6,10 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import VendorRegisterPage from "../pages/auth/VendorRegisterPage";
 import TrainerAcceptInvitePage from "../pages/auth/TrainerAcceptInvitePage";
 
+// Shared
+import NotFoundPage from "../pages/shared/NotFoundPage";
+import NotificationsPage from "../pages/shared/notification/NotificationsPage";
+
 // Admin Layout
 import AdminLayout from "../layouts/AdminLayout";
 
@@ -67,6 +71,13 @@ const AppRoutes = () => {
       ================================================================= */}
 
       <Route path="/" element={<LoginPage />} />
+
+      {/*
+        ProtectedRoute and Navbar's logout handler both redirect to
+        "/login" — that route didn't previously exist (only "/" did),
+        so any logged-out or session-expired visit hit a blank screen.
+      */}
+      <Route path="/login" element={<LoginPage />} />
 
       <Route path="/vendor/register" element={<VendorRegisterPage />} />
 
@@ -197,6 +208,12 @@ const AppRoutes = () => {
           ------------------------------------------------------------- */}
 
           <Route path="/admin/settings" element={<SettingsPage />} />
+
+          {/* ------------------------------------------------------------
+              NOTIFICATIONS
+          ------------------------------------------------------------- */}
+
+          <Route path="/admin/notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 
@@ -232,6 +249,8 @@ const AppRoutes = () => {
             path="/vendor/requirements/:id/edit"
             element={<EditVendorRequirementPage />}
           />
+
+          <Route path="/vendor/notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 
@@ -264,8 +283,21 @@ const AppRoutes = () => {
             path="/trainer/availability"
             element={<TrainerAvailabilityPage />}
           />
+
+          <Route
+            path="/trainer/notifications"
+            element={<NotificationsPage />}
+          />
         </Route>
       </Route>
+
+      {/* ================================================================
+          CATCH-ALL 404
+          Must stay last — matches any URL not matched above instead of
+          rendering a blank screen.
+      ================================================================= */}
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };

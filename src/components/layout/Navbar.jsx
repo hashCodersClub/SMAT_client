@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import {
-  FiBell,
   FiMenu,
   FiSearch,
   FiChevronDown,
@@ -12,6 +11,7 @@ import {
 
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import NotificationBell from "../notifications/NotificationBell";
 
 const Navbar = ({
   setSidebarOpen,
@@ -139,15 +139,7 @@ const Navbar = ({
 
         {/* Notifications */}
 
-        <button
-          type="button"
-          className="relative rounded-lg border border-transparent p-2.5 text-slate-700 transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-950"
-          aria-label="Notifications"
-        >
-          <FiBell size={20} />
-
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-600 ring-2 ring-white" />
-        </button>
+        <NotificationBell />
 
         <div className="hidden h-9 w-px bg-slate-300 sm:block" />
 
