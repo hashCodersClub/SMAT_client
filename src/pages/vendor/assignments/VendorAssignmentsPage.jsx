@@ -115,10 +115,8 @@ const VendorAssignmentsPage = () => {
     return (
       <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-200 bg-white">
         <div className="text-center">
-          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-indigo-600" />
-          <p className="mt-3 text-sm text-slate-500">
-            Loading assignments...
-          </p>
+          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-blue-600" />
+          <p className="mt-3 text-sm text-slate-500">Loading assignments...</p>
         </div>
       </div>
     );
@@ -159,7 +157,7 @@ const VendorAssignmentsPage = () => {
             onClick={() => setTab(item.key)}
             className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
               tab === item.key
-                ? "bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20"
+                ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/20"
                 : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -176,7 +174,7 @@ const VendorAssignmentsPage = () => {
           return (
             <div
               key={assignment._id}
-              className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md hover:border-indigo-200"
+              className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md hover:border-blue-200"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 flex-1">

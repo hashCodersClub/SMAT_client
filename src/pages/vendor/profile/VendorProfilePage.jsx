@@ -172,7 +172,7 @@ const VendorProfilePage = () => {
     return (
       <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-200 bg-white">
         <div className="text-center">
-          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-indigo-600" />
+          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-blue-600" />
           <p className="mt-3 text-sm text-slate-500">Loading your profile...</p>
         </div>
       </div>
@@ -427,7 +427,7 @@ const VendorProfilePage = () => {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
           >
             <FiSave size={16} />
             {saving ? "Saving..." : "Save Changes"}
