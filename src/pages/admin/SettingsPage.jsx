@@ -10,7 +10,7 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 
-import authApi from "../../../api/authApi";
+import authApi from "../../api/authApi";
 
 /*
 |--------------------------------------------------------------------------
