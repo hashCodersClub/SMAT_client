@@ -149,6 +149,14 @@ export const mapTrainerFromApi = (trainer = {}) => {
 
     /*
     |--------------------------------------------------------------------------
+    | Profile Photo
+    |--------------------------------------------------------------------------
+    */
+
+    profilePhotoUrl: trainer.profilePhotoUrl || "",
+
+    /*
+    |--------------------------------------------------------------------------
     | Performance
     |--------------------------------------------------------------------------
     */
@@ -284,9 +292,14 @@ export const mapTrainerToApi = (form = {}) => {
     |--------------------------------------------------------------------------
     | Resume
     |--------------------------------------------------------------------------
+    |
+    | Deliberately NOT setting resumeUrl here. Now that resumes are
+    | uploaded as files (see File Uploads below) rather than pasted as a
+    | URL, resumeUrl should only ever be written by the backend's upload
+    | handling. Sending resumeUrl: "" here on every save (when no new file
+    | is chosen) would silently wipe out an existing resume on update.
+    |
     */
-
-    resumeUrl: form.cvUrl || "",
 
     /*
     |--------------------------------------------------------------------------
@@ -299,5 +312,22 @@ export const mapTrainerToApi = (form = {}) => {
     */
 
     tags: Array.isArray(form.trainingTypes) ? form.trainingTypes : [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | File Uploads
+    |--------------------------------------------------------------------------
+    |
+    | Passed through untouched (not renamed/transformed like the fields
+    | above) so trainersApi.create/update can detect them and switch to a
+    | multipart request. Only present when TrainerForm's file inputs were
+    | used this session - see TrainerForm.jsx handleSubmit.
+    |
+    */
+
+    ...(form.profilePhotoFile
+      ? { profilePhotoFile: form.profilePhotoFile }
+      : {}),
+    ...(form.resumeFile ? { resumeFile: form.resumeFile } : {}),
   };
 };

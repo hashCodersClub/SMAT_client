@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiPlus, FiX } from "react-icons/fi";
+import { FiPlus, FiX, FiUpload, FiFile, FiExternalLink } from "react-icons/fi";
 
 const initialValues = {
   name: "",
@@ -17,8 +17,14 @@ const initialValues = {
   modes: [],
   preferredLocations: "",
   skills: [],
+  // Existing (already-uploaded) file URLs — populated when editing a
+  // trainer that already has a photo/resume on Cloudinary.
+  profilePhotoUrl: "",
   cvUrl: "",
 };
+
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB, matches backend limit
+const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB, matches backend limit
 
 const TrainerForm = ({
   initialData = initialValues,
@@ -31,6 +37,15 @@ const TrainerForm = ({
   });
 
   const [skillInput, setSkillInput] = useState("");
+
+  // New files selected in this session — separate from form.profilePhotoUrl
+  // / form.cvUrl, which only ever reflect what's already been uploaded.
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState(
+    initialData.profilePhotoUrl || "",
+  );
+  const [fileError, setFileError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,11 +87,78 @@ const TrainerForm = ({
     }));
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | File Handlers
+  |--------------------------------------------------------------------------
+  */
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    setFileError("");
+
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setFileError("Profile photo must be a JPEG, PNG, or WEBP image.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_SIZE) {
+      setFileError("Profile photo must be smaller than 5MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setProfilePhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const clearPhoto = () => {
+    setProfilePhotoFile(null);
+    setPhotoPreviewUrl(initialData.profilePhotoUrl || "");
+  };
+
+  const handleResumeChange = (e) => {
+    const file = e.target.files?.[0];
+    setFileError("");
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setFileError("Resume must be a PDF or Word document.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_RESUME_SIZE) {
+      setFileError("Resume must be smaller than 10MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setResumeFile(file);
+  };
+
+  const clearResume = () => {
+    setResumeFile(null);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    const { profilePhotoUrl, cvUrl, ...rest } = form;
+
     onSubmit({
-      ...form,
+      ...rest,
+
       experienceYears: Number(form.experienceYears),
       trainingExperienceYears: Number(form.trainingExperienceYears),
       onlineRate: Number(form.onlineRate),
@@ -89,6 +171,13 @@ const TrainerForm = ({
               .map((item) => item.trim())
               .filter(Boolean)
           : form.preferredLocations,
+
+      // Only included when a new file was actually chosen this session.
+      // trainersApi automatically switches to a multipart request when
+      // either of these is present, and leaves everything else untouched
+      // (including cvUrl) when neither is.
+      ...(profilePhotoFile ? { profilePhotoFile } : {}),
+      ...(resumeFile ? { resumeFile } : {}),
     });
   };
 
@@ -100,6 +189,55 @@ const TrainerForm = ({
         title="Personal Information"
         description="Basic trainer and contact details."
       >
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Profile Photo
+          </label>
+
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50">
+              {photoPreviewUrl ? (
+                <img
+                  src={photoPreviewUrl}
+                  alt="Profile preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-lg font-semibold text-slate-300">
+                  {form.name?.trim()?.[0]?.toUpperCase() || "?"}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <FiUpload size={14} />
+                {photoPreviewUrl ? "Replace photo" : "Upload photo"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+              </label>
+
+              {profilePhotoFile && (
+                <button
+                  type="button"
+                  onClick={clearPhoto}
+                  className="text-xs font-medium text-slate-400 hover:text-slate-600"
+                >
+                  Undo
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="mt-2 text-xs text-slate-400">
+            JPEG, PNG, or WEBP. Max 5MB.
+          </p>
+        </div>
+
         <Input
           label="Full Name"
           name="name"
@@ -306,23 +444,62 @@ const TrainerForm = ({
 
       <FormSection
         title="Documents"
-        description="Trainer CV and profile documents."
+        description="Trainer resume, uploaded and stored securely."
       >
         <div className="md:col-span-2">
-          <Input
-            label="CV / Resume URL"
-            name="cvUrl"
-            value={form.cvUrl}
-            onChange={handleChange}
-            placeholder="Google Drive URL"
-          />
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Resume / CV
+          </label>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <FiUpload size={14} />
+              {resumeFile || form.cvUrl ? "Replace resume" : "Upload resume"}
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={handleResumeChange}
+                className="hidden"
+              />
+            </label>
+
+            {resumeFile && (
+              <span className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700">
+                <FiFile size={12} />
+                {resumeFile.name}
+
+                <button type="button" onClick={clearResume}>
+                  <FiX size={12} />
+                </button>
+              </span>
+            )}
+
+            {!resumeFile && form.cvUrl && (
+              <a
+                href={form.cvUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:underline"
+              >
+                <FiExternalLink size={12} />
+                View current resume
+              </a>
+            )}
+          </div>
 
           <p className="mt-2 text-xs text-slate-400">
-            For the MVP, we'll store a Google Drive URL instead of uploading
-            files directly.
+            PDF or Word document. Max 10MB.
           </p>
         </div>
       </FormSection>
+
+      {/* File errors */}
+
+      {fileError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {fileError}
+        </div>
+      )}
 
       {/* Actions */}
 
