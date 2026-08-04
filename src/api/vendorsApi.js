@@ -65,6 +65,30 @@ const vendorsApi = {
 
   /*
   |--------------------------------------------------------------------------
+  | Get My Vendor Profile (Self-Service)
+  |--------------------------------------------------------------------------
+  */
+
+  getMyProfile: async () => {
+    const response = await api.get("/vendors/me");
+
+    return response.data;
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Update My Vendor Profile (Self-Service)
+  |--------------------------------------------------------------------------
+  */
+
+  updateMyProfile: async (data) => {
+    const response = await api.patch("/vendors/me", data);
+
+    return response.data;
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Get Vendor Portal Users
   |--------------------------------------------------------------------------
   */

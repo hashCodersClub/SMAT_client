@@ -56,6 +56,9 @@ import VendorRequirementsPage from "../pages/vendor/requirements/VendorRequireme
 import AddVendorRequirementPage from "../pages/vendor/requirements/AddVendorRequirementPage";
 import VendorRequirementDetailsPage from "../pages/vendor/requirements/VendorRequirementDetailsPage";
 import EditVendorRequirementPage from "../pages/vendor/requirements/EditVendorRequirementPage";
+import VendorProfilePage from "../pages/vendor/profile/VendorProfilePage";
+import VendorSettingsPage from "../pages/vendor/settings/VendorSettingsPage";
+import VendorAssignmentsPage from "../pages/vendor/assignments/VendorAssignmentsPage";
 
 // Trainer Portal
 import TrainerLayout from "../layouts/TrainerLayout";
@@ -64,6 +67,7 @@ import TrainerProfilePage from "../pages/trainer/profile/TrainerProfilePage";
 import TrainerAvailabilityPage from "../pages/trainer/availability/TrainerAvailabilityPage";
 import TrainerOpportunitiesPage from "../pages/trainer/opportunities/TrainerOpportunitiesPage";
 import TrainerAssignmentsPage from "../pages/trainer/assignments/TrainerAssignmentsPage";
+import TrainerSettingsPage from "../pages/trainer/settings/TrainerSettingsPage";
 
 const AppRoutes = () => {
   return (
@@ -73,13 +77,6 @@ const AppRoutes = () => {
       ================================================================= */}
 
       <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/login" element={<LoginPage />} />
-
-      {/*
-        ProtectedRoute and Navbar's logout handler both redirect to
-        "/login" — that route didn't previously exist (only "/" did),
-        so any logged-out or session-expired visit hit a blank screen.
-      */}
       <Route path="/login" element={<LoginPage />} />
 
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -257,6 +254,15 @@ const AppRoutes = () => {
             element={<EditVendorRequirementPage />}
           />
 
+          <Route
+            path="/vendor/assignments"
+            element={<VendorAssignmentsPage />}
+          />
+
+          <Route path="/vendor/profile" element={<VendorProfilePage />} />
+
+          <Route path="/vendor/settings" element={<VendorSettingsPage />} />
+
           <Route path="/vendor/notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
@@ -290,6 +296,8 @@ const AppRoutes = () => {
             path="/trainer/availability"
             element={<TrainerAvailabilityPage />}
           />
+
+          <Route path="/trainer/settings" element={<TrainerSettingsPage />} />
 
           <Route
             path="/trainer/notifications"
