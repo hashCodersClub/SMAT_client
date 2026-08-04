@@ -10,6 +10,7 @@ import {
   FiCheckCircle,
   FiEdit2,
   FiExternalLink,
+  FiFile,
   FiGlobe,
   FiLinkedin,
   FiLoader,
@@ -19,6 +20,7 @@ import {
   FiPlus,
   FiSave,
   FiShield,
+  FiUpload,
   FiUser,
   FiX,
 } from "react-icons/fi";
@@ -28,6 +30,7 @@ import SkillDetailsEditor from "../../../components/trainer/profile/SkillDetails
 import CertificationsEditor from "../../../components/trainer/profile/CertificationsEditor";
 import EmploymentHistoryEditor from "../../../components/trainer/profile/EmploymentHistoryEditor";
 import EducationEditor from "../../../components/trainer/profile/EducationEditor";
+import LanguagesEditor from "../../../components/trainer/profile/LanguagesEditor";
 
 /*
 |--------------------------------------------------------------------------
@@ -57,6 +60,7 @@ const INITIAL_FORM = {
   certifications: [],
   employmentHistory: [],
   education: [],
+  languages: [],
 
   experience: 0,
   trainingExperience: 0,
@@ -72,6 +76,7 @@ const INITIAL_FORM = {
   availabilityStatus: "AVAILABLE",
 
   resumeUrl: "",
+  profilePhotoUrl: "",
   linkedinUrl: "",
   portfolioUrl: "",
   githubUrl: "",
@@ -99,6 +104,22 @@ const TrainerProfilePage = () => {
 
   const [locationInput, setLocationInput] = useState("");
   const [industryInput, setIndustryInput] = useState("");
+
+  /*
+  |--------------------------------------------------------------------------
+  | Profile Photo / Resume Upload
+  |--------------------------------------------------------------------------
+  |
+  | New files selected in this editing session - separate from
+  | form.profilePhotoUrl / form.resumeUrl, which only ever reflect what's
+  | already been uploaded to Cloudinary.
+  |--------------------------------------------------------------------------
+  */
+
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [fileError, setFileError] = useState("");
 
   /*
   |--------------------------------------------------------------------------
@@ -149,6 +170,8 @@ const TrainerProfilePage = () => {
 
         education: Array.isArray(trainer.education) ? trainer.education : [],
 
+        languages: Array.isArray(trainer.languages) ? trainer.languages : [],
+
         experience: trainer.experience ?? 0,
 
         trainingExperience: trainer.trainingExperience ?? 0,
@@ -169,6 +192,8 @@ const TrainerProfilePage = () => {
 
         resumeUrl: trainer.resumeUrl || "",
 
+        profilePhotoUrl: trainer.profilePhotoUrl || "",
+
         linkedinUrl: trainer.linkedinUrl || "",
 
         portfolioUrl: trainer.portfolioUrl || "",
@@ -181,6 +206,11 @@ const TrainerProfilePage = () => {
 
         vendorProfileCode: trainer.vendorProfileCode || "",
       });
+
+      setPhotoPreviewUrl(trainer.profilePhotoUrl || "");
+      setProfilePhotoFile(null);
+      setResumeFile(null);
+      setFileError("");
     } catch (error) {
       console.error("Failed to load trainer profile:", error);
 
@@ -346,6 +376,98 @@ const TrainerProfilePage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | Languages
+  |--------------------------------------------------------------------------
+  */
+
+  const handleLanguagesChange = (languages) => {
+    setForm((current) => ({
+      ...current,
+      languages,
+    }));
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Profile Photo / Resume Upload
+  |--------------------------------------------------------------------------
+  */
+
+  const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB, matches backend limit
+  const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB, matches backend limit
+
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0];
+    setFileError("");
+
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setFileError("Profile photo must be a JPEG, PNG, or WEBP image.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_SIZE) {
+      setFileError("Profile photo must be smaller than 5MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setProfilePhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  const clearPhotoSelection = () => {
+    setProfilePhotoFile(null);
+    setPhotoPreviewUrl(form.profilePhotoUrl || "");
+  };
+
+  const handleResumeChange = (event) => {
+    const file = event.target.files?.[0];
+    setFileError("");
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setFileError("Resume must be a PDF or Word document.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_RESUME_SIZE) {
+      setFileError("Resume must be smaller than 10MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setResumeFile(file);
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  const clearResumeSelection = () => {
+    setResumeFile(null);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
   | Training Modes
   |--------------------------------------------------------------------------
   */
@@ -475,6 +597,8 @@ const TrainerProfilePage = () => {
 
         education,
 
+        languages: form.languages,
+
         experience: Number(form.experience) || 0,
 
         trainingExperience: Number(form.trainingExperience) || 0,
@@ -496,6 +620,13 @@ const TrainerProfilePage = () => {
         portfolioUrl: form.portfolioUrl.trim(),
 
         githubUrl: form.githubUrl.trim(),
+
+        // Only included when a new file was actually chosen this session -
+        // trainersApi automatically switches to a multipart request when
+        // either is present, and leaves everything else (including the
+        // existing photo/resume) untouched when neither is.
+        ...(profilePhotoFile ? { profilePhotoFile } : {}),
+        ...(resumeFile ? { resumeFile } : {}),
       };
 
       const response = await trainersApi.updateMyProfile(payload);
@@ -560,6 +691,11 @@ const TrainerProfilePage = () => {
       id: "section-employment",
       label: "Add your employment history",
       done: form.employmentHistory.length > 0,
+    },
+    {
+      id: "section-languages",
+      label: "Add a language you speak",
+      done: form.languages.length > 0,
     },
     {
       id: "section-links",
@@ -679,6 +815,12 @@ const TrainerProfilePage = () => {
         </Message>
       )}
 
+      {fileError && (
+        <Message type="error" icon={FiAlertCircle}>
+          {fileError}
+        </Message>
+      )}
+
       {success && (
         <Message type="success" icon={FiCheckCircle}>
           {success}
@@ -697,8 +839,45 @@ const TrainerProfilePage = () => {
         <div className="px-8 pb-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="-mt-12 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-blue-600 to-indigo-600 text-3xl font-bold text-white shadow-xl shadow-blue-600/30 ring-2 ring-white/50 transition-all hover:scale-105">
-                {getInitials(form.name)}
+              <div className="-mt-12 shrink-0">
+                <div className="group relative h-24 w-24 overflow-hidden rounded-2xl border-4 border-white shadow-xl shadow-blue-600/30 ring-2 ring-white/50 transition-all hover:scale-105">
+                  {photoPreviewUrl ? (
+                    <img
+                      src={photoPreviewUrl}
+                      alt={form.name || "Profile photo"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-3xl font-bold text-white">
+                      {getInitials(form.name)}
+                    </div>
+                  )}
+
+                  {editing && (
+                    <label className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-1 bg-slate-900/0 text-white opacity-0 transition-all hover:bg-slate-900/60 hover:opacity-100">
+                      <FiUpload size={18} />
+                      <span className="text-[10px] font-bold uppercase tracking-wide">
+                        Change
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {editing && profilePhotoFile && (
+                  <button
+                    type="button"
+                    onClick={clearPhotoSelection}
+                    className="mt-2 w-full text-center text-[11px] font-semibold text-slate-400 hover:text-slate-600"
+                  >
+                    Undo
+                  </button>
+                )}
               </div>
 
               <div className="min-w-0 pt-1">
@@ -1084,6 +1263,23 @@ const TrainerProfilePage = () => {
       </Section>
 
       {/* ================================================================
+          LANGUAGES
+      ================================================================= */}
+
+      <Section
+        id="section-languages"
+        title="Languages"
+        description="Languages you're comfortable training in. This helps Nxthack match you to requirements with specific language needs."
+        icon={FiGlobe}
+      >
+        <LanguagesEditor
+          languages={form.languages}
+          editing={editing}
+          onChange={handleLanguagesChange}
+        />
+      </Section>
+
+      {/* ================================================================
           TRAINING PREFERENCES
       ================================================================= */}
 
@@ -1228,14 +1424,59 @@ const TrainerProfilePage = () => {
         icon={FiLinkedin}
       >
         <div className="grid gap-6 md:grid-cols-2">
-          <LinkField
-            label="Resume URL"
-            name="resumeUrl"
-            value={form.resumeUrl}
-            editing={editing}
-            onChange={handleChange}
-            placeholder="https://..."
-          />
+          <div className="md:col-span-2">
+            <Label>Resume</Label>
+
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {editing && (
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200/80 bg-white/50 px-4 py-2.5 text-sm font-semibold text-slate-700 backdrop-blur-sm transition-all hover:border-slate-300/80 hover:bg-white/80">
+                  <FiUpload size={14} />
+                  {resumeFile || form.resumeUrl
+                    ? "Replace resume"
+                    : "Upload resume"}
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={handleResumeChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+
+              {resumeFile && (
+                <span className="flex items-center gap-1.5 rounded-lg bg-emerald-50/90 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                  <FiFile size={12} />
+                  {resumeFile.name}
+
+                  <button type="button" onClick={clearResumeSelection}>
+                    <FiX size={12} />
+                  </button>
+                </span>
+              )}
+
+              {!resumeFile && form.resumeUrl && (
+                <a
+                  href={form.resumeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 text-sm font-bold text-blue-600 transition-all hover:text-blue-700 hover:scale-105"
+                >
+                  <FiExternalLink size={14} />
+                  View current resume
+                </a>
+              )}
+
+              {!editing && !form.resumeUrl && (
+                <p className="text-sm text-slate-400/60">No resume uploaded.</p>
+              )}
+            </div>
+
+            {editing && (
+              <p className="mt-2 text-xs text-slate-400">
+                PDF or Word document. Max 10MB.
+              </p>
+            )}
+          </div>
 
           <LinkField
             label="LinkedIn"

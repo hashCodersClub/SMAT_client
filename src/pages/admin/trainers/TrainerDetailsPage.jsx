@@ -243,12 +243,22 @@ const TrainerDetailsPage = () => {
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-start">
           <div className="flex gap-4">
             {/* Avatar */}
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-xl font-bold text-white shadow-lg shadow-blue-500/30">
-              {trainer.name
-                .split(" ")
-                .map((word) => word[0])
-                .slice(0, 2)
-                .join("")}
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl shadow-lg shadow-blue-500/30">
+              {trainer.profilePhotoUrl ? (
+                <img
+                  src={trainer.profilePhotoUrl}
+                  alt={trainer.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 text-xl font-bold text-white">
+                  {trainer.name
+                    .split(" ")
+                    .map((word) => word[0])
+                    .slice(0, 2)
+                    .join("")}
+                </div>
+              )}
             </div>
 
             {/* Identity */}
@@ -523,6 +533,33 @@ const TrainerDetailsPage = () => {
               <EmptyText>No preferred locations added.</EmptyText>
             )}
           </Section>
+          {/* Languages */}
+          <Section title="Languages">
+            {trainer.languages?.length ? (
+              <>
+                <p className="mb-3 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                  Speaks {trainer.languages.length}{" "}
+                  {trainer.languages.length === 1 ? "language" : "languages"}
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {trainer.languages.map((language) => (
+                    <span
+                      key={language.name}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200/60 bg-indigo-50/80 px-3 py-1.5 text-sm font-medium text-indigo-700 backdrop-blur-sm dark:border-indigo-800/30 dark:bg-indigo-900/20 dark:text-indigo-300"
+                    >
+                      {language.name}
+                      <span className="text-xs font-normal opacity-70">
+                        {formatProficiency(language.proficiency)}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <EmptyText>No languages added.</EmptyText>
+            )}
+          </Section>
         </div>
 
         {/* Right Column (1/3) */}
@@ -686,6 +723,22 @@ const Contact = ({ icon: Icon, value }) => (
 const EmptyText = ({ children }) => (
   <p className="text-sm text-slate-400 dark:text-slate-500">{children}</p>
 );
+
+/*
+|--------------------------------------------------------------------------
+| Format Proficiency
+|--------------------------------------------------------------------------
+*/
+
+const PROFICIENCY_LABELS = {
+  BASIC: "Basic",
+  CONVERSATIONAL: "Conversational",
+  PROFESSIONAL: "Professional",
+  NATIVE: "Native",
+};
+
+const formatProficiency = (value) =>
+  PROFICIENCY_LABELS[value] || "Professional";
 
 /*
 |--------------------------------------------------------------------------
