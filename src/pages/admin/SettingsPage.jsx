@@ -1,316 +1,380 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  FiSave,
-  FiUser,
   FiBell,
-  FiLock,
   FiGlobe,
-  FiMoon,
-  FiMail,
-  FiShield,
+  FiLock,
   FiToggleLeft,
   FiToggleRight,
-  FiChevronRight,
+  FiSave,
+  FiCheckCircle,
+  FiAlertCircle,
 } from "react-icons/fi";
 
-const SettingsPage = () => {
-  // State for toggles
+import authApi from "../../../api/authApi";
+
+/*
+|--------------------------------------------------------------------------
+| Trainer Settings Page
+|--------------------------------------------------------------------------
+|
+| Change Password — wired to POST /api/auth/change-password.
+| Notifications + Timezone — wired to GET /api/auth/me and
+| PATCH /api/auth/me/preferences. Both are real now; profile details
+| still live on the separate Profile page.
+|--------------------------------------------------------------------------
+*/
+
+const TrainerSettingsPage = () => {
   const [notifications, setNotifications] = useState({
     email: true,
-    push: false,
-    sms: true,
-  });
-  const [preferences, setPreferences] = useState({
-    darkMode: false,
-    language: "English",
-    timezone: "IST (UTC+5:30)",
-  });
-  const [security, setSecurity] = useState({
-    twoFactor: false,
-    sessionTimeout: "30 mins",
+    sms: false,
   });
 
-  const handleToggle = (section, key) => {
-    if (section === "notifications") {
-      setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
-    } else if (section === "preferences") {
-      if (key === "darkMode") {
-        setPreferences((prev) => ({ ...prev, darkMode: !prev.darkMode }));
+  const [timezone, setTimezone] = useState("IST (UTC+5:30)");
+
+  const [prefsLoading, setPrefsLoading] = useState(true);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsError, setPrefsError] = useState("");
+  const [prefsSuccess, setPrefsSuccess] = useState("");
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load Current Preferences
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const response = await authApi.getMe();
+        const preferences = response?.user?.preferences;
+
+        if (preferences) {
+          setNotifications({
+            email: preferences.emailNotifications ?? true,
+            sms: preferences.smsNotifications ?? false,
+          });
+          setTimezone(preferences.timezone || "IST (UTC+5:30)");
+        }
+      } catch {
+        // Non-fatal — fall back to defaults already in state.
+      } finally {
+        setPrefsLoading(false);
       }
-    } else if (section === "security") {
-      if (key === "twoFactor") {
-        setSecurity((prev) => ({ ...prev, twoFactor: !prev.twoFactor }));
-      }
+    };
+
+    loadPreferences();
+  }, []);
+
+  const handleToggle = (key) => {
+    setNotifications((previous) => ({ ...previous, [key]: !previous[key] }));
+  };
+
+  const handleSavePreferences = async () => {
+    setPrefsSaving(true);
+    setPrefsError("");
+    setPrefsSuccess("");
+
+    try {
+      await authApi.updatePreferences({
+        emailNotifications: notifications.email,
+        smsNotifications: notifications.sms,
+        timezone,
+      });
+
+      setPrefsSuccess("Preferences saved.");
+    } catch (err) {
+      setPrefsError(
+        err.response?.data?.message || "Unable to save preferences.",
+      );
+    } finally {
+      setPrefsSaving(false);
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Change Password
+  |--------------------------------------------------------------------------
+  */
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters.");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("New password and confirmation don't match.");
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    try {
+      await authApi.changePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword,
+      );
+
+      setPasswordSuccess("Password updated successfully.");
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      setPasswordError(
+        err.response?.data?.message ||
+          "Unable to update your password. Check your current password and try again.",
+      );
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Settings
-          </h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Application settings will appear here.
-          </p>
-        </div>
-        <button className="mt-3 flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-105 hover:shadow-blue-500/50 sm:mt-0">
-          <FiSave size={16} />
-          Save Changes
-        </button>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          Settings
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Manage your account, security, and notification preferences.
+        </p>
       </div>
 
-      {/* Settings cards */}
-      <div className="space-y-6">
-        {/* Profile Settings */}
-        <SettingCard
-          icon={FiUser}
-          title="Profile"
-          description="Manage your personal information"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5">
-                Full Name
-              </label>
-              <input
-                type="text"
-                defaultValue="Admin User"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-blue-500/50 focus:bg-white/10 focus:ring-1 focus:ring-blue-500/30"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5">
-                Email Address
-              </label>
-              <input
-                type="email"
-                defaultValue="admin@nxthack.com"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-blue-500/50 focus:bg-white/10 focus:ring-1 focus:ring-blue-500/30"
-              />
-            </div>
+      {/* Change Password */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+            <FiLock size={20} className="text-indigo-600" />
           </div>
-        </SettingCard>
-
-        {/* Preferences */}
-        <SettingCard
-          icon={FiGlobe}
-          title="Preferences"
-          description="Customize your experience"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white">Dark Mode</p>
-                <p className="text-xs text-slate-400">Switch to dark theme</p>
-              </div>
-              <button
-                onClick={() => handleToggle("preferences", "darkMode")}
-                className="text-2xl text-slate-400 transition hover:text-white"
-              >
-                {preferences.darkMode ? (
-                  <FiToggleRight className="text-blue-400" />
-                ) : (
-                  <FiToggleLeft />
-                )}
-              </button>
-            </div>
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5">
-                Language
-              </label>
-              <select
-                value={preferences.language}
-                onChange={(e) =>
-                  setPreferences((prev) => ({
-                    ...prev,
-                    language: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-all focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
-              >
-                <option value="English" className="bg-slate-900">
-                  English
-                </option>
-                <option value="Hindi" className="bg-slate-900">
-                  Hindi
-                </option>
-                <option value="Spanish" className="bg-slate-900">
-                  Spanish
-                </option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5">
-                Timezone
-              </label>
-              <select
-                value={preferences.timezone}
-                onChange={(e) =>
-                  setPreferences((prev) => ({
-                    ...prev,
-                    timezone: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-all focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
-              >
-                <option value="IST (UTC+5:30)" className="bg-slate-900">
-                  IST (UTC+5:30)
-                </option>
-                <option value="EST (UTC-5:00)" className="bg-slate-900">
-                  EST (UTC-5:00)
-                </option>
-                <option value="PST (UTC-8:00)" className="bg-slate-900">
-                  PST (UTC-8:00)
-                </option>
-              </select>
-            </div>
-          </div>
-        </SettingCard>
-
-        {/* Notifications */}
-        <SettingCard
-          icon={FiBell}
-          title="Notifications"
-          description="Manage how you receive updates"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white">Email Notifications</p>
-                <p className="text-xs text-slate-400">
-                  Receive updates via email
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle("notifications", "email")}
-                className="text-2xl text-slate-400 transition hover:text-white"
-              >
-                {notifications.email ? (
-                  <FiToggleRight className="text-blue-400" />
-                ) : (
-                  <FiToggleLeft />
-                )}
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white">Push Notifications</p>
-                <p className="text-xs text-slate-400">In-app alerts</p>
-              </div>
-              <button
-                onClick={() => handleToggle("notifications", "push")}
-                className="text-2xl text-slate-400 transition hover:text-white"
-              >
-                {notifications.push ? (
-                  <FiToggleRight className="text-blue-400" />
-                ) : (
-                  <FiToggleLeft />
-                )}
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white">SMS Notifications</p>
-                <p className="text-xs text-slate-400">
-                  Important alerts via SMS
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle("notifications", "sms")}
-                className="text-2xl text-slate-400 transition hover:text-white"
-              >
-                {notifications.sms ? (
-                  <FiToggleRight className="text-blue-400" />
-                ) : (
-                  <FiToggleLeft />
-                )}
-              </button>
-            </div>
-          </div>
-        </SettingCard>
-
-        {/* Security */}
-        <SettingCard
-          icon={FiLock}
-          title="Security"
-          description="Protect your account"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white">Two-Factor Authentication</p>
-                <p className="text-xs text-slate-400">
-                  Add an extra layer of security
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle("security", "twoFactor")}
-                className="text-2xl text-slate-400 transition hover:text-white"
-              >
-                {security.twoFactor ? (
-                  <FiToggleRight className="text-blue-400" />
-                ) : (
-                  <FiToggleLeft />
-                )}
-              </button>
-            </div>
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5">
-                Session Timeout
-              </label>
-              <select
-                value={security.sessionTimeout}
-                onChange={(e) =>
-                  setSecurity((prev) => ({
-                    ...prev,
-                    sessionTimeout: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-all focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
-              >
-                <option value="15 mins" className="bg-slate-900">
-                  15 mins
-                </option>
-                <option value="30 mins" className="bg-slate-900">
-                  30 mins
-                </option>
-                <option value="1 hour" className="bg-slate-900">
-                  1 hour
-                </option>
-                <option value="Never" className="bg-slate-900">
-                  Never
-                </option>
-              </select>
-            </div>
-            <button className="text-sm font-medium text-red-400 transition hover:text-red-300">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
               Change Password
+            </h2>
+            <p className="text-sm text-slate-500">
+              Update the password used to sign in
+            </p>
+          </div>
+        </div>
+
+        {passwordError && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{passwordError}</span>
+          </div>
+        )}
+
+        {passwordSuccess && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{passwordSuccess}</span>
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500">
+              Current Password
+            </label>
+            <input
+              type="password"
+              name="currentPassword"
+              value={passwordForm.currentPassword}
+              onChange={handlePasswordChange}
+              required
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500">
+                New Password
+              </label>
+              <input
+                type="password"
+                name="newPassword"
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+                required
+                minLength={8}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={passwordForm.confirmPassword}
+                onChange={handlePasswordChange}
+                required
+                minLength={8}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={passwordSaving}
+              className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+            >
+              {passwordSaving ? "Updating..." : "Update Password"}
             </button>
           </div>
-        </SettingCard>
+        </form>
       </div>
-    </div>
-  );
-};
 
-// Setting Card Component
-const SettingCard = ({ icon: Icon, title, description, children }) => {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-white/20">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-2.5 border border-white/10">
-          <Icon size={20} className="text-blue-400" />
+      {/* Notifications & Preferences */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+              <FiBell size={20} className="text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Notifications
+              </h2>
+              <p className="text-sm text-slate-500">
+                Choose how you'd like to hear about updates
+              </p>
+            </div>
+          </div>
         </div>
+
+        {prefsError && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{prefsError}</span>
+          </div>
+        )}
+
+        {prefsSuccess && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{prefsSuccess}</span>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-900">Email Notifications</p>
+              <p className="text-xs text-slate-500">
+                Assignment updates and requirement matches
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleToggle("email")}
+              disabled={prefsLoading}
+              className="text-2xl text-slate-300 transition hover:text-slate-500 disabled:opacity-50"
+              aria-label="Toggle email notifications"
+            >
+              {notifications.email ? (
+                <FiToggleRight className="text-indigo-600" />
+              ) : (
+                <FiToggleLeft />
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-900">SMS Notifications</p>
+              <p className="text-xs text-slate-500">
+                Time-sensitive alerts via SMS
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleToggle("sms")}
+              disabled={prefsLoading}
+              className="text-2xl text-slate-300 transition hover:text-slate-500 disabled:opacity-50"
+              aria-label="Toggle SMS notifications"
+            >
+              {notifications.sms ? (
+                <FiToggleRight className="text-indigo-600" />
+              ) : (
+                <FiToggleLeft />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Preferences */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+            <FiGlobe size={20} className="text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Preferences
+            </h2>
+            <p className="text-sm text-slate-500">Regional settings</p>
+          </div>
+        </div>
+
         <div>
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <p className="text-sm text-slate-400">{description}</p>
+          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500">
+            Timezone
+          </label>
+          <select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            disabled={prefsLoading}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
+          >
+            <option value="IST (UTC+5:30)">IST (UTC+5:30)</option>
+            <option value="EST (UTC-5:00)">EST (UTC-5:00)</option>
+            <option value="PST (UTC-8:00)">PST (UTC-8:00)</option>
+          </select>
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={handleSavePreferences}
+            disabled={prefsSaving || prefsLoading}
+            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+          >
+            <FiSave size={16} />
+            {prefsSaving ? "Saving..." : "Save Preferences"}
+          </button>
         </div>
       </div>
-      <div className="pl-2">{children}</div>
     </div>
   );
 };
 
-export default SettingsPage;
+export default TrainerSettingsPage;

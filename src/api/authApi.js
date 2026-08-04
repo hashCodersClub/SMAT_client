@@ -48,6 +48,18 @@ const authApi = {
 
     return response.data;
   },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Update My Preferences
+  |--------------------------------------------------------------------------
+  */
+
+  updatePreferences: async (data) => {
+    const response = await api.patch("/auth/me/preferences", data);
+
+    return response.data;
+  },
 };
 
 export default authApi;

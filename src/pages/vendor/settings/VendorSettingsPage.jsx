@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FiBell,
   FiGlobe,
   FiLock,
   FiToggleLeft,
   FiToggleRight,
-  FiInfo,
+  FiSave,
   FiCheckCircle,
   FiAlertCircle,
 } from "react-icons/fi";
@@ -17,14 +17,10 @@ import authApi from "../../../api/authApi";
 | Vendor Settings Page
 |--------------------------------------------------------------------------
 |
-| Change Password is real — wired to POST /api/auth/change-password.
-|
-| Notification/timezone preferences are NOT — there's still no backend
-| model/endpoint for per-user preferences (only auth + vendor company
-| profile exist). Rather than silently do nothing on "Save" like the
-| admin Settings page does, that section is explicitly labeled as a
-| local preview. Company details live on the separate Profile page,
-| which IS real and saves to the backend.
+| Change Password — wired to POST /api/auth/change-password.
+| Notifications + Timezone — wired to GET /api/auth/me and
+| PATCH /api/auth/me/preferences. Both are real now; company details
+| still live on the separate Profile page.
 |--------------------------------------------------------------------------
 */
 
@@ -36,8 +32,64 @@ const VendorSettingsPage = () => {
 
   const [timezone, setTimezone] = useState("IST (UTC+5:30)");
 
+  const [prefsLoading, setPrefsLoading] = useState(true);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsError, setPrefsError] = useState("");
+  const [prefsSuccess, setPrefsSuccess] = useState("");
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load Current Preferences
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const response = await authApi.getMe();
+        const preferences = response?.user?.preferences;
+
+        if (preferences) {
+          setNotifications({
+            email: preferences.emailNotifications ?? true,
+            sms: preferences.smsNotifications ?? false,
+          });
+          setTimezone(preferences.timezone || "IST (UTC+5:30)");
+        }
+      } catch {
+        // Non-fatal — fall back to defaults already in state.
+      } finally {
+        setPrefsLoading(false);
+      }
+    };
+
+    loadPreferences();
+  }, []);
+
   const handleToggle = (key) => {
     setNotifications((previous) => ({ ...previous, [key]: !previous[key] }));
+  };
+
+  const handleSavePreferences = async () => {
+    setPrefsSaving(true);
+    setPrefsError("");
+    setPrefsSuccess("");
+
+    try {
+      await authApi.updatePreferences({
+        emailNotifications: notifications.email,
+        smsNotifications: notifications.sms,
+        timezone,
+      });
+
+      setPrefsSuccess("Preferences saved.");
+    } catch (err) {
+      setPrefsError(
+        err.response?.data?.message || "Unable to save preferences.",
+      );
+    } finally {
+      setPrefsSaving(false);
+    }
   };
 
   /*
@@ -200,31 +252,37 @@ const VendorSettingsPage = () => {
         </form>
       </div>
 
-      <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-        <FiInfo className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>
-          Notification and timezone preferences below are a preview and
-          aren't saved to your account yet. To update your company details,
-          use the <span className="font-semibold">Profile</span> page
-          instead — those changes do save.
-        </span>
-      </div>
-
-      {/* Notifications */}
+      {/* Notifications & Preferences */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-            <FiBell size={20} className="text-indigo-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Notifications
-            </h2>
-            <p className="text-sm text-slate-500">
-              Choose how you'd like to hear about updates
-            </p>
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+              <FiBell size={20} className="text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Notifications
+              </h2>
+              <p className="text-sm text-slate-500">
+                Choose how you'd like to hear about updates
+              </p>
+            </div>
           </div>
         </div>
+
+        {prefsError && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{prefsError}</span>
+          </div>
+        )}
+
+        {prefsSuccess && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{prefsSuccess}</span>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -237,7 +295,8 @@ const VendorSettingsPage = () => {
             <button
               type="button"
               onClick={() => handleToggle("email")}
-              className="text-2xl text-slate-300 transition hover:text-slate-500"
+              disabled={prefsLoading}
+              className="text-2xl text-slate-300 transition hover:text-slate-500 disabled:opacity-50"
               aria-label="Toggle email notifications"
             >
               {notifications.email ? (
@@ -258,7 +317,8 @@ const VendorSettingsPage = () => {
             <button
               type="button"
               onClick={() => handleToggle("sms")}
-              className="text-2xl text-slate-300 transition hover:text-slate-500"
+              disabled={prefsLoading}
+              className="text-2xl text-slate-300 transition hover:text-slate-500 disabled:opacity-50"
               aria-label="Toggle SMS notifications"
             >
               {notifications.sms ? (
@@ -292,12 +352,25 @@ const VendorSettingsPage = () => {
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+            disabled={prefsLoading}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
           >
             <option value="IST (UTC+5:30)">IST (UTC+5:30)</option>
             <option value="EST (UTC-5:00)">EST (UTC-5:00)</option>
             <option value="PST (UTC-8:00)">PST (UTC-8:00)</option>
           </select>
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={handleSavePreferences}
+            disabled={prefsSaving || prefsLoading}
+            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
+          >
+            <FiSave size={16} />
+            {prefsSaving ? "Saving..." : "Save Preferences"}
+          </button>
         </div>
       </div>
     </div>
