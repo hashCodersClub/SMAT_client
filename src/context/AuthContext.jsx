@@ -1,12 +1,46 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import authApi from "../api/authApi";
+import trainersApi from "../api/trainersApi";
+import vendorsApi from "../api/vendorsApi";
 
 const AuthContext = createContext(null);
 
+const enrichUserWithProfile = async (rawUser) => {
+  if (!rawUser) return null;
+  let fullUser = { ...rawUser };
+
+  const role = (rawUser.role || "").toUpperCase();
+
+  if (role === "TRAINER" && !fullUser.profilePhotoUrl && !fullUser.avatar) {
+    try {
+      const res = await trainersApi.getMyProfile();
+      if (res?.trainer) {
+        fullUser.trainer = res.trainer;
+        fullUser.profilePhotoUrl = res.trainer.profilePhotoUrl || "";
+        fullUser.avatar = res.trainer.profilePhotoUrl || "";
+      }
+    } catch (err) {
+      console.warn("Could not enrich trainer profile:", err);
+    }
+  } else if (role === "VENDOR" && !fullUser.logoUrl && !fullUser.avatar) {
+    try {
+      const res = await vendorsApi.getMyProfile();
+      if (res?.vendor) {
+        fullUser.vendor = res.vendor;
+        fullUser.logoUrl = res.vendor.logoUrl || "";
+        fullUser.avatar = res.vendor.logoUrl || "";
+      }
+    } catch (err) {
+      console.warn("Could not enrich vendor profile:", err);
+    }
+  }
+
+  return fullUser;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-
   const [loading, setLoading] = useState(true);
 
   /*
@@ -20,41 +54,27 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = localStorage.getItem("accessToken");
 
-        /*
-         * If access token exists,
-         * Axios will send it.
-         */
-
         if (token) {
           try {
             const data = await authApi.getMe();
-            setUser(data.user);
+            const enriched = await enrichUserWithProfile(data.user);
+            setUser(enriched);
             return;
           } catch (meError) {
-            // If rate limited (429), preserve token and don't wipe session
             if (meError.response?.status === 429) {
-              console.warn("Session restore rate-limited (429). Retrying session state preservation.");
+              console.warn("Session restore rate-limited (429). Preserving session.");
               return;
             }
             throw meError;
           }
         }
 
-        /*
-         * No access token.
-         *
-         * Try HTTP-only refresh
-         * cookie.
-         */
-
         try {
           const refreshData = await authApi.refresh();
-
           localStorage.setItem("accessToken", refreshData.accessToken);
-
           const meData = await authApi.getMe();
-
-          setUser(meData.user);
+          const enriched = await enrichUserWithProfile(meData.user);
+          setUser(enriched);
         } catch (refreshErr) {
           if (refreshErr.response?.status !== 429) {
             setUser(null);
@@ -63,7 +83,6 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Session restore failed:", error);
-
         if (error.response?.status !== 429) {
           setUser(null);
           localStorage.removeItem("accessToken");
@@ -89,10 +108,10 @@ export const AuthProvider = ({ children }) => {
     });
 
     localStorage.setItem("accessToken", data.accessToken);
+    const enriched = await enrichUserWithProfile(data.user);
+    setUser(enriched);
 
-    setUser(data.user);
-
-    return data.user;
+    return enriched;
   };
 
   /*
@@ -108,7 +127,6 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout request failed:", error);
     } finally {
       localStorage.removeItem("accessToken");
-
       setUser(null);
     }
   };
@@ -117,8 +135,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await authApi.getMe();
       if (data?.user) {
-        setUser(data.user);
-        return data.user;
+        const enriched = await enrichUserWithProfile(data.user);
+        setUser(enriched);
+        return enriched;
       }
     } catch (error) {
       console.error("Failed to refresh user:", error);

@@ -699,6 +699,20 @@ const TrainerProfilePage = () => {
       setEditing(false);
 
       await loadProfile();
+
+      const updatedPhotoUrl = response?.trainer?.profilePhotoUrl || response?.profilePhotoUrl;
+      if (updatedPhotoUrl) {
+        updateUser((prev) => ({
+          ...prev,
+          profilePhotoUrl: updatedPhotoUrl,
+          avatar: updatedPhotoUrl,
+          trainer: {
+            ...(prev?.trainer || {}),
+            profilePhotoUrl: updatedPhotoUrl,
+          },
+        }));
+      }
+
       await refreshUser();
 
       setSuccess(response?.message || "Profile updated successfully.");
