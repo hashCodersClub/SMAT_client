@@ -163,6 +163,16 @@ export const mapTrainerFromApi = (trainer = {}) => {
 
     languages: Array.isArray(trainer.languages) ? trainer.languages : [],
 
+    professionalHeadline: trainer.professionalHeadline || "",
+
+    professionalSummary: trainer.professionalSummary || "",
+
+    currentDesignation: trainer.currentDesignation || "",
+
+    currentOrganization: trainer.currentOrganization || "",
+
+    projects: Array.isArray(trainer.projects) ? trainer.projects : [],
+
     /*
     |--------------------------------------------------------------------------
     | Performance
@@ -320,6 +330,16 @@ export const mapTrainerToApi = (form = {}) => {
     */
 
     tags: Array.isArray(form.trainingTypes) ? form.trainingTypes : [],
+
+    professionalHeadline: form.professionalHeadline?.trim() || "",
+
+    professionalSummary: form.professionalSummary?.trim() || "",
+
+    currentDesignation: form.currentDesignation?.trim() || "",
+
+    currentOrganization: form.currentOrganization?.trim() || "",
+
+    projects: Array.isArray(form.projects) ? form.projects : [],
 
     /*
     |--------------------------------------------------------------------------

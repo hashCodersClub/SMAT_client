@@ -11,6 +11,7 @@ import {
   FiEdit2,
   FiExternalLink,
   FiFile,
+  FiFolder,
   FiGlobe,
   FiLinkedin,
   FiLoader,
@@ -31,6 +32,7 @@ import CertificationsEditor from "../../../components/trainer/profile/Certificat
 import EmploymentHistoryEditor from "../../../components/trainer/profile/EmploymentHistoryEditor";
 import EducationEditor from "../../../components/trainer/profile/EducationEditor";
 import LanguagesEditor from "../../../components/trainer/profile/LanguagesEditor";
+import ProjectsEditor from "../../../components/trainer/profile/ProjectsEditor";
 import AvatarCropModal from "../../../components/shared/AvatarCropModal";
 
 /*
@@ -62,6 +64,7 @@ const INITIAL_FORM = {
   employmentHistory: [],
   education: [],
   languages: [],
+  projects: [],
 
   experience: 0,
   trainingExperience: 0,
@@ -177,6 +180,8 @@ const TrainerProfilePage = () => {
         education: Array.isArray(trainer.education) ? trainer.education : [],
 
         languages: Array.isArray(trainer.languages) ? trainer.languages : [],
+
+        projects: Array.isArray(trainer.projects) ? trainer.projects : [],
 
         experience: trainer.experience ?? 0,
 
@@ -397,6 +402,23 @@ const TrainerProfilePage = () => {
     setForm((current) => ({
       ...current,
       languages,
+    }));
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Projects
+  |--------------------------------------------------------------------------
+  */
+
+  const handleProjectsChange = (projects) => {
+    setForm((current) => ({
+      ...current,
+      projects,
     }));
 
     if (success) {
@@ -634,6 +656,8 @@ const TrainerProfilePage = () => {
         education,
 
         languages: form.languages,
+
+        projects: form.projects,
 
         experience: Number(form.experience) || 0,
 
@@ -1279,6 +1303,23 @@ const TrainerProfilePage = () => {
           employmentHistory={form.employmentHistory}
           editing={editing}
           onChange={handleEmploymentHistoryChange}
+        />
+      </Section>
+
+      {/* ================================================================
+          PROJECTS WORKED ON
+      ================================================================= */}
+
+      <Section
+        id="section-projects"
+        title="Projects Worked On"
+        description="Showcase key projects, corporate deliveries, and systems you have worked on or built."
+        icon={FiFolder}
+      >
+        <ProjectsEditor
+          projects={form.projects}
+          editing={editing}
+          onChange={handleProjectsChange}
         />
       </Section>
 

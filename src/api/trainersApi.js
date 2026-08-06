@@ -120,6 +120,19 @@ const trainersApi = {
 
     return response.data;
   },
+
+  parseDocument: async (file) => {
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    const response = await api.post(
+      "/trainers/parse-document",
+      formData,
+      multipartConfig,
+    );
+
+    return response.data;
+  },
 };
 
 export default trainersApi;

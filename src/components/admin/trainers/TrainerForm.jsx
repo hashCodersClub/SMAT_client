@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { FiPlus, FiX, FiUpload, FiFile, FiExternalLink } from "react-icons/fi";
+import {
+  FiPlus,
+  FiX,
+  FiUpload,
+  FiFile,
+  FiExternalLink,
+  FiFileText,
+  FiCheckCircle,
+  FiLoader,
+} from "react-icons/fi";
 
 import AvatarCropModal from "../../shared/AvatarCropModal";
+import ProjectsEditor from "../../trainer/profile/ProjectsEditor";
+import trainersApi from "../../../api/trainersApi";
 
 const initialValues = {
   name: "",
@@ -19,6 +30,7 @@ const initialValues = {
   modes: [],
   preferredLocations: "",
   skills: [],
+  projects: [],
   // Existing (already-uploaded) file URLs — populated when editing a
   // trainer that already has a photo/resume on Cloudinary.
   profilePhotoUrl: "",
@@ -48,11 +60,75 @@ const TrainerForm = ({
     initialData.profilePhotoUrl || "",
   );
   const [fileError, setFileError] = useState("");
+  const [parsingDoc, setParsingDoc] = useState(false);
+  const [parseSuccessMsg, setParseSuccessMsg] = useState("");
 
   // Raw file staged for cropping - the crop modal is open whenever this is
   // set. profilePhotoFile/photoPreviewUrl only get updated once the user
   // confirms a crop; canceling just discards this and changes nothing.
   const [photoToCrop, setPhotoToCrop] = useState(null);
+
+  const handleDocumentAutoFill = async (e) => {
+    const file = e.target.files?.[0];
+    setFileError("");
+    setParseSuccessMsg("");
+    if (!file) return;
+
+    try {
+      setParsingDoc(true);
+      const res = await trainersApi.parseDocument(file);
+      const data = res.data || {};
+
+      setForm((prev) => ({
+        ...prev,
+        name: data.name || prev.name,
+        email: data.email || prev.email,
+        phone: data.phone || prev.phone,
+        city: data.city || prev.city,
+        state: data.state || prev.state,
+        experienceYears:
+          data.experienceYears !== undefined && data.experienceYears !== 0
+            ? String(data.experienceYears)
+            : prev.experienceYears,
+        trainingExperienceYears:
+          data.trainingExperienceYears !== undefined &&
+          data.trainingExperienceYears !== 0
+            ? String(data.trainingExperienceYears)
+            : prev.trainingExperienceYears,
+        skills: Array.from(
+          new Set([...(prev.skills || []), ...(data.skills || [])]),
+        ),
+        projects:
+          Array.isArray(data.projects) && data.projects.length > 0
+            ? data.projects
+            : prev.projects || [],
+      }));
+
+      setResumeFile(file);
+
+      let count = 0;
+      if (data.name) count++;
+      if (data.email) count++;
+      if (data.phone) count++;
+      if (data.city) count++;
+      if (data.skills?.length) count++;
+      if (data.projects?.length) count++;
+      if (data.experienceYears) count++;
+
+      setParseSuccessMsg(
+        `Resume parsed successfully! ${count} field groups auto-filled. Please review and make any necessary adjustments.`,
+      );
+    } catch (err) {
+      console.error("Failed to parse document:", err);
+      setFileError(
+        err.response?.data?.message ||
+          "Unable to parse uploaded resume document.",
+      );
+    } finally {
+      setParsingDoc(false);
+      e.target.value = "";
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -203,6 +279,8 @@ const TrainerForm = ({
               .filter(Boolean)
           : form.preferredLocations,
 
+      projects: form.projects || [],
+
       // Only included when a new file was actually chosen this session.
       // trainersApi automatically switches to a multipart request when
       // either of these is present, and leaves everything else untouched
@@ -215,6 +293,53 @@ const TrainerForm = ({
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Document Parsing Banner */}
+        <div className="relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+                <FiFileText size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900">
+                  Auto-fill from Resume (PDF / DOCX)
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-600">
+                  Upload a PDF or DOCX file to automatically parse name, contact details, skills, experience, and projects.
+                </p>
+              </div>
+            </div>
+
+            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50">
+              {parsingDoc ? (
+                <>
+                  <FiLoader className="animate-spin" size={16} />
+                  <span>Parsing Document...</span>
+                </>
+              ) : (
+                <>
+                  <FiUpload size={16} />
+                  <span>Upload & Auto-fill</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={handleDocumentAutoFill}
+                disabled={parsingDoc}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {parseSuccessMsg && (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800">
+              <FiCheckCircle size={15} className="shrink-0 text-emerald-600" />
+              <span>{parseSuccessMsg}</span>
+            </div>
+          )}
+        </div>
+
         {/* Personal information */}
 
         <FormSection
@@ -418,6 +543,23 @@ const TrainerForm = ({
               }
               onChange={handleChange}
               placeholder="Delhi, Noida, Gurgaon"
+            />
+          </div>
+        </FormSection>
+
+        {/* Projects Worked On */}
+
+        <FormSection
+          title="Projects Worked On"
+          description="Projects and corporate assignments the trainer has delivered or worked on."
+        >
+          <div className="md:col-span-2">
+            <ProjectsEditor
+              projects={form.projects || []}
+              editing={true}
+              onChange={(projects) =>
+                setForm((prev) => ({ ...prev, projects }))
+              }
             />
           </div>
         </FormSection>

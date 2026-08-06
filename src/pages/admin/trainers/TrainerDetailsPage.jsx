@@ -18,6 +18,9 @@ import {
   FiUserCheck,
   FiClock,
   FiTrash2,
+  FiFolder,
+  FiExternalLink,
+  FiCode,
 } from "react-icons/fi";
 
 import trainersApi from "../../../api/trainersApi";
@@ -558,6 +561,62 @@ const TrainerDetailsPage = () => {
               </>
             ) : (
               <EmptyText>No languages added.</EmptyText>
+            )}
+          </Section>
+
+          {/* Projects Worked On */}
+          <Section title="Projects Worked On">
+            {trainer.projects?.length ? (
+              <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2">
+                {trainer.projects.map((project, index) => (
+                  <div
+                    key={project._id || index}
+                    className="flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white/70 p-4 backdrop-blur-sm shadow-xs transition hover:shadow-md dark:border-slate-700/50 dark:bg-slate-800/40"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <FiFolder className="text-blue-600 dark:text-blue-400" size={16} />
+                          <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                            {project.title}
+                          </h3>
+                        </div>
+                        {project.projectUrl && (
+                          <a
+                            href={project.projectUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                          >
+                            <FiExternalLink size={12} className="inline mr-1" />
+                            Link
+                          </a>
+                        )}
+                      </div>
+                      {project.description && (
+                        <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300 line-clamp-3">
+                          {project.description}
+                        </p>
+                      )}
+                    </div>
+                    {project.technologies?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1 border-t border-slate-100 pt-2 dark:border-slate-700/50">
+                        {project.technologies.map((tech, tIdx) => (
+                          <span
+                            key={tIdx}
+                            className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                          >
+                            <FiCode size={9} className="text-slate-400" />
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyText>No projects added.</EmptyText>
             )}
           </Section>
         </div>
