@@ -56,7 +56,9 @@ const Navbar = ({
     user?.avatar ||
     user?.profilePhotoUrl ||
     user?.trainer?.profilePhotoUrl ||
+    user?.trainerId?.profilePhotoUrl ||
     user?.vendor?.logoUrl ||
+    user?.vendorId?.logoUrl ||
     "";
 
   const getInitials = (name = "") => {

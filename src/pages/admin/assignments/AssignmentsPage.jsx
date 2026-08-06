@@ -69,9 +69,11 @@ const AssignmentsPage = () => {
 
       const records = Array.isArray(response?.data)
         ? response.data
-        : Array.isArray(response?.assignments)
-          ? response.assignments
-          : [];
+        : Array.isArray(response)
+          ? response
+          : Array.isArray(response?.assignments)
+            ? response.assignments
+            : [];
 
       setAssignments(records);
     } catch (requestError) {

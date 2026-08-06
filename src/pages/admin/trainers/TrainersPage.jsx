@@ -609,13 +609,32 @@ const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
     <tr className="group transition-all duration-300 hover:bg-slate-50/50 dark:hover:bg-white/5">
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-semibold text-white shadow-lg shadow-blue-500/30">
-            {trainer.avatar || trainer.name?.charAt(0) || "T"}
-          </div>
+          {trainer.profilePhotoUrl ? (
+            <img
+              src={trainer.profilePhotoUrl}
+              alt={trainer.name}
+              className="h-10 w-10 shrink-0 rounded-xl object-cover ring-2 ring-indigo-500/20 shadow-md"
+            />
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-semibold text-white shadow-md">
+              {trainer.name?.charAt(0) || "T"}
+            </div>
+          )}
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
-              {trainer.name}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-slate-900 dark:text-white">
+                {trainer.name}
+              </p>
+              {trainer.portalEnabled ? (
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                  Portal Active
+                </span>
+              ) : (
+                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                  Invite Pending
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {trainer.email}
             </p>
@@ -663,14 +682,22 @@ const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
         <div className="relative flex items-center justify-end gap-1">
           <button
             onClick={() => onAssign(trainer)}
-            className="rounded-lg p-1.5 text-blue-500 transition hover:bg-blue-500/10"
+            className="rounded-lg p-1.5 text-indigo-500 transition hover:bg-indigo-500/10"
             title="Assign to requirement"
           >
             <FiPlus size={16} />
           </button>
           <button
-            onClick={() => navigate(`/admin/trainers/${trainer.id}/edit`)} // ✅ now works
+            onClick={() => navigate(`/admin/trainers/${trainer.id}`)}
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100/50 hover:text-indigo-600 dark:hover:bg-white/10 dark:hover:text-white"
+            title="View trainer details"
+          >
+            <FiUser size={16} />
+          </button>
+          <button
+            onClick={() => navigate(`/admin/trainers/${trainer.id}/edit`)}
             className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100/50 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white"
+            title="Edit trainer"
           >
             <FiEdit size={16} />
           </button>
@@ -678,6 +705,7 @@ const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
             onClick={() => onDelete(trainer.id)}
             disabled={deletingId === trainer.id}
             className="rounded-lg p-1.5 text-rose-400 transition hover:bg-rose-500/10 disabled:opacity-30"
+            title="Delete trainer"
           >
             <FiTrash2
               size={16}
@@ -691,13 +719,32 @@ const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
             <FiMoreVertical size={16} />
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-40 rounded-lg bg-white shadow-xl dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-1 z-10">
-              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
-                <FiMail size={14} /> Email
+            <div className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-white shadow-2xl dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-1.5 z-20 text-left">
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  navigate(`/admin/trainers/${trainer.id}/availability`);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                <FiClock size={14} /> Availability
               </button>
-              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
-                <FiPhone size={14} /> Call
-              </button>
+              {trainer.email && (
+                <a
+                  href={`mailto:${trainer.email}`}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                  <FiMail size={14} /> Send Email
+                </a>
+              )}
+              {trainer.phone && (
+                <a
+                  href={`tel:${trainer.phone}`}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                  <FiPhone size={14} /> Call Phone
+                </a>
+              )}
             </div>
           )}
         </div>

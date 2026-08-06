@@ -8,13 +8,21 @@ const TrainerCard = ({ trainer }) => {
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 font-semibold text-white">
-            {trainer.name
-              .split(" ")
-              .map((word) => word[0])
-              .slice(0, 2)
-              .join("")}
-          </div>
+          {trainer.profilePhotoUrl ? (
+            <img
+              src={trainer.profilePhotoUrl}
+              alt={trainer.name}
+              className="h-11 w-11 shrink-0 rounded-xl object-cover ring-2 ring-indigo-500/20 shadow-md"
+            />
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 font-semibold text-white shadow-md">
+              {trainer.name
+                .split(" ")
+                .map((word) => word[0])
+                .slice(0, 2)
+                .join("")}
+            </div>
+          )}
 
           <div>
             <h3 className="font-semibold text-slate-800">{trainer.name}</h3>

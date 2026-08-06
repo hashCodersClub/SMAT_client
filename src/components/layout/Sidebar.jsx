@@ -169,7 +169,7 @@ const Sidebar = ({
               {navigation.map((section) => (
                 <div key={section.title}>
                   <p
-                    className={`mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500 transition-all duration-500 ${
+                    className={`mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-300 transition-all duration-500 ${
                       isCollapsed ? "text-center" : "px-3"
                     }`}
                   >
@@ -193,11 +193,11 @@ const Sidebar = ({
                           }}
                           className={({ isActive }) => `
                             group relative flex items-center gap-3 rounded-xl px-3 py-2.5
-                            text-sm font-medium transition-all duration-300
+                            text-sm font-semibold transition-all duration-300
                             ${
                               isActive
-                                ? "bg-white/10 text-white shadow-sm"
-                                : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                ? "bg-white/15 text-white font-bold shadow-sm"
+                                : "text-slate-200 hover:bg-white/10 hover:text-white"
                             }
                             ${isCollapsed ? "justify-center" : ""}
                           `}
