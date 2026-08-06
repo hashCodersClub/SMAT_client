@@ -76,11 +76,17 @@ const LoginPage = () => {
       navigate(getHomeRoute(loggedInUser.role), { replace: true });
     } catch (error) {
       console.error("Login failed:", error);
-      setError(
-        error.response?.data?.message ||
-          error.message ||
-          "Unable to login. Please try again.",
-      );
+      if (error.response?.status === 429) {
+        setError(
+          "Too many requests. The server is temporarily rate-limiting requests. Please wait a few seconds and try again.",
+        );
+      } else {
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Unable to login. Please try again.",
+        );
+      }
     } finally {
       setLoading(false);
     }

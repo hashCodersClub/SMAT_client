@@ -26,11 +26,18 @@ export const AuthProvider = ({ children }) => {
          */
 
         if (token) {
-          const data = await authApi.getMe();
-
-          setUser(data.user);
-
-          return;
+          try {
+            const data = await authApi.getMe();
+            setUser(data.user);
+            return;
+          } catch (meError) {
+            // If rate limited (429), preserve token and don't wipe session
+            if (meError.response?.status === 429) {
+              console.warn("Session restore rate-limited (429). Retrying session state preservation.");
+              return;
+            }
+            throw meError;
+          }
         }
 
         /*
@@ -48,17 +55,19 @@ export const AuthProvider = ({ children }) => {
           const meData = await authApi.getMe();
 
           setUser(meData.user);
-        } catch {
-          setUser(null);
-
-          localStorage.removeItem("accessToken");
+        } catch (refreshErr) {
+          if (refreshErr.response?.status !== 429) {
+            setUser(null);
+            localStorage.removeItem("accessToken");
+          }
         }
       } catch (error) {
         console.error("Session restore failed:", error);
 
-        setUser(null);
-
-        localStorage.removeItem("accessToken");
+        if (error.response?.status !== 429) {
+          setUser(null);
+          localStorage.removeItem("accessToken");
+        }
       } finally {
         setLoading(false);
       }
