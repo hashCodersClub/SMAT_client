@@ -59,7 +59,13 @@ const Navbar = ({
     user?.trainerId?.profilePhotoUrl ||
     user?.vendor?.logoUrl ||
     user?.vendorId?.logoUrl ||
+    user?.photoUrl ||
     "";
+
+  // Reset image error state when avatarUrl changes
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
 
   const getInitials = (name = "") => {
     if (!name) return "U";

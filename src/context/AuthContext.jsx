@@ -104,6 +104,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const data = await authApi.getMe();
+      if (data?.user) {
+        setUser(data.user);
+        return data.user;
+      }
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+    }
+    return null;
+  };
+
+  const updateUser = (updatedFields) => {
+    setUser((prev) => {
+      if (!prev) return updatedFields;
+      return typeof updatedFields === "function"
+        ? updatedFields(prev)
+        : { ...prev, ...updatedFields };
+    });
+  };
+
   const isAuthenticated = Boolean(user);
 
   return (
@@ -113,6 +135,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        refreshUser,
+        updateUser,
         isAuthenticated,
       }}
     >

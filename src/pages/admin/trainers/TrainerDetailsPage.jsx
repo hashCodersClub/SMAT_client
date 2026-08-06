@@ -21,6 +21,7 @@ import {
   FiFolder,
   FiExternalLink,
   FiCode,
+  FiX,
 } from "react-icons/fi";
 
 import trainersApi from "../../../api/trainersApi";
@@ -81,18 +82,19 @@ const TrainerDetailsPage = () => {
   */
 
   const handleSendInvitation = async () => {
-    if (!trainer?.id) {
+    const trainerId = trainer?.id || trainer?._id || id;
+
+    if (!trainerId) {
+      setInviteError("Trainer ID is missing.");
       return;
     }
 
     try {
       setInviting(true);
-
       setInviteSuccess("");
       setInviteError("");
 
-      // Use the correct invitation API
-      const response = await trainerInvitationApi.invite(trainer.id);
+      const response = await trainerInvitationApi.invite(trainerId);
 
       setInviteSuccess(
         response?.message || "Trainer portal invitation sent successfully.",
@@ -240,6 +242,41 @@ const TrainerDetailsPage = () => {
         <FiArrowLeft className="transition-transform duration-200 group-hover:-translate-x-1" />
         <span>Back to Trainers</span>
       </button>
+
+      {/* Invitation Alert Banners */}
+      {inviteSuccess && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 shadow-sm">
+          <FiCheckCircle className="mt-0.5 shrink-0 text-emerald-600 h-5 w-5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold">Portal Invitation Sent</p>
+            <p className="text-sm text-emerald-700">{inviteSuccess}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setInviteSuccess("")}
+            className="text-emerald-500 hover:text-emerald-800"
+          >
+            <FiX className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {inviteError && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800 shadow-sm">
+          <FiAlertCircle className="mt-0.5 shrink-0 text-red-600 h-5 w-5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold">Invitation Error</p>
+            <p className="text-sm text-red-700">{inviteError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setInviteError("")}
+            className="text-red-500 hover:text-red-800"
+          >
+            <FiX className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Profile Header */}
       <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/60 p-6 backdrop-blur-xl shadow-2xl shadow-slate-200/40 transition-all duration-300 sm:p-8">

@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 import TrainerForm from "../../../components/admin/trainers/TrainerForm";
 import trainersApi from "../../../api/trainersApi";
+import trainerInvitationApi from "../../../api/trainerInvitationApi";
 import { mapTrainerToApi } from "../../../utils/trainerAdapter";
 
 const AddTrainerPage = () => {
@@ -42,11 +43,24 @@ const AddTrainerPage = () => {
 
       /*
       |--------------------------------------------------------------------------
-      | Trainer Created
+      | Trainer Created & Activation Email
       |--------------------------------------------------------------------------
       */
 
-      const createdTrainer = response?.trainer;
+      const createdTrainer = response?.trainer || response;
+      const trainerId = createdTrainer?._id || createdTrainer?.id || response?.id;
+
+      let invitationSent = response?.invitationSent === true;
+
+      // If backend creation didn't send invitation automatically, trigger it now
+      if (!invitationSent && trainerId) {
+        try {
+          await trainerInvitationApi.invite(trainerId);
+          invitationSent = true;
+        } catch (inviteErr) {
+          console.warn("Activation email trigger fallback:", inviteErr);
+        }
+      }
 
       setSuccess({
         name: createdTrainer?.name || trainerData.name || "Trainer",
@@ -54,12 +68,13 @@ const AddTrainerPage = () => {
         email: createdTrainer?.email || trainerData.email,
 
         message:
-          response?.message ||
-          "Trainer created and portal invitation sent successfully.",
+          invitationSent
+            ? "Trainer created and activation email sent successfully."
+            : "Trainer created successfully. You can resend the activation email anytime.",
 
-        trainerId: createdTrainer?._id || createdTrainer?.id,
+        trainerId,
 
-        invitationSent: response?.invitationSent !== false,
+        invitationSent,
       });
 
       /*

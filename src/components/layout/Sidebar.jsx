@@ -55,8 +55,16 @@ const Sidebar = ({
     user?.avatar ||
     user?.profilePhotoUrl ||
     user?.trainer?.profilePhotoUrl ||
+    user?.trainerId?.profilePhotoUrl ||
     user?.vendor?.logoUrl ||
+    user?.vendorId?.logoUrl ||
+    user?.photoUrl ||
     "";
+
+  // Reset image error state when avatarUrl changes
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
 
   const getInitials = (name = "") => {
     if (!name) return "U";
@@ -84,9 +92,8 @@ const Sidebar = ({
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-500 lg:hidden ${
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-500 lg:hidden ${open ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         onClick={() => setOpen(false)}
       />
 
@@ -112,9 +119,8 @@ const Sidebar = ({
           {/* Brand Header */}
           <div className="flex h-20 items-center justify-between border-b border-white/5 px-4">
             <div
-              className={`flex items-center gap-3 transition-all duration-500 ${
-                isCollapsed ? "w-full justify-center" : ""
-              }`}
+              className={`flex items-center gap-3 transition-all duration-500 ${isCollapsed ? "w-full justify-center" : ""
+                }`}
             >
               <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
                 <img
@@ -125,11 +131,10 @@ const Sidebar = ({
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/50 to-purple-600/50 blur-xl" />
               </div>
               <div
-                className={`transition-all duration-500 ${
-                  isCollapsed
+                className={`transition-all duration-500 ${isCollapsed
                     ? "w-0 scale-0 opacity-0"
                     : "w-auto scale-100 opacity-100"
-                }`}
+                  }`}
               >
                 <h1 className="text-lg font-bold tracking-tight text-white">
                   NXTHACK
@@ -144,12 +149,11 @@ const Sidebar = ({
             <button
               type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all duration-300 lg:flex"
+              className="hidden h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/10 transition-all duration-300 lg:flex"
             >
               <ChevronRight
-                className={`h-4 w-4 transition-transform duration-500 ${
-                  isCollapsed ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 transition-transform duration-500 ${isCollapsed ? "rotate-180" : ""
+                  }`}
               />
             </button>
 
@@ -157,7 +161,7 @@ const Sidebar = ({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all duration-300 lg:hidden"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/10 transition-all duration-300 lg:hidden"
             >
               <FiX className="h-5 w-5" />
             </button>
@@ -169,9 +173,8 @@ const Sidebar = ({
               {navigation.map((section) => (
                 <div key={section.title}>
                   <p
-                    className={`mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-300 transition-all duration-500 ${
-                      isCollapsed ? "text-center" : "px-3"
-                    }`}
+                    className={`mb-2 text-[11px] font-bold uppercase tracking-wider text-white transition-all duration-500 ${isCollapsed ? "text-center" : "px-3"
+                      }`}
                   >
                     {isCollapsed ? "•" : section.title}
                   </p>
@@ -194,10 +197,9 @@ const Sidebar = ({
                           className={({ isActive }) => `
                             group relative flex items-center gap-3 rounded-xl px-3 py-2.5
                             text-sm font-semibold transition-all duration-300
-                            ${
-                              isActive
-                                ? "bg-white/15 text-white font-bold shadow-sm"
-                                : "text-slate-200 hover:bg-white/10 hover:text-white"
+                            ${isActive
+                              ? "bg-white/20 text-white font-bold shadow-sm"
+                              : "text-white/90 hover:bg-white/10 hover:text-white"
                             }
                             ${isCollapsed ? "justify-center" : ""}
                           `}
@@ -210,17 +212,15 @@ const Sidebar = ({
                               )}
 
                               <Icon
-                                className={`h-5 w-5 shrink-0 transition-all duration-300 ${
-                                  isActive ? "text-indigo-400" : "group-hover:text-white"
-                                }`}
+                                className={`h-5 w-5 shrink-0 transition-all duration-300 ${isActive ? "text-indigo-400" : "text-white/90 group-hover:text-white"
+                                  }`}
                               />
 
                               <span
-                                className={`flex-1 truncate text-left transition-all duration-500 ${
-                                  isCollapsed
+                                className={`flex-1 truncate text-left transition-all duration-500 ${isCollapsed
                                     ? "w-0 scale-0 opacity-0"
-                                    : "w-auto scale-100 opacity-100"
-                                }`}
+                                    : "w-auto scale-100 opacity-100 text-white"
+                                  }`}
                               >
                                 {item.name}
                               </span>
@@ -245,9 +245,8 @@ const Sidebar = ({
           <div className="border-t border-white/5 p-3 space-y-2">
             {/* User Profile Card */}
             <div
-              className={`flex items-center gap-3 rounded-xl p-2 transition-all duration-300 hover:bg-white/5 cursor-pointer ${
-                isCollapsed ? "justify-center" : ""
-              }`}
+              className={`flex items-center gap-3 rounded-xl p-2 transition-all duration-300 hover:bg-white/5 cursor-pointer ${isCollapsed ? "justify-center" : ""
+                }`}
             >
               <div className="relative shrink-0">
                 {avatarUrl && !imageError ? (
@@ -266,25 +265,23 @@ const Sidebar = ({
               </div>
 
               <div
-                className={`flex-1 min-w-0 transition-all duration-500 ${
-                  isCollapsed
+                className={`flex-1 min-w-0 transition-all duration-500 ${isCollapsed
                     ? "w-0 scale-0 opacity-0 hidden"
                     : "w-auto scale-100 opacity-100"
-                }`}
+                  }`}
               >
                 <p className="truncate text-sm font-semibold text-white leading-tight">
                   {user?.name || "User"}
                 </p>
-                <p className="truncate text-xs text-slate-400">{user?.email || ""}</p>
+                <p className="truncate text-xs text-white/80">{user?.email || ""}</p>
               </div>
 
               <button
                 type="button"
                 onClick={handleLogout}
                 title="Sign Out"
-                className={`p-1.5 text-slate-400 hover:text-rose-400 transition-colors ${
-                  isCollapsed ? "hidden" : "block"
-                }`}
+                className={`p-1.5 text-white/80 hover:text-rose-400 transition-colors ${isCollapsed ? "hidden" : "block"
+                  }`}
               >
                 <LogOut className="h-4 w-4" />
               </button>

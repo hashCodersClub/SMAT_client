@@ -34,6 +34,7 @@ import EducationEditor from "../../../components/trainer/profile/EducationEditor
 import LanguagesEditor from "../../../components/trainer/profile/LanguagesEditor";
 import ProjectsEditor from "../../../components/trainer/profile/ProjectsEditor";
 import AvatarCropModal from "../../../components/shared/AvatarCropModal";
+import { useAuth } from "../../../context/AuthContext";
 
 /*
 |--------------------------------------------------------------------------
@@ -49,7 +50,7 @@ const INITIAL_FORM = {
 
   city: "",
   state: "",
-  country: "India",
+  country: "",
 
   professionalHeadline: "",
   professionalSummary: "",
@@ -61,29 +62,32 @@ const INITIAL_FORM = {
   skillDetails: [],
 
   certifications: [],
-  employmentHistory: [],
-  education: [],
-  languages: [],
-  projects: [],
 
   experience: 0,
   trainingExperience: 0,
 
-  industries: [],
+  hourlyRate: 0,
+  dailyRate: 0,
 
   trainingModes: [],
 
   preferredLocations: [],
 
-  willingToTravel: true,
+  willingToTravel: false,
 
   availabilityStatus: "AVAILABLE",
 
   resumeUrl: "",
-  profilePhotoUrl: "",
   linkedinUrl: "",
   portfolioUrl: "",
   githubUrl: "",
+
+  profilePhotoUrl: "",
+  employmentHistory: [],
+  education: [],
+  languages: [],
+  projects: [],
+  industries: [],
 
   profileCompletion: 0,
   profileVerified: false,
@@ -97,6 +101,7 @@ const INITIAL_FORM = {
 */
 
 const TrainerProfilePage = () => {
+  const { refreshUser } = useAuth();
   const [form, setForm] = useState(INITIAL_FORM);
 
   const [loading, setLoading] = useState(true);
@@ -694,6 +699,7 @@ const TrainerProfilePage = () => {
       setEditing(false);
 
       await loadProfile();
+      await refreshUser();
 
       setSuccess(response?.message || "Profile updated successfully.");
     } catch (error) {
