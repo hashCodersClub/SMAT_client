@@ -13,7 +13,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "../notifications/NotificationBell";
-import { resolveAvatarUrl } from "./Sidebar";
 
 const Navbar = ({
   setSidebarOpen,
@@ -53,12 +52,14 @@ const Navbar = ({
   | Resolve User Avatar URL & Initials
   |--------------------------------------------------------------------------
   */
-  const avatarUrl = resolveAvatarUrl(user);
-
-  // Reset image error state when avatarUrl changes
-  useEffect(() => {
-    setImageError(false);
-  }, [avatarUrl]);
+  const avatarUrl =
+    user?.avatar ||
+    user?.profilePhotoUrl ||
+    user?.trainer?.profilePhotoUrl ||
+    user?.trainerId?.profilePhotoUrl ||
+    user?.vendor?.logoUrl ||
+    user?.vendorId?.logoUrl ||
+    "";
 
   const getInitials = (name = "") => {
     if (!name) return "U";
@@ -132,7 +133,9 @@ const Navbar = ({
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
               <Search
                 className={`h-4 w-4 transition-colors duration-200 ${
-                  searchFocused ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400"
+                  searchFocused
+                    ? "text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-400"
                 }`}
               />
             </div>
@@ -242,7 +245,8 @@ const Navbar = ({
                         {user?.email || ""}
                       </p>
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                        <CheckCircle size={10} /> Active ({formatRole(user?.role)})
+                        <CheckCircle size={10} /> Active (
+                        {formatRole(user?.role)})
                       </span>
                     </div>
                   </div>
