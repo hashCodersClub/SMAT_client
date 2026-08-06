@@ -115,7 +115,13 @@ const Sidebar = ({
                             }
                           />
 
-                          <span>{item.name}</span>
+                          <span className="flex-1">{item.name}</span>
+
+                          {item.badge && (
+                            <span className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                              {item.badge}
+                            </span>
+                          )}
                         </>
                       )}
                     </NavLink>

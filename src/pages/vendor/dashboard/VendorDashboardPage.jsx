@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -69,7 +69,7 @@ const VendorDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -87,10 +87,38 @@ const VendorDashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadDashboard();
+    let ignore = false;
+    const fetchDashboard = async () => {
+      try {
+        setError("");
+        const [requirementsRes, assignmentsRes] = await Promise.all([
+          requirementsApi.getAllMine(),
+          assignmentsApi.getMine(),
+        ]);
+        if (!ignore) {
+          setRequirements(requirementsRes.requirements || []);
+          setAssignments(assignmentsRes?.data || []);
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Failed to load dashboard:", err);
+          setError(err.response?.data?.message || "Unable to load your dashboard.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchDashboard();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   /*

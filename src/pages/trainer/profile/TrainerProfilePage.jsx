@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   FiAlertCircle,
@@ -133,7 +133,7 @@ const TrainerProfilePage = () => {
   |--------------------------------------------------------------------------
   */
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -227,11 +227,17 @@ const TrainerProfilePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    let ignore = false;
+    if (!ignore) {
+      loadProfile();
+    }
+    return () => {
+      ignore = true;
+    };
+  }, [loadProfile]);
 
   /*
   |--------------------------------------------------------------------------

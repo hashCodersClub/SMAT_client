@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FiBriefcase,
   FiCalendar,
@@ -43,7 +43,37 @@ const TrainerOpportunitiesPage = () => {
   const [rateDrafts, setRateDrafts] = useState({});
   const [respondingId, setRespondingId] = useState("");
 
-  const loadOpportunities = async () => {
+  useEffect(() => {
+    let ignore = false;
+    const fetchMine = async () => {
+      try {
+        setError("");
+        const response = await outreachApi.getMine();
+        if (!ignore) {
+          setRecords(response?.outreach || []);
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Failed to load opportunities:", err);
+          setError(
+            err.response?.data?.message || "Unable to load your opportunities.",
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchMine();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const loadOpportunities = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -60,10 +90,6 @@ const TrainerOpportunitiesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadOpportunities();
   }, []);
 
   const respond = async (record, outreachStatus) => {

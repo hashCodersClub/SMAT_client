@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -52,7 +52,7 @@ const VendorRequirementDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadRequirement = async () => {
+  const loadRequirement = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -69,10 +69,36 @@ const VendorRequirementDetailsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    loadRequirement();
+    let ignore = false;
+    const fetchRequirement = async () => {
+      try {
+        setError("");
+        const response = await requirementsApi.getMineById(id);
+        if (!ignore) {
+          setRequirement(response.requirement);
+        }
+      } catch (error) {
+        if (!ignore) {
+          console.error("Failed to load requirement:", error);
+          setError(
+            error.response?.data?.message || "Unable to load this requirement.",
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchRequirement();
+
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
   if (loading) {

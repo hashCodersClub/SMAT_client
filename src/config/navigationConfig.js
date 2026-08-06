@@ -7,6 +7,8 @@ import {
   FiSettings,
   FiUser,
   FiCalendar,
+  FiCpu,
+  FiZap,
 } from "react-icons/fi";
 
 /*
@@ -27,8 +29,8 @@ export const navigationConfig = {
 
     navbar: {
       title: "Trainer Operations",
-      subtitle: "Manage requirements, trainers and assignments",
-      searchPlaceholder: "Search trainers, vendors...",
+      subtitle: "Manage requirements, trainers, AI matching & assignments",
+      searchPlaceholder: "Search trainers, vendors, requirements...",
     },
 
     profilePath: "/admin/settings",
@@ -42,6 +44,12 @@ export const navigationConfig = {
             name: "Dashboard",
             path: "/admin/dashboard",
             icon: FiGrid,
+          },
+          {
+            name: "Smart Requirement AI",
+            path: "/admin/requirements/smart",
+            icon: FiCpu,
+            badge: "AI",
           },
         ],
       },

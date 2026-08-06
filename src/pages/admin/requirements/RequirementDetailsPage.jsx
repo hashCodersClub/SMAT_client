@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -7,6 +7,7 @@ import {
   FiCalendar,
   FiCheckCircle,
   FiClock,
+  FiCpu,
   FiEdit2,
   FiMapPin,
   FiRefreshCw,
@@ -91,7 +92,7 @@ const RequirementDetailsPage = () => {
   |--------------------------------------------------------------------------
   */
 
-  const loadRequirement = async () => {
+  const loadRequirement = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -106,11 +107,11 @@ const RequirementDetailsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadRequirement();
-  }, [id]);
+  }, [loadRequirement]);
 
   /*
   |--------------------------------------------------------------------------
@@ -292,14 +293,45 @@ const RequirementDetailsPage = () => {
             <button
               type="button"
               onClick={() => navigate(`/admin/requirements/${id}/matches`)}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:from-indigo-700 hover:to-purple-700"
             >
-              <FiUsers />
-              Find Trainers
+              <FiCpu />
+              ✨ AI Match Trainers
             </button>
           )}
         </div>
       </div>
+
+      {/* ================================================================
+          AI SMART MATCH HIGHLIGHT
+      ================================================================= */}
+
+      <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-white p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+              <FiCpu size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-slate-900">AI Trainer Recommendation Engine</h2>
+                <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase">Automated</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-600">
+                Scans available trainer network against skills, location ({requirement.city || "Remote"}), experience ({requirement.experienceRequired || 0} yrs), and budget.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate(`/admin/requirements/${id}/matches`)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 shrink-0"
+          >
+            Run AI Match Analysis &rarr;
+          </button>
+        </div>
+      </section>
 
       {/* ================================================================
           STATUS MANAGEMENT

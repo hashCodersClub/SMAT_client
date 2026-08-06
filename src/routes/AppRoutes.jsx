@@ -1,76 +1,80 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
-// Authentication
-import LoginPage from "../pages/auth/LoginPage";
-import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
-import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
+// Layouts & Auth Guards
 import ProtectedRoute from "../components/auth/ProtectedRoute";
-import VendorRegisterPage from "../pages/auth/VendorRegisterPage";
-import TrainerAcceptInvitePage from "../pages/auth/TrainerAcceptInvitePage";
-
-// Shared
-import NotFoundPage from "../pages/shared/NotFoundPage";
-import NotificationsPage from "../pages/shared/notification/NotificationsPage";
-
-// Admin Layout
 import AdminLayout from "../layouts/AdminLayout";
-
-// Admin Dashboard
-import DashboardPage from "../pages/admin/DashboardPage";
-
-// Admin - Trainers
-import TrainersPage from "../pages/admin/trainers/TrainersPage";
-import AddTrainerPage from "../pages/admin/trainers/AddTrainerPage";
-import TrainerDetailsPage from "../pages/admin/trainers/TrainerDetailsPage";
-import EditTrainerPage from "../pages/admin/trainers/EditTrainerPage";
-import AdminTrainerAvailabilityPage from "../pages/admin/trainers/AdminTrainerAvailabilityPage";
-
-// Admin - Requirements
-import RequirementsPage from "../pages/admin/requirements/RequirementsPage";
-import AddRequirementPage from "../pages/admin/requirements/AddRequirementPage";
-import RequirementDetailsPage from "../pages/admin/requirements/RequirementDetailsPage";
-import EditRequirementPage from "../pages/admin/requirements/EditRequirementPage";
-import SmartRequirementPage from "../pages/admin/requirements/SmartRequirementPage";
-import TrainerMatchesPage from "../pages/admin/requirements/TrainerMatchesPage";
-import RequirementOutreachPage from "../pages/admin/requirements/RequirementOutreachPage";
-import VendorSelectionPage from "../pages/admin/requirements/VendorSelectionPage";
-
-// Admin - Vendors
-import VendorsPage from "../pages/admin/vendors/VendorsPage";
-import AddVendorPage from "../pages/admin/vendors/AddVendorPage";
-import VendorDetailsPage from "../pages/admin/vendors/VendorDetailsPage";
-import EditVendorPage from "../pages/admin/vendors/EditVendorPage";
-
-// Admin - Assignments
-import AssignmentsPage from "../pages/admin/assignments/AssignmentsPage";
-import CreateAssignmentPage from "../pages/admin/assignments/CreateAssignmentPage";
-import AssignmentDetailsPage from "../pages/admin/assignments/AssignmentDetailsPage";
-
-// Admin - Settings
-import SettingsPage from "../pages/admin/SettingsPage";
-
-// Vendor Portal
 import VendorLayout from "../layouts/VendorLayout";
-import VendorDashboardPage from "../pages/vendor/dashboard/VendorDashboardPage";
-import VendorRequirementsPage from "../pages/vendor/requirements/VendorRequirementsPage";
-import AddVendorRequirementPage from "../pages/vendor/requirements/AddVendorRequirementPage";
-import VendorRequirementDetailsPage from "../pages/vendor/requirements/VendorRequirementDetailsPage";
-import EditVendorRequirementPage from "../pages/vendor/requirements/EditVendorRequirementPage";
-import VendorProfilePage from "../pages/vendor/profile/VendorProfilePage";
-import VendorSettingsPage from "../pages/vendor/settings/VendorSettingsPage";
-import VendorAssignmentsPage from "../pages/vendor/assignments/VendorAssignmentsPage";
-
-// Trainer Portal
 import TrainerLayout from "../layouts/TrainerLayout";
-import TrainerDashboardPage from "../pages/trainer/dashboard/TrainerDashboardPage";
-import TrainerProfilePage from "../pages/trainer/profile/TrainerProfilePage";
-import TrainerAvailabilityPage from "../pages/trainer/availability/TrainerAvailabilityPage";
-import TrainerOpportunitiesPage from "../pages/trainer/opportunities/TrainerOpportunitiesPage";
-import TrainerAssignmentsPage from "../pages/trainer/assignments/TrainerAssignmentsPage";
-import TrainerSettingsPage from "../pages/trainer/settings/TrainerSettingsPage";
+
+// Page Loader Fallback
+const PageFallback = () => (
+  <div className="flex min-h-[360px] w-full flex-col items-center justify-center gap-3 p-8">
+    <div className="h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+    <span className="text-xs font-medium text-slate-400">Loading...</span>
+  </div>
+);
+
+// Public / Auth Pages
+const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("../pages/auth/ResetPasswordPage"));
+const VendorRegisterPage = lazy(() => import("../pages/auth/VendorRegisterPage"));
+const TrainerAcceptInvitePage = lazy(() => import("../pages/auth/TrainerAcceptInvitePage"));
+
+// Shared Pages
+const NotFoundPage = lazy(() => import("../pages/shared/NotFoundPage"));
+const NotificationsPage = lazy(() => import("../pages/shared/notification/NotificationsPage"));
+
+// Admin Pages
+const DashboardPage = lazy(() => import("../pages/admin/DashboardPage"));
+const TrainersPage = lazy(() => import("../pages/admin/trainers/TrainersPage"));
+const AddTrainerPage = lazy(() => import("../pages/admin/trainers/AddTrainerPage"));
+const TrainerDetailsPage = lazy(() => import("../pages/admin/trainers/TrainerDetailsPage"));
+const EditTrainerPage = lazy(() => import("../pages/admin/trainers/EditTrainerPage"));
+const AdminTrainerAvailabilityPage = lazy(() => import("../pages/admin/trainers/AdminTrainerAvailabilityPage"));
+
+const RequirementsPage = lazy(() => import("../pages/admin/requirements/RequirementsPage"));
+const AddRequirementPage = lazy(() => import("../pages/admin/requirements/AddRequirementPage"));
+const RequirementDetailsPage = lazy(() => import("../pages/admin/requirements/RequirementDetailsPage"));
+const EditRequirementPage = lazy(() => import("../pages/admin/requirements/EditRequirementPage"));
+const SmartRequirementPage = lazy(() => import("../pages/admin/requirements/SmartRequirementPage"));
+const TrainerMatchesPage = lazy(() => import("../pages/admin/requirements/TrainerMatchesPage"));
+const RequirementOutreachPage = lazy(() => import("../pages/admin/requirements/RequirementOutreachPage"));
+const VendorSelectionPage = lazy(() => import("../pages/admin/requirements/VendorSelectionPage"));
+
+const VendorsPage = lazy(() => import("../pages/admin/vendors/VendorsPage"));
+const AddVendorPage = lazy(() => import("../pages/admin/vendors/AddVendorPage"));
+const VendorDetailsPage = lazy(() => import("../pages/admin/vendors/VendorDetailsPage"));
+const EditVendorPage = lazy(() => import("../pages/admin/vendors/EditVendorPage"));
+
+const AssignmentsPage = lazy(() => import("../pages/admin/assignments/AssignmentsPage"));
+const CreateAssignmentPage = lazy(() => import("../pages/admin/assignments/CreateAssignmentPage"));
+const AssignmentDetailsPage = lazy(() => import("../pages/admin/assignments/AssignmentDetailsPage"));
+
+const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
+
+// Vendor Portal Pages
+const VendorDashboardPage = lazy(() => import("../pages/vendor/dashboard/VendorDashboardPage"));
+const VendorRequirementsPage = lazy(() => import("../pages/vendor/requirements/VendorRequirementsPage"));
+const AddVendorRequirementPage = lazy(() => import("../pages/vendor/requirements/AddVendorRequirementPage"));
+const VendorRequirementDetailsPage = lazy(() => import("../pages/vendor/requirements/VendorRequirementDetailsPage"));
+const EditVendorRequirementPage = lazy(() => import("../pages/vendor/requirements/EditVendorRequirementPage"));
+const VendorProfilePage = lazy(() => import("../pages/vendor/profile/VendorProfilePage"));
+const VendorSettingsPage = lazy(() => import("../pages/vendor/settings/VendorSettingsPage"));
+const VendorAssignmentsPage = lazy(() => import("../pages/vendor/assignments/VendorAssignmentsPage"));
+
+// Trainer Portal Pages
+const TrainerDashboardPage = lazy(() => import("../pages/trainer/dashboard/TrainerDashboardPage"));
+const TrainerProfilePage = lazy(() => import("../pages/trainer/profile/TrainerProfilePage"));
+const TrainerAvailabilityPage = lazy(() => import("../pages/trainer/availability/TrainerAvailabilityPage"));
+const TrainerOpportunitiesPage = lazy(() => import("../pages/trainer/opportunities/TrainerOpportunitiesPage"));
+const TrainerAssignmentsPage = lazy(() => import("../pages/trainer/assignments/TrainerAssignmentsPage"));
+const TrainerSettingsPage = lazy(() => import("../pages/trainer/settings/TrainerSettingsPage"));
 
 const AppRoutes = () => {
   return (
+    <Suspense fallback={<PageFallback />}>
     <Routes>
       {/* ================================================================
           PUBLIC ROUTES
@@ -314,6 +318,7 @@ const AppRoutes = () => {
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </Suspense>
   );
 };
 

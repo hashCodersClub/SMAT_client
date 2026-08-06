@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
 import {
   FiAlertCircle,
   FiCalendar,
+  FiCpu,
   FiEye,
   FiMapPin,
   FiPlus,
@@ -90,10 +91,9 @@ const VendorRequirementsPage = () => {
   |--------------------------------------------------------------------------
   */
 
-  const loadRequirements = async () => {
+  const loadRequirements = useCallback(async () => {
     try {
       setLoading(true);
-
       setError("");
 
       const data = await requirementsApi.getAll({
@@ -108,10 +108,35 @@ const VendorRequirementsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadRequirements();
+    let isSubscribed = true;
+
+    const fetchInitialData = async () => {
+      try {
+        const data = await requirementsApi.getAll({ limit: 100 });
+        if (isSubscribed) {
+          setRequirements(data.requirements || []);
+          setError("");
+        }
+      } catch (error) {
+        if (isSubscribed) {
+          console.error("Failed to load requirements:", error);
+          setError(error.response?.data?.message || "Unable to load requirements.");
+        }
+      } finally {
+        if (isSubscribed) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchInitialData();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, []);
 
   /*
@@ -202,14 +227,25 @@ const VendorRequirementsPage = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/vendor/requirements/add")}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-        >
-          <FiPlus />
-          New Requirement
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/requirements/smart")}
+            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:from-indigo-700 hover:to-purple-700"
+          >
+            <FiCpu />
+            ✨ AI Requirement Parser
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/vendor/requirements/add")}
+            className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            <FiPlus />
+            New Requirement
+          </button>
+        </div>
       </div>
 
       {/* ================================================================

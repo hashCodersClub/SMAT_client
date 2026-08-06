@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FiBriefcase,
   FiCalendar,
@@ -75,7 +75,7 @@ const VendorAssignmentsPage = () => {
   const [error, setError] = useState("");
   const [tab, setTab] = useState("UPCOMING");
 
-  const loadAssignments = async () => {
+  const loadAssignments = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -88,11 +88,17 @@ const VendorAssignmentsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadAssignments();
-  }, []);
+    let ignore = false;
+    if (!ignore) {
+      loadAssignments();
+    }
+    return () => {
+      ignore = true;
+    };
+  }, [loadAssignments]);
 
   const filtered = useMemo(() => {
     if (tab === "PAST") {

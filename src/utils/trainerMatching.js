@@ -133,7 +133,7 @@ export const calculateTrainerMatch = (trainer, requirement) => {
 
   const requiredExperience = Number(requirement.experienceRequired || 0);
 
-  let experienceScore = 0;
+  let experienceScore;
 
   if (requiredExperience === 0) {
     experienceScore = 15;
@@ -199,8 +199,31 @@ export const calculateTrainerMatch = (trainer, requirement) => {
 
   totalScore += availabilityScore;
 
+  const aiInsights = [];
+  if (matchedSkills.length > 0) {
+    aiInsights.push(`Matches ${matchedSkills.length} key skill(s): ${matchedSkills.join(", ")}.`);
+  }
+  if (missingSkills.length > 0) {
+    aiInsights.push(`Missing skills: ${missingSkills.join(", ")}.`);
+  }
+  if (trainerExperience >= requiredExperience) {
+    aiInsights.push(`Meets experience requirement (${trainerExperience} years vs ${requiredExperience} required).`);
+  } else if (requiredExperience > 0) {
+    aiInsights.push(`Under required experience (${trainerExperience} years vs ${requiredExperience} required).`);
+  }
+  if (trainerRate && vendorBudget && trainerRate <= vendorBudget) {
+    aiInsights.push(`Within daily rate budget (${trainerRate} <= ${vendorBudget}).`);
+  }
+
+  const roundedScore = Math.min(100, Math.round(totalScore));
+  let recommendationLevel = "LOW";
+  if (roundedScore >= 80) recommendationLevel = "HIGH";
+  else if (roundedScore >= 60) recommendationLevel = "MEDIUM";
+
   return {
-    score: Math.min(100, Math.round(totalScore)),
+    score: roundedScore,
+    recommendationLevel,
+    aiInsights,
 
     breakdown: {
       skills: {
@@ -253,3 +276,4 @@ export const rankTrainers = (trainers, requirement) => {
     }))
     .sort((a, b) => b.match.score - a.match.score);
 };
+

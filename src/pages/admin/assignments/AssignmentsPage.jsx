@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FiAlertCircle,
   FiBriefcase,
@@ -58,7 +58,7 @@ const AssignmentsPage = () => {
   |--------------------------------------------------------------------------
   */
 
-  const loadAssignments = async () => {
+  const loadAssignments = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -79,11 +79,11 @@ const AssignmentsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadAssignments();
-  }, []);
+  }, [loadAssignments]);
 
   /*
   |--------------------------------------------------------------------------
