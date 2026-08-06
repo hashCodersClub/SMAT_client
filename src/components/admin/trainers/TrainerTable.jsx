@@ -230,6 +230,16 @@ const TrainerTable = ({ trainers, onDelete, deletingId, onAssign }) => {
                               Inactive
                             </span>
                           )}
+
+                          {trainer.portalEnabled ? (
+                            <span className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                              Portal Active
+                            </span>
+                          ) : (
+                            <span className="shrink-0 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                              Invite Pending
+                            </span>
+                          )}
                         </div>
 
                         <p className="mt-0.5 truncate text-xs text-slate-400">

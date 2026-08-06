@@ -19,7 +19,18 @@ const TrainerCard = ({ trainer }) => {
           <div>
             <h3 className="font-semibold text-slate-800">{trainer.name}</h3>
 
-            <p className="text-xs text-slate-400">{trainer.id}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-xs text-slate-400">{trainer.id}</p>
+              {trainer.portalEnabled ? (
+                <span className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700">
+                  Portal Active
+                </span>
+              ) : (
+                <span className="rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
+                  Invite Pending
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

@@ -224,43 +224,39 @@ const TrainerAcceptInvitePage = () => {
 
   return (
     <PageShell>
-      <div className="mb-7">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-950">
           Activate Trainer Account
         </h1>
 
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          Create your password to access the Nxthack Trainer Portal.
+          Welcome to Nxthack! Set up your password to activate your Trainer Portal account.
         </p>
       </div>
 
-      {/* Trainer */}
-
-      <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Trainer
+      {/* Trainer Info Card */}
+      <div className="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 p-4">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+          Invited Account
         </p>
 
-        <p className="mt-1 font-bold text-slate-900">
+        <p className="mt-1 text-base font-bold text-slate-900">
           {invitation?.trainerName || "Trainer"}
         </p>
 
-        <p className="mt-1 text-sm text-slate-500">{invitation?.email}</p>
+        <p className="mt-0.5 text-xs text-slate-600 font-medium">{invitation?.email}</p>
       </div>
 
-      {/* Error */}
-
+      {/* Error Alert */}
       {error && (
-        <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50/90 p-4 shadow-sm">
           <FiAlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
-
-          <p className="text-sm font-medium text-red-700">{error}</p>
+          <p className="text-sm font-medium text-red-800">{error}</p>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Password */}
-
+        {/* Password Field */}
         <PasswordField
           label="Create Password"
           value={password}
@@ -270,31 +266,52 @@ const TrainerAcceptInvitePage = () => {
           placeholder="Minimum 8 characters"
         />
 
-        {/* Confirm */}
+        {/* Strength meter */}
+        {password.length > 0 && (
+          <div className="-mt-3 space-y-1.5">
+            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  password.length >= 12
+                    ? "w-full bg-emerald-500"
+                    : password.length >= 8
+                      ? "w-2/3 bg-blue-500"
+                      : "w-1/3 bg-amber-500"
+                }`}
+              />
+            </div>
+            <p className="text-[11px] font-medium text-slate-500">
+              {password.length >= 12
+                ? "Strong password"
+                : password.length >= 8
+                  ? "Good password length"
+                  : "Must be at least 8 characters"}
+            </p>
+          </div>
+        )}
 
+        {/* Confirm Password Field */}
         <PasswordField
           label="Confirm Password"
           value={confirmPassword}
           setValue={setConfirmPassword}
           show={showConfirmPassword}
           setShow={setShowConfirmPassword}
-          placeholder="Enter password again"
+          placeholder="Re-enter your password"
         />
 
         <button
           type="submit"
           disabled={submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:from-blue-700 hover:to-indigo-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting && <FiLoader size={17} className="animate-spin" />}
-
-          {submitting ? "Activating Account..." : "Activate Account"}
+          {submitting ? "Activating Account..." : "Set Password & Activate Portal"}
         </button>
       </form>
 
       <p className="mt-6 text-center text-xs leading-5 text-slate-400">
-        By activating your account, you'll be able to access your trainer
-        profile, opportunities and assignments.
+        Once activated, you can immediately log in with your email and new password.
       </p>
     </PageShell>
   );

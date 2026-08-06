@@ -407,62 +407,110 @@ const TrainerDetailsPage = () => {
         </div>
       )}
 
-      {/* Portal Access Section */}
-      <section className="relative mt-6 overflow-hidden rounded-2xl border border-white/20 bg-white/60 p-5 backdrop-blur-sm shadow-xl shadow-slate-200/30 transition-all duration-300 dark:bg-slate-800/30">
+      {/* Portal Access & Automated Workflow Lifecycle Section */}
+      <section className="relative mt-6 overflow-hidden rounded-3xl border border-white/20 bg-white/70 p-6 backdrop-blur-xl shadow-xl shadow-slate-200/40 transition-all duration-300 dark:bg-slate-800/40">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-4">
             <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ${
                 portalActive
-                  ? "bg-emerald-50/80 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-300"
-                  : "bg-amber-50/80 text-amber-600 dark:bg-amber-900/20 dark:text-amber-300"
+                  ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-emerald-500/20"
+                  : "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/20"
               }`}
             >
-              {portalActive ? <FiUserCheck size={20} /> : <FiClock size={20} />}
+              {portalActive ? <FiUserCheck size={22} /> : <FiClock size={22} />}
             </div>
 
             <div>
-              <h2 className="font-bold text-slate-900 dark:text-white">
-                Trainer Portal Access
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Trainer Portal Access
+                </h2>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    portalActive
+                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                      : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                  }`}
+                >
+                  {portalActive ? "ACTIVE" : "PENDING"}
+                </span>
+              </div>
 
               {portalActive ? (
-                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                  This trainer has activated their account and can sign in to
-                  the Nxthack Trainer Portal.
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Account activated for <span className="font-semibold text-slate-900 dark:text-white">{trainer.email}</span>. The trainer can sign in to manage profile, view requirement matches, and accept assignments.
                 </p>
               ) : (
-                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                  Portal activation is pending. The trainer must open their
-                  invitation email and create a password.
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Portal invitation email sent to <span className="font-semibold text-slate-900 dark:text-white">{trainer.email || "trainer"}</span>. Awaiting trainer to set up their password.
                 </p>
               )}
             </div>
           </div>
 
-          <div
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold backdrop-blur-sm ${
-              portalActive
-                ? "border-emerald-200/80 bg-emerald-50/80 text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-300"
-                : "border-amber-200/80 bg-amber-50/80 text-amber-700 dark:border-amber-800/30 dark:bg-amber-900/20 dark:text-amber-300"
-            }`}
-          >
-            {portalActive ? "ACTIVE" : "PENDING"}
+          {!portalActive && trainer.email && (
+            <button
+              type="button"
+              onClick={handleSendInvitation}
+              disabled={inviting}
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-95 disabled:opacity-50"
+            >
+              {inviting ? <FiLoader className="animate-spin" /> : <FiSend />}
+              {inviting ? "Sending..." : "Resend Invitation Email"}
+            </button>
+          )}
+        </div>
+
+        {/* Automated Workflow Lifecycle Stepper */}
+        <div className="mt-6 border-t border-slate-200/60 pt-5 dark:border-white/10">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Automated Onboarding Workflow
+          </p>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white shadow-xs">
+                ✓
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Profile Added</p>
+                <p className="text-[10px] text-slate-500">By Admin</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs ${trainer.email ? "bg-emerald-500" : "bg-amber-500"}`}>
+                {trainer.email ? "✓" : "2"}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Email Dispatched</p>
+                <p className="text-[10px] text-slate-500">{trainer.email ? "Activation Link Sent" : "Email Required"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs ${portalActive ? "bg-emerald-500" : "bg-amber-400"}`}>
+                {portalActive ? "✓" : "3"}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">3. Password Setup</p>
+                <p className="text-[10px] text-slate-500">{portalActive ? "Completed by Trainer" : "Pending Action"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs ${portalActive ? "bg-emerald-500" : "bg-slate-300"}`}>
+                {portalActive ? "✓" : "4"}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">4. Portal Activated</p>
+                <p className="text-[10px] text-slate-500">{portalActive ? "Ready for Login" : "Awaiting Setup"}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {!portalActive && trainer.email && (
-          <div className="mt-4 border-t border-slate-200/60 pt-4 dark:border-white/10">
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <FiMail className="h-4 w-4" />
-              Invitation email:
-              <span className="font-semibold text-slate-800 dark:text-white">
-                {trainer.email}
-              </span>
-            </div>
-          </div>
-        )}
-        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-20" />
+        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 opacity-30" />
       </section>
 
       {/* Main Information Grid */}
