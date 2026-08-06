@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "../notifications/NotificationBell";
+import { resolveAvatarUrl } from "./Sidebar";
 
 const Navbar = ({
   setSidebarOpen,
@@ -52,15 +53,7 @@ const Navbar = ({
   | Resolve User Avatar URL & Initials
   |--------------------------------------------------------------------------
   */
-  const avatarUrl =
-    user?.avatar ||
-    user?.profilePhotoUrl ||
-    user?.trainer?.profilePhotoUrl ||
-    user?.trainerId?.profilePhotoUrl ||
-    user?.vendor?.logoUrl ||
-    user?.vendorId?.logoUrl ||
-    user?.photoUrl ||
-    "";
+  const avatarUrl = resolveAvatarUrl(user);
 
   // Reset image error state when avatarUrl changes
   useEffect(() => {
