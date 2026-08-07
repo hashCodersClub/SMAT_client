@@ -5,12 +5,17 @@ import {
   FiCheck,
   FiClock,
   FiDollarSign,
+  FiFilter,
   FiMapPin,
   FiRefreshCw,
+  FiSearch,
+  FiStar,
   FiX,
+  FiZap,
 } from "react-icons/fi";
-
-import outreachApi from "../../../api/outreachApi";
+import opportunitiesApi from "../../../api/opportunitiesApi";
+import MatchInsight from "../../../components/opportunities/MatchInsight";
+import OpportunityDetailModal from "../../../components/opportunities/OpportunityDetailModal";
 
 const MODE_LABELS = {
   ONLINE: "Online",
@@ -20,7 +25,6 @@ const MODE_LABELS = {
 
 const formatDate = (value) => {
   if (!value) return "—";
-
   return new Date(value).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
@@ -29,379 +33,554 @@ const formatDate = (value) => {
 };
 
 const FILTERS = [
-  { key: "NEW", label: "New" },
-  { key: "RESPONDED", label: "Responded" },
-  { key: "ALL", label: "All" },
+  { key: "ALL", label: "All Opportunities" },
+  { key: "PENDING", label: "Pending" },
+  { key: "INTERESTED", label: "Interested" },
+  { key: "MAYBE", label: "Maybe" },
+  { key: "DECLINED", label: "Declined" },
+  { key: "EXPIRED", label: "Expired" },
 ];
 
 const TrainerOpportunitiesPage = () => {
   const [records, setRecords] = useState([]);
+  const [stats, setStats] = useState({
+    pendingOpportunities: 0,
+    interestedOpportunities: 0,
+    selectedOpportunities: 0,
+    expiredOpportunities: 0,
+    averageMatchScore: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [filter, setFilter] = useState("NEW");
-  const [rateDrafts, setRateDrafts] = useState({});
+  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("NEWEST");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+
+  const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [respondingId, setRespondingId] = useState("");
 
-  useEffect(() => {
-    let ignore = false;
-    const fetchMine = async () => {
-      try {
-        setError("");
-        const response = await outreachApi.getMine();
-        if (!ignore) {
-          setRecords(response?.outreach || []);
-        }
-      } catch (err) {
-        if (!ignore) {
-          console.error("Failed to load opportunities:", err);
-          setError(
-            err.response?.data?.message || "Unable to load your opportunities.",
-          );
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
+  // Confirmation modal state for inline "Interested" click
+  const [confirmingRecord, setConfirmingRecord] = useState(null);
+  const [quotedRateDrafts, setQuotedRateDrafts] = useState({});
 
-    fetchMine();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  const loadOpportunities = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await outreachApi.getMine();
+      const [oppResponse, statsResponse] = await Promise.all([
+        opportunitiesApi.getMine({
+          status: activeFilter,
+          search: searchTerm,
+          sort: sortBy,
+          page,
+          limit: 10,
+        }),
+        opportunitiesApi.getMineStats().catch(() => ({ stats: null })),
+      ]);
 
-      setRecords(response?.outreach || []);
+      setRecords(oppResponse.opportunities || []);
+      if (oppResponse.pagination) setPagination(oppResponse.pagination);
+
+      if (statsResponse?.stats) {
+        setStats(statsResponse.stats);
+      }
     } catch (err) {
       console.error("Failed to load opportunities:", err);
-
-      setError(
-        err.response?.data?.message || "Unable to load your opportunities.",
-      );
+      setError(err.response?.data?.message || "Unable to load opportunities.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeFilter, searchTerm, sortBy, page]);
 
-  const respond = async (record, outreachStatus) => {
-    if (outreachStatus === "INTERESTED") {
-      const confirmed = window.confirm(
-        `Confirm your interest in "${record.requirementId?.title || "this requirement"
-        }"?\n\nOnce confirmed, you'll be shortlisted and the Nxthack team will be notified immediately.`,
-      );
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-      if (!confirmed) {
-        return;
-      }
-    }
-
+  const handleRespond = async (opportunityId, responsePayload) => {
     try {
-      setRespondingId(record._id);
+      setRespondingId(opportunityId);
+      const res = await opportunitiesApi.respondMine(opportunityId, responsePayload);
 
-      const draftRate = rateDrafts[record._id];
-
-      const { outreach } = await outreachApi.respond(record._id, {
-        outreachStatus,
-        ...(draftRate !== undefined && draftRate !== ""
-          ? { quotedRate: Number(draftRate) }
-          : {}),
-      });
-
-      setRecords((previous) =>
-        previous.map((item) => (item._id === record._id ? outreach : item)),
+      setRecords((prev) =>
+        prev.map((item) => (item._id === opportunityId ? res.opportunity : item)),
       );
-    } catch (err) {
-      console.error("Failed to respond:", err);
 
-      setError(err.response?.data?.message || "Unable to save your response.");
+      if (selectedOpportunity && selectedOpportunity._id === opportunityId) {
+        setSelectedOpportunity(res.opportunity);
+      }
+
+      // Refresh stats
+      const statsRes = await opportunitiesApi.getMineStats().catch(() => null);
+      if (statsRes?.stats) setStats(statsRes.stats);
+    } catch (err) {
+      console.error("Failed to submit response:", err);
+      setError(err.response?.data?.message || "Unable to submit response.");
     } finally {
       setRespondingId("");
+      setConfirmingRecord(null);
     }
   };
 
-  const updateRateDraft = (id, value) => {
-    setRateDrafts((previous) => ({
-      ...previous,
-      [id]: value,
-    }));
+  const handleInlineInterestConfirm = (record) => {
+    const draftRate = quotedRateDrafts[record._id];
+    handleRespond(record._id, {
+      status: "INTERESTED",
+      ...(draftRate !== undefined && draftRate !== "" ? { quotedRate: Number(draftRate) } : {}),
+    });
   };
 
-  const filteredRecords = useMemo(() => {
-    if (filter === "ALL") return records;
-
-    if (filter === "NEW") {
-      return records.filter((record) =>
-        ["NOT_CONTACTED", "CONTACTED"].includes(record.outreachStatus),
-      );
-    }
-
-    return records.filter((record) =>
-      ["INTERESTED", "DECLINED"].includes(record.outreachStatus),
-    );
-  }, [records, filter]);
-
-  const newCount = records.filter((record) =>
-    ["NOT_CONTACTED", "CONTACTED"].includes(record.outreachStatus),
-  ).length;
-
-  if (loading) {
-    return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-3xl border border-slate-200/80 bg-white/80 backdrop-blur-sm shadow-xl">
-        <div className="text-center">
-          <FiRefreshCw
-            size={24}
-            className="mx-auto animate-spin text-blue-600"
-          />
-          <p className="mt-3 text-sm font-medium text-slate-500/80">
-            Loading your opportunities...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const handleOpenDetail = (record) => {
+    setSelectedOpportunity(record);
+    setIsDetailOpen(true);
+  };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-12 animate-fade-in">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          Opportunities
-        </h1>
+    <div className="mx-auto max-w-6xl space-y-8 pb-16 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            Opportunity Portal
+          </h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Discover training opportunities matched specifically to your expertise. Review match insights and respond seamlessly.
+          </p>
+        </div>
 
-        <p className="text-base font-medium text-slate-500/80">
-          Training requirements you've been matched with. Let us know if you're
-          interested — no need to wait for a call.
-        </p>
+        <button
+          type="button"
+          onClick={loadData}
+          className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+        >
+          <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          Refresh
+        </button>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200/80 bg-red-50/80 px-5 py-4 text-sm font-semibold text-red-700 shadow-sm backdrop-blur-sm">
-          <span>{error}</span>
+      {/* Phase E - Trainer Dashboard Stats Widgets */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400">Pending</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <FiClock size={16} />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-black text-slate-900">{stats.pendingOpportunities}</p>
+        </div>
 
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400">Interested</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <FiCheck size={16} />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-black text-slate-900">{stats.interestedOpportunities}</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400">Selected</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-green-50 text-green-600">
+              <FiStar size={16} />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-black text-slate-900">{stats.selectedOpportunities}</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400">Expired</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+              <FiX size={16} />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-black text-slate-900">{stats.expiredOpportunities}</p>
+        </div>
+
+        <div className="col-span-2 sm:col-span-1 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-indigo-700">Avg Match Score</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white">
+              <FiZap size={16} />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-black text-indigo-900">{stats.averageMatchScore}%</p>
+        </div>
+      </div>
+
+      {/* Controls Bar: Search, Filters, Sorting */}
+      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white/80 p-5 shadow-lg backdrop-blur-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <FiSearch size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search by skill, title, location, delivery mode..."
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+            />
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2">
+            <FiFilter size={15} className="text-slate-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none transition hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+            >
+              <option value="NEWEST">Newest First</option>
+              <option value="MATCH_SCORE_DESC">Highest Match Score</option>
+              <option value="EXPIRING_SOON">Expiring Soonest</option>
+              <option value="OLDEST">Oldest First</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+          {FILTERS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => {
+                setActiveFilter(item.key);
+                setPage(1);
+              }}
+              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                activeFilter === item.key
+                  ? "bg-slate-900 text-white shadow-md shadow-slate-900/20"
+                  : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+          <span>{error}</span>
           <button
             type="button"
-            onClick={loadOpportunities}
-            className="flex shrink-0 items-center gap-1.5 font-bold text-red-700 transition hover:text-red-900 hover:scale-105"
+            onClick={loadData}
+            className="flex items-center gap-1 text-xs font-extrabold underline hover:text-red-900"
           >
-            <FiRefreshCw size={14} />
             Retry
           </button>
         </div>
       )}
 
-      {/* Filter Buttons */}
-      <div className="flex gap-2">
-        {FILTERS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => setFilter(item.key)}
-            className={`relative rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-300 ${filter === item.key
-              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 scale-[1.02]"
-              : "bg-white/80 text-slate-600 backdrop-blur-sm hover:bg-slate-50/80 hover:shadow-md border border-slate-200/80"
-              }`}
-          >
-            {item.label}
-            {item.key === "NEW" && newCount > 0 && (
-              <span
-                className={`ml-2 rounded-full px-2 py-0.5 text-xs ${filter === item.key
-                  ? "bg-white/20"
-                  : "bg-blue-100 text-blue-700"
-                  }`}
-              >
-                {newCount}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
       {/* Opportunity List */}
-      <div className="space-y-4">
-        {filteredRecords.map((record) => {
-          const requirement = record.requirementId || {};
-          const vendor = requirement.vendorId || {};
-          const isResponded = ["INTERESTED", "DECLINED"].includes(
-            record.outreachStatus,
-          );
+      {loading ? (
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white/80 shadow-xl">
+          <FiRefreshCw size={28} className="animate-spin text-indigo-600" />
+          <p className="mt-3 text-sm font-medium text-slate-500">
+            Loading opportunities...
+          </p>
+        </div>
+      ) : records.length === 0 ? (
+        <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-12 text-center shadow-xl">
+          <FiBriefcase size={36} className="mx-auto text-slate-300" />
+          <h3 className="mt-4 text-lg font-extrabold text-slate-800">
+            No opportunities found
+          </h3>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            {searchTerm
+              ? "No requirements matched your search criteria."
+              : "You'll see new opportunities here as soon as you are matched."}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {records.map((record) => {
+            const requirement = record.requirementId || record.requirementSnapshot || {};
+            const isResponded = ["INTERESTED", "MAYBE", "DECLINED"].includes(record.status);
+            const isExpired =
+              record.status === "EXPIRED" ||
+              (record.expiresAt && new Date(record.expiresAt) <= new Date());
 
-          return (
-            <div
-              key={record._id}
-              className={`group rounded-3xl border bg-white/80 p-6 shadow-xl shadow-slate-200/40 backdrop-blur-sm transition-all hover:shadow-2xl hover:shadow-slate-300/50 hover:scale-[1.005] ${record.outreachStatus === "INTERESTED"
-                ? "border-emerald-300/80 bg-emerald-50/60"
-                : record.outreachStatus === "DECLINED"
-                  ? "border-slate-200/60 bg-slate-50/60 opacity-75"
-                  : "border-slate-200/80"
+            return (
+              <div
+                key={record._id}
+                className={`group rounded-3xl border bg-white p-6 shadow-xl shadow-slate-200/30 transition-all hover:shadow-2xl hover:scale-[1.003] ${
+                  record.status === "INTERESTED"
+                    ? "border-emerald-300 bg-emerald-50/30"
+                    : record.status === "MAYBE"
+                      ? "border-amber-300 bg-amber-50/30"
+                      : record.status === "DECLINED" || record.status === "EXPIRED"
+                        ? "border-slate-200 bg-slate-50/50 opacity-75"
+                        : "border-slate-200/90"
                 }`}
-            >
-              <div className="flex flex-col justify-between gap-5 lg:flex-row">
-                {/* Left: Details */}
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-lg font-extrabold tracking-tight text-slate-900">
-                      {requirement.title || "Training Requirement"}
-                    </h3>
-
-                    {record.outreachStatus === "NOT_CONTACTED" && (
-                      <span className="rounded-full border border-blue-200/60 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 px-3 py-1 text-xs font-bold text-blue-700 shadow-sm backdrop-blur-sm">
-                        New
-                      </span>
-                    )}
-
-                    {record.outreachStatus === "INTERESTED" && (
-                      <span className="flex items-center gap-1.5 rounded-full border border-emerald-200/60 bg-gradient-to-r from-emerald-50/80 to-teal-50/80 px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
-                        <FiCheck size={13} />
-                        You're interested
-                      </span>
-                    )}
-
-                    {record.outreachStatus === "DECLINED" && (
-                      <span className="flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-slate-100/80 px-3 py-1 text-xs font-bold text-slate-500 backdrop-blur-sm">
-                        <FiX size={13} />
-                        Declined
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-1 text-sm font-medium text-slate-500/80">
-                    {vendor.companyName || "Vendor"}
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500/80">
-                    <span className="flex items-center gap-1.5">
-                      <FiMapPin size={15} className="text-slate-400" />
-                      {requirement.city || "Online"}
-                    </span>
-
-                    <span className="flex items-center gap-1.5">
-                      <FiBriefcase size={15} className="text-slate-400" />
-                      {MODE_LABELS[requirement.mode] || requirement.mode}
-                    </span>
-
-                    <span className="flex items-center gap-1.5">
-                      <FiCalendar size={15} className="text-slate-400" />
-                      {formatDate(requirement.startDate)} –{" "}
-                      {formatDate(requirement.endDate)}
-                    </span>
-
-                    {requirement.budget > 0 && (
-                      <span className="flex items-center gap-1.5">
-                        <FiDollarSign size={15} className="text-slate-400" />₹
-                        {Number(requirement.budget).toLocaleString("en-IN")}
-                        /day (vendor budget)
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {requirement.skills?.map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-lg bg-slate-100/80 px-2.5 py-1 text-xs font-semibold text-slate-600 backdrop-blur-sm"
+              >
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                  {/* Left Main Information */}
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3
+                        onClick={() => handleOpenDetail(record)}
+                        className="text-lg font-extrabold text-slate-900 hover:text-indigo-600 cursor-pointer transition"
                       >
-                        {skill}
+                        {requirement.title || "Training Requirement"}
+                      </h3>
+
+                      {/* Vendor Anonymization Label (Phase A Requirement) */}
+                      <span className="rounded-full bg-slate-100 px-3 py-0.5 text-xs font-bold text-slate-600 border border-slate-200">
+                        Client: Corporate Client
                       </span>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Right: Actions */}
-                <div className="flex shrink-0 flex-col gap-3 lg:w-56">
-                  {!isResponded ? (
-                    <>
-                      <div>
-                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400/80">
-                          Your Rate / Day (optional)
-                        </label>
-
-                        <input
-                          type="number"
-                          min="0"
-                          value={
-                            rateDrafts[record._id] ?? record.quotedRate ?? ""
-                          }
-                          onChange={(e) =>
-                            updateRateDraft(record._id, e.target.value)
-                          }
-                          placeholder="₹"
-                          className="w-full rounded-xl border border-slate-200/80 bg-white/50 px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400/60 hover:border-slate-300/80 focus:border-blue-500/80 focus:ring-4 focus:ring-blue-500/10 focus:bg-white/80 backdrop-blur-sm"
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={respondingId === record._id}
-                        onClick={() => respond(record, "INTERESTED")}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-emerald-600/40 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
-                      >
-                        <FiCheck size={16} />
-                        I'm Interested
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={respondingId === record._id}
-                        onClick={() => respond(record, "DECLINED")}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white/50 px-4 py-3 text-sm font-bold text-slate-500 backdrop-blur-sm transition-all hover:bg-slate-50/80 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <FiX size={16} />
-                        Not Available
-                      </button>
-                    </>
-                  ) : (
-                    <div className="rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 text-center text-xs font-medium text-slate-500/80 backdrop-blur-sm">
-                      <FiClock className="mx-auto mb-1.5" size={18} />
-                      Responded on {formatDate(record.respondedAt)}
-                      {record.quotedRate > 0 && (
-                        <p className="mt-1 font-bold text-slate-700">
-                          ₹{Number(record.quotedRate).toLocaleString("en-IN")}
-                          /day quoted
-                        </p>
+                      {/* Status Badges */}
+                      {record.status === "INTERESTED" && (
+                        <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-800">
+                          <FiCheck size={13} /> Interested
+                        </span>
                       )}
-                      {record.outreachStatus === "INTERESTED" &&
-                        record.vendorStatus &&
-                        record.vendorStatus !== "NOT_SENT" &&
-                        record.vendorStatus !== "PROFILE_SENT" && (
-                          <p className="mt-1.5 flex items-center justify-center gap-1 font-bold text-emerald-600">
-                            <FiCheck size={13} />
-                            You've been shortlisted
+                      {record.status === "MAYBE" && (
+                        <span className="flex items-center gap-1 rounded-full bg-amber-100 px-3 py-0.5 text-xs font-bold text-amber-800">
+                          <FiClock size={13} /> Maybe
+                        </span>
+                      )}
+                      {record.status === "DECLINED" && (
+                        <span className="rounded-full bg-slate-200 px-3 py-0.5 text-xs font-bold text-slate-600">
+                          Declined
+                        </span>
+                      )}
+                      {record.status === "SELECTED" && (
+                        <span className="flex items-center gap-1 rounded-full bg-green-600 px-3 py-0.5 text-xs font-bold text-white shadow-sm">
+                          <FiStar size={13} /> You're Selected
+                        </span>
+                      )}
+                      {isExpired && record.status !== "SELECTED" && (
+                        <span className="rounded-full bg-red-100 px-3 py-0.5 text-xs font-bold text-red-700">
+                          Expired
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Metadata Line */}
+                    <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-500">
+                      <span className="flex items-center gap-1.5">
+                        <FiMapPin size={14} className="text-slate-400" />
+                        {requirement.mode === "ONLINE" ? "Online" : requirement.city || "—"}
+                      </span>
+
+                      <span className="flex items-center gap-1.5">
+                        <FiBriefcase size={14} className="text-slate-400" />
+                        {MODE_LABELS[requirement.mode] || requirement.mode}
+                      </span>
+
+                      <span className="flex items-center gap-1.5">
+                        <FiCalendar size={14} className="text-slate-400" />
+                        {formatDate(requirement.startDate)} – {formatDate(requirement.endDate)}
+                      </span>
+
+                      {record.expiresAt && !isExpired && (
+                        <span className="flex items-center gap-1.5 text-amber-700 font-bold">
+                          <FiClock size={14} />
+                          Expires: {formatDate(record.expiresAt)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Skill Tags */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {requirement.skills?.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Phase B Match Explanation Insight */}
+                    <div className="pt-2">
+                      <MatchInsight
+                        matchScore={record.matchScore}
+                        breakdown={record.matchBreakdown}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Actions & Responses */}
+                  <div className="flex shrink-0 flex-col gap-3 lg:w-56">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDetail(record)}
+                      className="w-full rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition"
+                    >
+                      View Details & History
+                    </button>
+
+                    {!isExpired && !["SELECTED", "WITHDRAWN"].includes(record.status) && (
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <div>
+                          <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Your Rate (₹/day optional)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={quotedRateDrafts[record._id] ?? record.quotedRate ?? ""}
+                            onChange={(e) =>
+                              setQuotedRateDrafts((prev) => ({ ...prev, [record._id]: e.target.value }))
+                            }
+                            placeholder="₹ Rate"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
+                          />
+                        </div>
+
+                        {/* Responsive Phase D Action Buttons */}
+                        <div className="flex flex-col gap-1.5">
+                          <button
+                            type="button"
+                            disabled={respondingId === record._id}
+                            onClick={() => setConfirmingRecord(record)}
+                            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/20 hover:scale-[1.02] transition disabled:opacity-50"
+                          >
+                            <FiCheck size={14} /> I'm Interested
+                          </button>
+
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              type="button"
+                              disabled={respondingId === record._id}
+                              onClick={() => handleRespond(record._id, { status: "MAYBE" })}
+                              className="rounded-xl border border-amber-200 bg-amber-50 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-50"
+                            >
+                              Maybe
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={respondingId === record._id}
+                              onClick={() => handleRespond(record._id, { status: "DECLINED" })}
+                              className="rounded-xl border border-slate-200 bg-white py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {isResponded && (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center text-xs font-medium text-slate-500">
+                        Responded on {formatDate(record.respondedAt)}
+                        {record.quotedRate > 0 && (
+                          <p className="mt-1 font-bold text-slate-800">
+                            Quoted: ₹{Number(record.quotedRate).toLocaleString("en-IN")}/day
                           </p>
                         )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination.pages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-200 pt-6">
+          <span className="text-xs font-bold text-slate-500">
+            Page {pagination.page} of {pagination.pages} ({pagination.total} total)
+          </span>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition"
+            >
+              Previous
+            </button>
+
+            <button
+              type="button"
+              disabled={page >= pagination.pages}
+              onClick={() => setPage(page + 1)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Opportunity Detail Modal */}
+      {isDetailOpen && (
+        <OpportunityDetailModal
+          opportunity={selectedOpportunity}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          onRespond={handleRespond}
+          responding={respondingId === selectedOpportunity?._id}
+        />
+      )}
+
+      {/* Phase D Response UX Inline Confirmation Modal */}
+      {confirmingRecord && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl text-center space-y-4">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+              <FiCheck size={24} />
             </div>
-          );
-        })}
 
-        {!filteredRecords.length && (
-          <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-12 text-center shadow-xl backdrop-blur-sm">
-            <FiBriefcase size={32} className="mx-auto text-slate-300/70" />
-
-            <h3 className="mt-4 text-lg font-extrabold text-slate-800">
-              {filter === "NEW"
-                ? "No new opportunities right now"
-                : "Nothing here yet"}
+            <h3 className="text-lg font-extrabold text-slate-900">
+              Express Interest
             </h3>
 
-            <p className="mt-1 text-sm font-medium text-slate-500/80">
-              You'll see requirements here as soon as we match you to one.
+            <p className="text-sm font-medium text-slate-600 leading-relaxed">
+              You are expressing interest in this opportunity. The operations team will review your profile and may select you for assignment.
             </p>
+
+            <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500 font-medium">
+              Note: This action expresses your availability. It does not create an assignment or guarantee selection.
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmingRecord(null)}
+                className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={respondingId === confirmingRecord._id}
+                onClick={() => handleInlineInterestConfirm(confirmingRecord)}
+                className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 hover:scale-[1.02] transition disabled:opacity-50"
+              >
+                {respondingId === confirmingRecord._id ? "Confirming..." : "Confirm"}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

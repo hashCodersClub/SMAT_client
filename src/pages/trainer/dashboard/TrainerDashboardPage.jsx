@@ -5,16 +5,17 @@ import {
   FiCalendar,
   FiCheckCircle,
   FiClipboard,
+  FiClock,
+  FiStar,
+  FiZap,
 } from "react-icons/fi";
 
 import { useAuth } from "../../../context/AuthContext";
-
-import outreachApi from "../../../api/outreachApi";
+import opportunitiesApi from "../../../api/opportunitiesApi";
 import assignmentsApi from "../../../api/assignmentsApi";
 
 const formatDate = (value) => {
   if (!value) return "—";
-
   return new Date(value).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
@@ -27,6 +28,13 @@ const TrainerDashboardPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [opportunities, setOpportunities] = useState([]);
+  const [stats, setStats] = useState({
+    pendingOpportunities: 0,
+    interestedOpportunities: 0,
+    selectedOpportunities: 0,
+    expiredOpportunities: 0,
+    averageMatchScore: 0,
+  });
   const [assignments, setAssignments] = useState([]);
 
   useEffect(() => {
@@ -34,12 +42,14 @@ const TrainerDashboardPage = () => {
       try {
         setLoading(true);
 
-        const [outreachResponse, assignmentsResponse] = await Promise.all([
-          outreachApi.getMine(),
-          assignmentsApi.getMine(),
+        const [oppResponse, statsResponse, assignmentsResponse] = await Promise.all([
+          opportunitiesApi.getMine({ page: 1, limit: 5 }),
+          opportunitiesApi.getMineStats().catch(() => ({ stats: null })),
+          assignmentsApi.getMine().catch(() => ({ data: [] })),
         ]);
 
-        setOpportunities(outreachResponse?.outreach || []);
+        setOpportunities(oppResponse?.opportunities || []);
+        if (statsResponse?.stats) setStats(statsResponse.stats);
         setAssignments(assignmentsResponse?.data || []);
       } catch (err) {
         console.error("Failed to load trainer dashboard:", err);
@@ -51,17 +61,9 @@ const TrainerDashboardPage = () => {
     load();
   }, []);
 
-  const newOpportunities = opportunities.filter((record) =>
-    ["NOT_CONTACTED", "CONTACTED"].includes(record.outreachStatus),
-  );
-
   const upcomingAssignments = assignments.filter(
     (assignment) => !["COMPLETED", "CANCELLED"].includes(assignment.status),
   );
-
-  const completedCount = assignments.filter(
-    (assignment) => assignment.status === "COMPLETED",
-  ).length;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-12 animate-fade-in">
@@ -72,34 +74,42 @@ const TrainerDashboardPage = () => {
         </h1>
 
         <p className="text-base font-medium text-slate-500/80">
-          Manage your training opportunities, assignments and profile.
+          Manage your training opportunities, assignments, and profile.
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-5 sm:grid-cols-3">
+      {/* Phase E Stats Widgets */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={FiClipboard}
-          label="New Opportunities"
-          value={loading ? "—" : newOpportunities.length}
+          icon={FiClock}
+          label="Pending Opportunities"
+          value={loading ? "—" : stats.pendingOpportunities}
           onClick={() => navigate("/trainer/opportunities")}
           color="blue"
         />
 
         <StatCard
-          icon={FiCalendar}
-          label="Upcoming Assignments"
-          value={loading ? "—" : upcomingAssignments.length}
-          onClick={() => navigate("/trainer/assignments")}
+          icon={FiClipboard}
+          label="Interested Opportunities"
+          value={loading ? "—" : stats.interestedOpportunities}
+          onClick={() => navigate("/trainer/opportunities")}
+          color="emerald"
+        />
+
+        <StatCard
+          icon={FiStar}
+          label="Selected Opportunities"
+          value={loading ? "—" : stats.selectedOpportunities}
+          onClick={() => navigate("/trainer/opportunities")}
           color="indigo"
         />
 
         <StatCard
-          icon={FiCheckCircle}
-          label="Completed Trainings"
-          value={loading ? "—" : completedCount}
-          onClick={() => navigate("/trainer/assignments")}
-          color="emerald"
+          icon={FiZap}
+          label="Average Match Score"
+          value={loading ? "—" : `${stats.averageMatchScore}%`}
+          onClick={() => navigate("/trainer/opportunities")}
+          color="purple"
         />
       </div>
 
@@ -113,9 +123,9 @@ const TrainerDashboardPage = () => {
           <button
             type="button"
             onClick={() => navigate("/trainer/opportunities")}
-            className="group flex items-center gap-1.5 text-sm font-bold text-blue-600 transition-all hover:text-blue-700"
+            className="group flex items-center gap-1.5 text-sm font-bold text-indigo-600 transition-all hover:text-indigo-700"
           >
-            View all
+            View all portal
             <FiArrowUpRight
               size={16}
               className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -124,36 +134,44 @@ const TrainerDashboardPage = () => {
         </div>
 
         <div className="mt-5 space-y-3">
-          {!loading && newOpportunities.length === 0 && (
-            <p className="py-8 text-center text-sm font-medium text-slate-400/80">
-              No new opportunities right now — we'll notify you as soon as
-              you're matched with one.
+          {!loading && opportunities.length === 0 && (
+            <p className="py-8 text-center text-sm font-medium text-slate-400">
+              No new opportunities right now — we'll notify you as soon as you're matched with one.
             </p>
           )}
 
-          {newOpportunities.slice(0, 3).map((record) => (
-            <button
-              key={record._id}
-              type="button"
-              onClick={() => navigate("/trainer/opportunities")}
-              className="group flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200/60 bg-white/50 px-5 py-4 text-left shadow-sm backdrop-blur-sm transition-all hover:border-blue-300/80 hover:bg-blue-50/70 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-bold text-slate-800 group-hover:text-blue-700">
-                  {record.requirementId?.title || "Training Requirement"}
-                </p>
+          {opportunities.slice(0, 4).map((record) => {
+            const requirement = record.requirementId || record.requirementSnapshot || {};
+            return (
+              <button
+                key={record._id}
+                type="button"
+                onClick={() => navigate("/trainer/opportunities")}
+                className="group flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-200/60 bg-white p-4 text-left shadow-xs transition-all hover:border-indigo-300 hover:bg-indigo-50/40 hover:shadow-md hover:scale-[1.005]"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-extrabold text-slate-800 group-hover:text-indigo-600">
+                      {requirement.title || "Training Requirement"}
+                    </p>
+                    {record.matchScore && (
+                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700">
+                        {record.matchScore}% Match
+                      </span>
+                    )}
+                  </div>
 
-                <p className="mt-1 truncate text-sm font-medium text-slate-500">
-                  {record.requirementId?.vendorId?.companyName || "Vendor"} •{" "}
-                  {record.requirementId?.city || "Online"}
-                </p>
-              </div>
+                  <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+                    Client: Corporate Client • {requirement.city || "Online"} • Mode: {requirement.mode || "Online"}
+                  </p>
+                </div>
 
-              <span className="shrink-0 rounded-full border border-blue-200/60 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 px-3.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm backdrop-blur-sm transition-all group-hover:shadow-md group-hover:scale-105">
-                {formatDate(record.requirementId?.startDate)}
-              </span>
-            </button>
-          ))}
+                <span className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700">
+                  {formatDate(requirement.startDate)}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -162,27 +180,23 @@ const TrainerDashboardPage = () => {
 
 const StatCard = ({ icon: Icon, label, value, onClick, color }) => {
   const colorMap = {
-    blue: "from-blue-500/10 to-indigo-500/10 text-blue-600 border-blue-200/50",
-    indigo:
-      "from-indigo-500/10 to-purple-500/10 text-indigo-600 border-indigo-200/50",
-    emerald:
-      "from-emerald-500/10 to-teal-500/10 text-emerald-600 border-emerald-200/50",
+    blue: "bg-blue-500/10 text-blue-600 border-blue-200/50",
+    emerald: "bg-emerald-500/10 text-emerald-600 border-emerald-200/50",
+    indigo: "bg-indigo-500/10 text-indigo-600 border-indigo-200/50",
+    purple: "bg-purple-500/10 text-purple-600 border-purple-200/50",
   };
 
-  const gradient = colorMap[color] || colorMap.blue;
+  const badgeStyle = colorMap[color] || colorMap.blue;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl border bg-white/80 p-6 text-left shadow-xl shadow-slate-200/40 backdrop-blur-sm transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] ${gradient}`}
+      className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm backdrop-blur-sm transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
     >
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100" />
-
       <div className="relative flex items-center justify-between">
-        <div className="rounded-2xl bg-gradient-to-br p-3 text-white shadow-md shadow-current/20">
-          <Icon size={20} />
+        <div className={`rounded-xl p-2.5 shadow-xs ${badgeStyle}`}>
+          <Icon size={18} />
         </div>
 
         <FiArrowUpRight
@@ -191,11 +205,11 @@ const StatCard = ({ icon: Icon, label, value, onClick, color }) => {
         />
       </div>
 
-      <p className="relative mt-5 text-3xl font-extrabold tracking-tight text-slate-900">
+      <p className="relative mt-4 text-2xl font-black tracking-tight text-slate-900">
         {value}
       </p>
 
-      <p className="relative mt-1 text-sm font-medium text-slate-500/80">
+      <p className="relative mt-1 text-xs font-bold text-slate-400">
         {label}
       </p>
     </button>
