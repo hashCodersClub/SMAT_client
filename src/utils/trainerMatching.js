@@ -18,9 +18,9 @@ const getTrainerSkills = (trainer) => {
 const getTrainerExperience = (trainer) => {
   return Number(
     trainer.experience ??
-      trainer.yearsOfExperience ??
-      trainer.totalExperience ??
-      0,
+    trainer.yearsOfExperience ??
+    trainer.totalExperience ??
+    0,
   );
 };
 
@@ -68,12 +68,13 @@ export const calculateTrainerMatch = (trainer, requirement) => {
   /*
     SCORE WEIGHTS
 
-    Skills       = 40
+    Skills       = 35
     Location     = 15
     Experience   = 15
     Budget       = 15
     Mode         = 10
     Availability = 5
+    Reliability  = 5
 
     TOTAL        = 100
   */
@@ -98,8 +99,8 @@ export const calculateTrainerMatch = (trainer, requirement) => {
 
   const skillScore =
     requiredSkills.length > 0
-      ? Math.round((matchedSkills.length / requiredSkills.length) * 40)
-      : 40;
+      ? Math.round((matchedSkills.length / requiredSkills.length) * 35)
+      : 35;
 
   totalScore += skillScore;
 
@@ -199,6 +200,23 @@ export const calculateTrainerMatch = (trainer, requirement) => {
 
   totalScore += availabilityScore;
 
+  /*
+   * RELIABILITY
+   *
+   * Track record from completed/cancelled assignments and outreach
+   * response rate (see backend/src/utils/trainerReliability.js). A
+   * trainer with no history yet gets a neutral score rather than being
+   * penalized for being new.
+   */
+
+  const hasReliabilityHistory = typeof trainer.reliabilityScore === "number";
+
+  const reliabilityScore = hasReliabilityHistory
+    ? Math.round((trainer.reliabilityScore / 100) * 5)
+    : 3;
+
+  totalScore += reliabilityScore;
+
   const aiInsights = [];
   if (matchedSkills.length > 0) {
     aiInsights.push(`Matches ${matchedSkills.length} key skill(s): ${matchedSkills.join(", ")}.`);
@@ -214,6 +232,11 @@ export const calculateTrainerMatch = (trainer, requirement) => {
   if (trainerRate && vendorBudget && trainerRate <= vendorBudget) {
     aiInsights.push(`Within daily rate budget (${trainerRate} <= ${vendorBudget}).`);
   }
+  if (hasReliabilityHistory && trainer.reliabilityScore >= 80) {
+    aiInsights.push(`Strong track record (reliability score ${trainer.reliabilityScore}/100).`);
+  } else if (hasReliabilityHistory && trainer.reliabilityScore < 50) {
+    aiInsights.push(`Below-average track record (reliability score ${trainer.reliabilityScore}/100).`);
+  }
 
   const roundedScore = Math.min(100, Math.round(totalScore));
   let recommendationLevel = "LOW";
@@ -228,7 +251,7 @@ export const calculateTrainerMatch = (trainer, requirement) => {
     breakdown: {
       skills: {
         score: skillScore,
-        max: 40,
+        max: 35,
         matched: matchedSkills,
         missing: missingSkills,
       },
@@ -264,6 +287,12 @@ export const calculateTrainerMatch = (trainer, requirement) => {
         max: 5,
         available,
       },
+
+      reliability: {
+        score: reliabilityScore,
+        max: 5,
+        reliabilityScore: hasReliabilityHistory ? trainer.reliabilityScore : null,
+      },
     },
   };
 };
@@ -276,4 +305,3 @@ export const rankTrainers = (trainers, requirement) => {
     }))
     .sort((a, b) => b.match.score - a.match.score);
 };
-
