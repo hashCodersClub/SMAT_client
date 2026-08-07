@@ -75,26 +75,26 @@ const TrainerSettingsPage = lazy(() => import("../pages/trainer/settings/Trainer
 const AppRoutes = () => {
   return (
     <Suspense fallback={<PageFallback />}>
-    <Routes>
-      {/* ================================================================
+      <Routes>
+        {/* ================================================================
           PUBLIC ROUTES
       ================================================================= */}
 
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<LoginPage />} />
 
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      <Route path="/vendor/register" element={<VendorRegisterPage />} />
+        <Route path="/vendor/register" element={<VendorRegisterPage />} />
 
-      <Route
-        path="/trainer/accept-invite"
-        element={<TrainerAcceptInvitePage />}
-      />
+        <Route
+          path="/trainer/accept-invite"
+          element={<TrainerAcceptInvitePage />}
+        />
 
-      {/* ================================================================
+        {/* ================================================================
           ADMIN / OPERATIONS PORTAL
           
           Accessible by:
@@ -103,221 +103,221 @@ const AppRoutes = () => {
           OPERATIONS
       ================================================================= */}
 
-      <Route
-        element={
-          <ProtectedRoute
-            allowedRoles={["SUPER_ADMIN", "ADMIN", "OPERATIONS"]}
-          />
-        }
-      >
-        <Route element={<AdminLayout />}>
-          {/* ------------------------------------------------------------
+        <Route
+          element={
+            <ProtectedRoute
+              allowedRoles={["SUPER_ADMIN", "ADMIN", "OPERATIONS"]}
+            />
+          }
+        >
+          <Route element={<AdminLayout />}>
+            {/* ------------------------------------------------------------
               DASHBOARD
           ------------------------------------------------------------- */}
 
-          <Route
-            path="/admin"
-            element={<Navigate to="/admin/dashboard" replace />}
-          />
+            <Route
+              path="/admin"
+              element={<Navigate to="/admin/dashboard" replace />}
+            />
 
-          <Route path="/admin/dashboard" element={<DashboardPage />} />
+            <Route path="/admin/dashboard" element={<DashboardPage />} />
 
-          {/* ------------------------------------------------------------
+            {/* ------------------------------------------------------------
               TRAINERS
           ------------------------------------------------------------- */}
 
-          <Route path="/admin/trainers" element={<TrainersPage />} />
+            <Route path="/admin/trainers" element={<TrainersPage />} />
 
-          <Route path="/admin/trainers/add" element={<AddTrainerPage />} />
+            <Route path="/admin/trainers/add" element={<AddTrainerPage />} />
 
-          <Route path="/admin/trainers/:id" element={<TrainerDetailsPage />} />
+            <Route path="/admin/trainers/:id" element={<TrainerDetailsPage />} />
 
-          <Route
-            path="/admin/trainers/:id/edit"
-            element={<EditTrainerPage />}
-          />
+            <Route
+              path="/admin/trainers/:id/edit"
+              element={<EditTrainerPage />}
+            />
 
-          <Route
-            path="/admin/trainers/:id/availability"
-            element={<AdminTrainerAvailabilityPage />}
-          />
+            <Route
+              path="/admin/trainers/:id/availability"
+              element={<AdminTrainerAvailabilityPage />}
+            />
 
-          {/* ------------------------------------------------------------
+            {/* ------------------------------------------------------------
               REQUIREMENTS
           ------------------------------------------------------------- */}
 
-          <Route path="/admin/requirements" element={<RequirementsPage />} />
+            <Route path="/admin/requirements" element={<RequirementsPage />} />
 
-          <Route
-            path="/admin/requirements/add"
-            element={<AddRequirementPage />}
-          />
+            <Route
+              path="/admin/requirements/add"
+              element={<AddRequirementPage />}
+            />
 
-          <Route
-            path="/admin/requirements/smart-create"
-            element={<SmartRequirementPage />}
-          />
+            <Route
+              path="/admin/requirements/smart"
+              element={<SmartRequirementPage />}
+            />
 
-          <Route
-            path="/admin/requirements/:id"
-            element={<RequirementDetailsPage />}
-          />
+            <Route
+              path="/admin/requirements/:id"
+              element={<RequirementDetailsPage />}
+            />
 
-          <Route
-            path="/admin/requirements/:id/edit"
-            element={<EditRequirementPage />}
-          />
+            <Route
+              path="/admin/requirements/:id/edit"
+              element={<EditRequirementPage />}
+            />
 
-          <Route
-            path="/admin/requirements/:id/matches"
-            element={<TrainerMatchesPage />}
-          />
+            <Route
+              path="/admin/requirements/:id/matches"
+              element={<TrainerMatchesPage />}
+            />
 
-          <Route
-            path="/admin/requirements/:id/outreach"
-            element={<RequirementOutreachPage />}
-          />
+            <Route
+              path="/admin/requirements/:id/outreach"
+              element={<RequirementOutreachPage />}
+            />
 
-          <Route
-            path="/admin/requirements/:id/vendor-selection"
-            element={<VendorSelectionPage />}
-          />
+            <Route
+              path="/admin/requirements/:id/vendor-selection"
+              element={<VendorSelectionPage />}
+            />
 
-          <Route
-            path="/admin/requirements/:id/create-assignment/:trainerId"
-            element={<CreateAssignmentPage />}
-          />
+            <Route
+              path="/admin/requirements/:id/create-assignment/:trainerId"
+              element={<CreateAssignmentPage />}
+            />
 
-          {/* ------------------------------------------------------------
+            {/* ------------------------------------------------------------
               VENDORS
           ------------------------------------------------------------- */}
 
-          <Route path="/admin/vendors" element={<VendorsPage />} />
+            <Route path="/admin/vendors" element={<VendorsPage />} />
 
-          <Route path="/admin/vendors/add" element={<AddVendorPage />} />
+            <Route path="/admin/vendors/add" element={<AddVendorPage />} />
 
-          <Route path="/admin/vendors/:id" element={<VendorDetailsPage />} />
+            <Route path="/admin/vendors/:id" element={<VendorDetailsPage />} />
 
-          <Route path="/admin/vendors/:id/edit" element={<EditVendorPage />} />
+            <Route path="/admin/vendors/:id/edit" element={<EditVendorPage />} />
 
-          {/* ------------------------------------------------------------
+            {/* ------------------------------------------------------------
               ASSIGNMENTS
           ------------------------------------------------------------- */}
 
-          <Route path="/admin/assignments" element={<AssignmentsPage />} />
+            <Route path="/admin/assignments" element={<AssignmentsPage />} />
 
-          <Route
-            path="/admin/assignments/:id"
-            element={<AssignmentDetailsPage />}
-          />
+            <Route
+              path="/admin/assignments/:id"
+              element={<AssignmentDetailsPage />}
+            />
 
-          {/* ------------------------------------------------------------
+            {/* ------------------------------------------------------------
               SETTINGS
           ------------------------------------------------------------- */}
 
-          <Route path="/admin/settings" element={<SettingsPage />} />
+            <Route path="/admin/settings" element={<SettingsPage />} />
 
-          {/* ------------------------------------------------------------
+            {/* ------------------------------------------------------------
               NOTIFICATIONS
           ------------------------------------------------------------- */}
 
-          <Route path="/admin/notifications" element={<NotificationsPage />} />
+            <Route path="/admin/notifications" element={<NotificationsPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* ================================================================
+        {/* ================================================================
           VENDOR PORTAL
       ================================================================= */}
 
-      <Route element={<ProtectedRoute allowedRoles={["VENDOR"]} />}>
-        <Route element={<VendorLayout />}>
-          <Route
-            path="/vendor"
-            element={<Navigate to="/vendor/dashboard" replace />}
-          />
+        <Route element={<ProtectedRoute allowedRoles={["VENDOR"]} />}>
+          <Route element={<VendorLayout />}>
+            <Route
+              path="/vendor"
+              element={<Navigate to="/vendor/dashboard" replace />}
+            />
 
-          <Route path="/vendor/dashboard" element={<VendorDashboardPage />} />
+            <Route path="/vendor/dashboard" element={<VendorDashboardPage />} />
 
-          <Route
-            path="/vendor/requirements"
-            element={<VendorRequirementsPage />}
-          />
+            <Route
+              path="/vendor/requirements"
+              element={<VendorRequirementsPage />}
+            />
 
-          <Route
-            path="/vendor/requirements/add"
-            element={<AddVendorRequirementPage />}
-          />
+            <Route
+              path="/vendor/requirements/add"
+              element={<AddVendorRequirementPage />}
+            />
 
-          <Route
-            path="/vendor/requirements/:id"
-            element={<VendorRequirementDetailsPage />}
-          />
+            <Route
+              path="/vendor/requirements/:id"
+              element={<VendorRequirementDetailsPage />}
+            />
 
-          <Route
-            path="/vendor/requirements/:id/edit"
-            element={<EditVendorRequirementPage />}
-          />
+            <Route
+              path="/vendor/requirements/:id/edit"
+              element={<EditVendorRequirementPage />}
+            />
 
-          <Route
-            path="/vendor/assignments"
-            element={<VendorAssignmentsPage />}
-          />
+            <Route
+              path="/vendor/assignments"
+              element={<VendorAssignmentsPage />}
+            />
 
-          <Route path="/vendor/profile" element={<VendorProfilePage />} />
+            <Route path="/vendor/profile" element={<VendorProfilePage />} />
 
-          <Route path="/vendor/settings" element={<VendorSettingsPage />} />
+            <Route path="/vendor/settings" element={<VendorSettingsPage />} />
 
-          <Route path="/vendor/notifications" element={<NotificationsPage />} />
+            <Route path="/vendor/notifications" element={<NotificationsPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* ================================================================
+        {/* ================================================================
           TRAINER PORTAL
       ================================================================= */}
 
-      <Route element={<ProtectedRoute allowedRoles={["TRAINER"]} />}>
-        <Route element={<TrainerLayout />}>
-          <Route
-            path="/trainer"
-            element={<Navigate to="/trainer/dashboard" replace />}
-          />
+        <Route element={<ProtectedRoute allowedRoles={["TRAINER"]} />}>
+          <Route element={<TrainerLayout />}>
+            <Route
+              path="/trainer"
+              element={<Navigate to="/trainer/dashboard" replace />}
+            />
 
-          <Route path="/trainer/dashboard" element={<TrainerDashboardPage />} />
+            <Route path="/trainer/dashboard" element={<TrainerDashboardPage />} />
 
-          <Route
-            path="/trainer/opportunities"
-            element={<TrainerOpportunitiesPage />}
-          />
+            <Route
+              path="/trainer/opportunities"
+              element={<TrainerOpportunitiesPage />}
+            />
 
-          <Route
-            path="/trainer/assignments"
-            element={<TrainerAssignmentsPage />}
-          />
+            <Route
+              path="/trainer/assignments"
+              element={<TrainerAssignmentsPage />}
+            />
 
-          <Route path="/trainer/profile" element={<TrainerProfilePage />} />
+            <Route path="/trainer/profile" element={<TrainerProfilePage />} />
 
-          <Route
-            path="/trainer/availability"
-            element={<TrainerAvailabilityPage />}
-          />
+            <Route
+              path="/trainer/availability"
+              element={<TrainerAvailabilityPage />}
+            />
 
-          <Route path="/trainer/settings" element={<TrainerSettingsPage />} />
+            <Route path="/trainer/settings" element={<TrainerSettingsPage />} />
 
-          <Route
-            path="/trainer/notifications"
-            element={<NotificationsPage />}
-          />
+            <Route
+              path="/trainer/notifications"
+              element={<NotificationsPage />}
+            />
+          </Route>
         </Route>
-      </Route>
 
-      {/* ================================================================
+        {/* ================================================================
           CATCH-ALL 404
           Must stay last — matches any URL not matched above instead of
           rendering a blank screen.
       ================================================================= */}
 
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     </Suspense>
   );
 };
