@@ -24,9 +24,9 @@ import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
 // ---------- Helper for stats ----------
 const getStats = (requirements) => {
   const total = requirements.length;
-  const open = requirements.filter((r) => r.status === "Open").length;
-  const sourcing = requirements.filter((r) => r.status === "Sourcing").length;
-  const confirmed = requirements.filter((r) => r.status === "Confirmed").length;
+  const open = requirements.filter((r) => r.status === "OPEN").length;
+  const sourcing = requirements.filter((r) => r.status === "SOURCING").length;
+  const confirmed = requirements.filter((r) => r.status === "CONFIRMED").length;
 
   return [
     {
@@ -46,7 +46,7 @@ const getStats = (requirements) => {
       color: "from-blue-500 to-cyan-400",
       icon: FiClock,
       filterKey: "status",
-      filterValue: "Open",
+      filterValue: "OPEN",
     },
     {
       label: "Sourcing",
@@ -56,7 +56,7 @@ const getStats = (requirements) => {
       color: "from-amber-500 to-orange-400",
       icon: FiAlertCircle,
       filterKey: "status",
-      filterValue: "Sourcing",
+      filterValue: "SOURCING",
     },
     {
       label: "Confirmed",
@@ -66,7 +66,7 @@ const getStats = (requirements) => {
       color: "from-emerald-500 to-teal-400",
       icon: FiCheckCircle,
       filterKey: "status",
-      filterValue: "Confirmed",
+      filterValue: "CONFIRMED",
     },
   ];
 };
@@ -149,10 +149,15 @@ const RequirementsPage = () => {
   const filteredRequirements = useMemo(() => {
     const query = search.toLowerCase().trim();
     return requirements.filter((req) => {
+      const vendorName =
+        (typeof req.vendorId === "object" && req.vendorId
+          ? req.vendorId.companyName
+          : req.vendorName) || "";
+
       const matchesSearch =
         !query ||
         req.title?.toLowerCase().includes(query) ||
-        req.vendorName?.toLowerCase().includes(query) ||
+        vendorName.toLowerCase().includes(query) ||
         req.city?.toLowerCase().includes(query) ||
         (req.skills && req.skills.some((s) => s.toLowerCase().includes(query)));
 
@@ -281,11 +286,10 @@ const RequirementsPage = () => {
                 <button
                   key={stat.label}
                   onClick={() => handleStatClick(stat)}
-                  className={`group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                    isActive
-                      ? "border-blue-500 bg-blue-50/80 shadow-blue-100/50 dark:border-blue-400 dark:bg-blue-900/20"
-                      : "border-white/20 bg-white/60 backdrop-blur-sm hover:border-slate-200/80 dark:border-slate-700/50 dark:bg-slate-800/30 dark:hover:border-slate-600/80"
-                  }`}
+                  className={`group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${isActive
+                    ? "border-blue-500 bg-blue-50/80 shadow-blue-100/50 dark:border-blue-400 dark:bg-blue-900/20"
+                    : "border-white/20 bg-white/60 backdrop-blur-sm hover:border-slate-200/80 dark:border-slate-700/50 dark:bg-slate-800/30 dark:hover:border-slate-600/80"
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div
@@ -294,11 +298,10 @@ const RequirementsPage = () => {
                       <Icon className="h-5 w-5" strokeWidth={2} />
                     </div>
                     <span
-                      className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        stat.trendUp
-                          ? "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-rose-100/80 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                      }`}
+                      className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${stat.trendUp
+                        ? "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-rose-100/80 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                        }`}
                     >
                       {stat.trendUp ? (
                         <FiTrendingUp className="h-3 w-3" />

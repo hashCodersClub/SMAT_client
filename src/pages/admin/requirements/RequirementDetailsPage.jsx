@@ -9,8 +9,10 @@ import {
   FiClock,
   FiCpu,
   FiEdit2,
+  FiLoader,
   FiMapPin,
   FiRefreshCw,
+  FiTrash2,
   FiUser,
   FiUsers,
 } from "react-icons/fi";
@@ -86,6 +88,9 @@ const RequirementDetailsPage = () => {
   const [error, setError] = useState("");
   const [statusError, setStatusError] = useState("");
 
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   /*
   |--------------------------------------------------------------------------
   | Load Requirement
@@ -147,6 +152,39 @@ const RequirementDetailsPage = () => {
       );
     } finally {
       setStatusUpdating(false);
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Delete Requirement
+  |--------------------------------------------------------------------------
+  */
+
+  const handleDeleteRequirement = async () => {
+    const confirmed = window.confirm(
+      "Delete this requirement? This cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setDeleteError("");
+
+      await requirementsApi.delete(id);
+
+      navigate("/admin/requirements");
+    } catch (error) {
+      console.error("Failed to delete requirement:", error);
+
+      setDeleteError(
+        error.response?.data?.message || "Unable to delete requirement.",
+      );
+
+      setDeleting(false);
     }
   };
 
@@ -246,10 +284,9 @@ const RequirementDetailsPage = () => {
             </h1>
 
             <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                statusStyles[requirement.status] ||
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[requirement.status] ||
                 "bg-slate-100 text-slate-700"
-              }`}
+                }`}
             >
               {formatLabel(requirement.status)}
             </span>
@@ -285,22 +322,45 @@ const RequirementDetailsPage = () => {
             Edit
           </button>
 
+          {/* Delete */}
+
+          <button
+            type="button"
+            onClick={handleDeleteRequirement}
+            disabled={deleting}
+            className="flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deleting ? <FiLoader className="animate-spin" /> : <FiTrash2 />}
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+
           {/* Start Sourcing */}
 
           {!["CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"].includes(
             requirement.status,
           ) && (
-            <button
-              type="button"
-              onClick={() => navigate(`/admin/requirements/${id}/matches`)}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:from-indigo-700 hover:to-purple-700"
-            >
-              <FiCpu />
-              ✨ AI Match Trainers
-            </button>
-          )}
+              <button
+                type="button"
+                onClick={() => navigate(`/admin/requirements/${id}/matches`)}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:from-indigo-700 hover:to-purple-700"
+              >
+                <FiCpu />
+                ✨ AI Match Trainers
+              </button>
+            )}
         </div>
       </div>
+
+      {/* Delete Error */}
+      {deleteError && (
+        <div
+          className="rounded-2xl border border-red-200 bg-red-50 p-5"
+          role="alert"
+        >
+          <p className="text-sm font-semibold text-red-800">Delete failed</p>
+          <p className="mt-1 text-sm text-red-700">{deleteError}</p>
+        </div>
+      )}
 
       {/* ================================================================
           AI SMART MATCH HIGHLIGHT
@@ -437,7 +497,7 @@ const RequirementDetailsPage = () => {
               label="Trainer Experience"
               value={
                 requirement.experienceRequired !== undefined &&
-                requirement.experienceRequired !== null
+                  requirement.experienceRequired !== null
                   ? `${requirement.experienceRequired} years`
                   : "—"
               }
@@ -569,8 +629,8 @@ const RequirementDetailsPage = () => {
                 value={
                   requirement.durationValue
                     ? `${requirement.durationValue} ${formatLabel(
-                        requirement.durationUnit,
-                      )}`
+                      requirement.durationUnit,
+                    )}`
                     : "—"
                 }
               />
@@ -702,11 +762,10 @@ const StatusProgress = ({ currentStatus }) => {
             <div key={status} className="flex flex-1 items-center">
               <div className="flex flex-col items-center">
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
-                    completed
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${completed
                       ? "border-blue-600 bg-blue-600 text-white"
                       : "border-slate-200 bg-white text-slate-400"
-                  }`}
+                    }`}
                 >
                   {completed ? (
                     <FiCheckCircle size={16} />
@@ -716,13 +775,12 @@ const StatusProgress = ({ currentStatus }) => {
                 </div>
 
                 <p
-                  className={`mt-2 whitespace-nowrap text-[11px] font-semibold ${
-                    active
+                  className={`mt-2 whitespace-nowrap text-[11px] font-semibold ${active
                       ? "text-blue-600"
                       : completed
                         ? "text-slate-700"
                         : "text-slate-400"
-                  }`}
+                    }`}
                 >
                   {formatLabel(status)}
                 </p>
@@ -730,9 +788,8 @@ const StatusProgress = ({ currentStatus }) => {
 
               {index < flow.length - 1 && (
                 <div
-                  className={`mx-2 mb-5 h-0.5 flex-1 ${
-                    index < currentIndex ? "bg-blue-600" : "bg-slate-200"
-                  }`}
+                  className={`mx-2 mb-5 h-0.5 flex-1 ${index < currentIndex ? "bg-blue-600" : "bg-slate-200"
+                    }`}
                 />
               )}
             </div>
