@@ -6,7 +6,7 @@ const PageHeader = ({
   className = "",
 }) => (
   <div
-    className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${className}`}
+    className={`animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${className}`}
   >
     <div>
       {breadcrumbs && (
@@ -16,7 +16,9 @@ const PageHeader = ({
         {title}
       </h1>
       {description && (
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+          {description}
+        </p>
       )}
     </div>
     {action && <div className="flex shrink-0 flex-wrap gap-2">{action}</div>}

@@ -1,9 +1,84 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   DESIGN TOKENS
+   ========================================================================== */
+@theme {
+  --font-sans:
+    "Geist", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* The single easing curve used everywhere — this is what makes motion feel
+     "premium" instead of default ease-in-out. Matches Vercel/Linear/Apple. */
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-gradient-xy: gradient-xy 15s ease infinite;
+  --animate-shimmer: shimmer 1.8s var(--ease-premium) infinite;
+  --animate-fade-in-up: fade-in-up 0.6s var(--ease-premium) both;
+  --animate-scale-in: scale-in 0.35s var(--ease-premium) both;
+  --animate-glow-pulse: glow-pulse 2.4s ease-in-out infinite;
+
+  @keyframes gradient-xy {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
 html,
 body,
 #root {
   min-height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -12,18 +87,27 @@ body {
   min-height: 100vh;
   background-color: #f8fafc;
   color: #0f172a;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Every interactive/transition-bearing element defaults to the premium curve
+   instead of Tailwind's stock ease — this alone makes the whole app feel
+   noticeably smoother without touching component code. */
+button,
+a,
+input,
+textarea,
+select,
+[class*="transition"] {
+  transition-timing-function: var(--ease-premium);
 }
 
 button,
@@ -42,59 +126,94 @@ a {
   text-decoration: none;
 }
 
-/* ===== Custom scrollbar (used in Sidebar) ===== */
+/* Tabular numbers by default anywhere stats/metrics render */
+.tabular-nums,
+[class*="text-2xl"],
+[class*="text-3xl"] {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background-color: rgba(99, 102, 241, 0.25);
+  color: #1e1b4b;
+}
+
+/* ==========================================================================
+   FOCUS
+   ========================================================================== */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   SCROLLBAR — thin, rounded, brightens on hover (used across dark surfaces)
+   ========================================================================== */
 .scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
+  height: 5px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
+  transition: background-color 0.3s var(--ease-premium);
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.18);
 }
 
-/* ===== Custom keyframes (optional, but used for extra polish) ===== */
-@keyframes pulse-soft {
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: scale(0.98);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.15) transparent;
 }
-/* You can also use Tailwind's built-in 'animate-pulse' – we already do */
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ==========================================================================
+   PREMIUM UTILITIES — reusable across pages
+   ========================================================================== */
+
+/* Frosted glass surface */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Soft, layered elevation — Vercel/Linear-style shadow stacking rather than
+   one flat box-shadow. Use in place of shadow-sm/shadow-md for hero cards. */
+.shadow-premium {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 4px 16px rgba(15, 23, 42, 0.06),
+    0 12px 32px -8px rgba(15, 23, 42, 0.08);
+}
+.shadow-premium-lg {
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.04),
+    0 8px 24px rgba(15, 23, 42, 0.08),
+    0 24px 48px -12px rgba(15, 23, 42, 0.14);
+}
+
+/* Animated gradient text, e.g. for hero headings */
+.text-gradient-premium {
+  background: linear-gradient(120deg, #4f46e5, #7c3aed 45%, #4f46e5);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-gradient-xy);
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: var(--animate-fade-in-up);
 }
-
-@theme {
-  --animate-gradient-xy: gradient-xy 15s ease infinite;
-  @keyframes gradient-xy {
-    0%,
-    100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-  }
+.animate-scale-in {
+  animation: var(--animate-scale-in);
+}
+.animate-shimmer {
+  animation: var(--animate-shimmer);
 }

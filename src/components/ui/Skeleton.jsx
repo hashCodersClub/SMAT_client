@@ -1,12 +1,14 @@
 const Skeleton = ({ className = "" }) => (
   <div
-    className={`animate-pulse rounded-md bg-slate-200/80 ${className}`}
+    className={`relative overflow-hidden rounded-md bg-slate-200/70 ${className}`}
     aria-hidden="true"
-  />
+  >
+    <div className="animate-shimmer absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent bg-[length:200%_100%]" />
+  </div>
 );
 
 export const StatCardSkeleton = () => (
-  <div className="rounded-xl border border-slate-200 bg-white p-5">
+  <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
     <Skeleton className="h-4 w-24" />
     <Skeleton className="mt-3 h-8 w-16" />
   </div>
