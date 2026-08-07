@@ -90,36 +90,8 @@ const VendorDashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    let ignore = false;
-    const fetchDashboard = async () => {
-      try {
-        setError("");
-        const [requirementsRes, assignmentsRes] = await Promise.all([
-          requirementsApi.getAllMine(),
-          assignmentsApi.getMine(),
-        ]);
-        if (!ignore) {
-          setRequirements(requirementsRes.requirements || []);
-          setAssignments(assignmentsRes?.data || []);
-        }
-      } catch (err) {
-        if (!ignore) {
-          console.error("Failed to load dashboard:", err);
-          setError(err.response?.data?.message || "Unable to load your dashboard.");
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchDashboard();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    loadDashboard();
+  }, [loadDashboard]);
 
   /*
   |--------------------------------------------------------------------------
