@@ -93,6 +93,17 @@ const TrainerOpportunitiesPage = () => {
   }, []);
 
   const respond = async (record, outreachStatus) => {
+    if (outreachStatus === "INTERESTED") {
+      const confirmed = window.confirm(
+        `Confirm your interest in "${record.requirementId?.title || "this requirement"
+        }"?\n\nOnce confirmed, you'll be shortlisted and the Nxthack team will be notified immediately.`,
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
     try {
       setRespondingId(record._id);
 
@@ -195,20 +206,18 @@ const TrainerOpportunitiesPage = () => {
             key={item.key}
             type="button"
             onClick={() => setFilter(item.key)}
-            className={`relative rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-300 ${
-              filter === item.key
-                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 scale-[1.02]"
-                : "bg-white/80 text-slate-600 backdrop-blur-sm hover:bg-slate-50/80 hover:shadow-md border border-slate-200/80"
-            }`}
+            className={`relative rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-300 ${filter === item.key
+              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 scale-[1.02]"
+              : "bg-white/80 text-slate-600 backdrop-blur-sm hover:bg-slate-50/80 hover:shadow-md border border-slate-200/80"
+              }`}
           >
             {item.label}
             {item.key === "NEW" && newCount > 0 && (
               <span
-                className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
-                  filter === item.key
-                    ? "bg-white/20"
-                    : "bg-blue-100 text-blue-700"
-                }`}
+                className={`ml-2 rounded-full px-2 py-0.5 text-xs ${filter === item.key
+                  ? "bg-white/20"
+                  : "bg-blue-100 text-blue-700"
+                  }`}
               >
                 {newCount}
               </span>
@@ -229,13 +238,12 @@ const TrainerOpportunitiesPage = () => {
           return (
             <div
               key={record._id}
-              className={`group rounded-3xl border bg-white/80 p-6 shadow-xl shadow-slate-200/40 backdrop-blur-sm transition-all hover:shadow-2xl hover:shadow-slate-300/50 hover:scale-[1.005] ${
-                record.outreachStatus === "INTERESTED"
-                  ? "border-emerald-300/80 bg-emerald-50/60"
-                  : record.outreachStatus === "DECLINED"
-                    ? "border-slate-200/60 bg-slate-50/60 opacity-75"
-                    : "border-slate-200/80"
-              }`}
+              className={`group rounded-3xl border bg-white/80 p-6 shadow-xl shadow-slate-200/40 backdrop-blur-sm transition-all hover:shadow-2xl hover:shadow-slate-300/50 hover:scale-[1.005] ${record.outreachStatus === "INTERESTED"
+                ? "border-emerald-300/80 bg-emerald-50/60"
+                : record.outreachStatus === "DECLINED"
+                  ? "border-slate-200/60 bg-slate-50/60 opacity-75"
+                  : "border-slate-200/80"
+                }`}
             >
               <div className="flex flex-col justify-between gap-5 lg:flex-row">
                 {/* Left: Details */}
@@ -361,6 +369,15 @@ const TrainerOpportunitiesPage = () => {
                           /day quoted
                         </p>
                       )}
+                      {record.outreachStatus === "INTERESTED" &&
+                        record.vendorStatus &&
+                        record.vendorStatus !== "NOT_SENT" &&
+                        record.vendorStatus !== "PROFILE_SENT" && (
+                          <p className="mt-1.5 flex items-center justify-center gap-1 font-bold text-emerald-600">
+                            <FiCheck size={13} />
+                            You've been shortlisted
+                          </p>
+                        )}
                     </div>
                   )}
                 </div>
