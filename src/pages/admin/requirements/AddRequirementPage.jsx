@@ -160,7 +160,7 @@ const AddRequirementPage = () => {
       {/* Error Alert */}
       {error && (
         <div
-          className="relative mb-8 overflow-hidden rounded-2xl border border-red-200/80 bg-white/80 backdrop-blur-sm shadow-lg shadow-red-100/30 transition-all duration-300"
+          className="animate-rise-in relative mb-8 overflow-hidden rounded-2xl border border-red-200/80 bg-white/80 backdrop-blur-sm shadow-lg shadow-red-100/30"
           role="alert"
         >
           <div className="flex items-start justify-between gap-4 p-5">
@@ -179,11 +179,11 @@ const AddRequirementPage = () => {
               <button
                 type="button"
                 onClick={loadVendors}
-                className="flex shrink-0 items-center gap-1.5 rounded-full bg-red-100/80 px-4 py-2 text-sm font-semibold text-red-700 transition-all duration-200 hover:bg-red-200/80 hover:shadow-md active:scale-95"
+                className="press-scale group/retry flex shrink-0 items-center gap-1.5 rounded-full bg-red-100/80 px-4 py-2 text-sm font-semibold text-red-700 transition-all duration-200 hover:bg-red-200/80 hover:shadow-md"
               >
                 <FiRefreshCw
                   size={14}
-                  className="transition-transform duration-500 group-active:rotate-180"
+                  className="transition-transform duration-500 group-hover/retry:rotate-180"
                 />
                 Retry
               </button>
@@ -195,27 +195,28 @@ const AddRequirementPage = () => {
       )}
 
       {/* Main Card */}
-      <div className="relative rounded-3xl border border-white/20 bg-white/60 p-6 shadow-2xl shadow-slate-200/40 backdrop-blur-xl transition-all duration-300 sm:p-8">
+      <div
+        style={{ animationDelay: "80ms" }}
+        className="animate-rise-in relative rounded-3xl border border-white/20 bg-white/60 p-6 shadow-2xl shadow-slate-200/40 backdrop-blur-xl transition-all duration-300 sm:p-8"
+      >
         {vendorsLoading ? (
-          <div className="flex min-h-[340px] flex-col items-center justify-center space-y-4">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl opacity-30 animate-pulse" />
-              <FiRefreshCw
-                size={32}
-                className="relative animate-spin text-blue-600"
-              />
-            </div>
-            <p className="text-sm font-medium text-slate-500 animate-pulse">
+          <div className="space-y-6">
+            {[0, 1, 2].map((section) => (
+              <div
+                key={section}
+                style={{ animationDelay: `${section * 80}ms` }}
+                className="animate-rise-in space-y-3"
+              >
+                <div className="skeleton h-3 w-32 rounded-full" />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="skeleton h-11 w-full rounded-xl" />
+                  <div className="skeleton h-11 w-full rounded-xl" />
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center gap-2 pt-2 text-sm font-medium text-slate-400">
+              <FiRefreshCw size={14} className="animate-spin" />
               Loading vendors…
-            </p>
-            <div className="flex w-full max-w-xs justify-center gap-2">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-2 w-12 rounded-full bg-slate-200/70 animate-pulse"
-                  style={{ animationDelay: `${i * 150}ms` }}
-                />
-              ))}
             </div>
           </div>
         ) : (

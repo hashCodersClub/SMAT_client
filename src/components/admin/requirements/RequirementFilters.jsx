@@ -1,5 +1,8 @@
 import { FiSearch, FiX } from "react-icons/fi";
 
+const selectClasses =
+  "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition-all duration-200 hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10";
+
 const RequirementFilters = ({
   search,
   setSearch,
@@ -16,18 +19,28 @@ const RequirementFilters = ({
       <div className="grid gap-3 lg:grid-cols-5">
         {/* Search */}
 
-        <div className="relative lg:col-span-2">
+        <div className="group relative lg:col-span-2">
           <FiSearch
             size={17}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors duration-200 group-focus-within:text-blue-500"
           />
 
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search requirement, vendor, skill or city..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:bg-white"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-9 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
           />
+
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="press-scale animate-scale-in absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition-colors duration-200 hover:bg-slate-200 hover:text-slate-700"
+            >
+              <FiX size={13} />
+            </button>
+          )}
         </div>
 
         {/* Status */}
@@ -35,7 +48,7 @@ const RequirementFilters = ({
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
+          className={selectClasses}
         >
           <option value="">All Statuses</option>
 
@@ -65,7 +78,7 @@ const RequirementFilters = ({
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
+          className={selectClasses}
         >
           <option value="">All Modes</option>
 
@@ -81,7 +94,7 @@ const RequirementFilters = ({
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500"
+          className={selectClasses}
         >
           <option value="">All Priorities</option>
 
@@ -97,7 +110,7 @@ const RequirementFilters = ({
         <button
           type="button"
           onClick={resetFilters}
-          className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+          className="press-scale animate-rise-in mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-800"
         >
           <FiX />
           Clear filters

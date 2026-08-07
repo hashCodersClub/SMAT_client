@@ -127,7 +127,7 @@ const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
 
   if (!requirements.length) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-14 text-center">
+      <div className="animate-scale-in rounded-2xl border border-slate-200 bg-white p-14 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
           <FiEye size={20} />
         </div>
@@ -179,7 +179,7 @@ const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
           ================================================================= */}
 
           <tbody className="divide-y divide-slate-100">
-            {requirements.map((requirement) => {
+            {requirements.map((requirement, index) => {
               const requirementId = requirement._id || requirement.id;
 
               const vendorName = getVendorName(requirement);
@@ -187,7 +187,8 @@ const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
               return (
                 <tr
                   key={requirementId}
-                  className="transition hover:bg-slate-50/80"
+                  style={{ animationDelay: `${Math.min(index, 10) * 35}ms` }}
+                  className="animate-rise-in group transition-colors duration-200 hover:bg-slate-50/80"
                 >
                   {/* ====================================================
                         REQUIREMENT
@@ -341,11 +342,12 @@ const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
 
                   <td className="px-5 py-4">
                     <span
-                      className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold transition-transform duration-200 group-hover:scale-105 ${
                         statusStyles[requirement.status] ||
                         "bg-slate-100 text-slate-700"
                       }`}
                     >
+                      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
                       {formatLabel(requirement.status)}
                     </span>
                   </td>
@@ -369,7 +371,7 @@ const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
                               `/admin/requirements/${requirementId}/create-assignment/${assignTrainerId}`,
                             )
                           }
-                          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                          className="press-scale flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md"
                         >
                           <FiUserCheck size={14} />
                           Select
@@ -384,7 +386,7 @@ const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
                         onClick={() =>
                           navigate(`/admin/requirements/${requirementId}`)
                         }
-                        className="rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
+                        className="press-scale rounded-lg p-2 text-slate-500 transition-all duration-200 hover:scale-110 hover:bg-blue-50 hover:text-blue-600"
                       >
                         <FiEye size={17} />
                       </button>
@@ -397,7 +399,7 @@ const RequirementTable = ({ requirements = [], assignTrainerId = "" }) => {
                         onClick={() =>
                           navigate(`/admin/requirements/${requirementId}/edit`)
                         }
-                        className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                        className="press-scale rounded-lg p-2 text-slate-500 transition-all duration-200 hover:scale-110 hover:bg-slate-100 hover:text-slate-900"
                       >
                         <FiEdit2 size={16} />
                       </button>

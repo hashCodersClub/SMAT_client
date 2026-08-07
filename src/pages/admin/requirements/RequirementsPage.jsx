@@ -13,13 +13,13 @@ import {
   FiRefreshCw,
 } from "react-icons/fi";
 
-import RequirementStats from "../../../components/admin/requirements/RequirementStats";
 import RequirementFilters from "../../../components/admin/requirements/RequirementFilters";
 import RequirementTable from "../../../components/admin/requirements/RequirementTable";
 
 import requirementsApi from "../../../api/requirementsApi";
 import trainersApi from "../../../api/trainersApi";
 import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
+import { useCountUp } from "../../../hooks/useCountUp";
 
 // ---------- Helper for stats ----------
 const getStats = (requirements) => {
@@ -70,6 +70,109 @@ const getStats = (requirements) => {
     },
   ];
 };
+
+/*
+|--------------------------------------------------------------------------
+| Stat Card
+|--------------------------------------------------------------------------
+|
+| Split out so useCountUp (a hook) can be called once per card — hooks
+| can't be called conditionally inside a .map() in the parent.
+|--------------------------------------------------------------------------
+*/
+
+const StatCard = ({ stat, isActive, index, onClick }) => {
+  const Icon = stat.icon;
+  const animatedValue = useCountUp(stat.value, { duration: 700 });
+
+  return (
+    <button
+      onClick={onClick}
+      style={{ animationDelay: `${index * 60}ms` }}
+      className={`animate-rise-in hover-lift press-scale group relative overflow-hidden rounded-2xl border p-5 text-left ${
+        isActive
+          ? "border-blue-500 bg-blue-50/80 shadow-lg shadow-blue-100/50 dark:border-blue-400 dark:bg-blue-900/20"
+          : "border-white/20 bg-white/60 shadow-sm backdrop-blur-sm hover:border-slate-200/80 hover:shadow-xl dark:border-slate-700/50 dark:bg-slate-800/30 dark:hover:border-slate-600/80"
+      }`}
+    >
+      <div className="flex items-start justify-between">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg transition-transform duration-300 ease-out group-hover:scale-110 group-hover:rotate-3`}
+        >
+          <Icon className="h-5 w-5" strokeWidth={2} />
+        </div>
+        <span
+          className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors duration-200 ${
+            stat.trendUp
+              ? "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              : "bg-rose-100/80 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+          }`}
+        >
+          {stat.trendUp ? (
+            <FiTrendingUp className="h-3 w-3" />
+          ) : (
+            <FiTrendingDown className="h-3 w-3" />
+          )}
+          {stat.trend}
+        </span>
+      </div>
+      <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
+        {stat.label}
+      </p>
+      <p
+        key={animatedValue}
+        className="animate-count-tick mt-0.5 text-2xl font-bold tabular-nums text-slate-900 dark:text-white"
+      >
+        {animatedValue}
+      </p>
+      {isActive && (
+        <div className="absolute inset-x-0 bottom-0 h-0.5 animate-scale-in bg-gradient-to-r from-blue-500 to-cyan-400" />
+      )}
+      {/* Subtle sheen sweep on hover — Stripe-card style */}
+      <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+    </button>
+  );
+};
+
+/*
+|--------------------------------------------------------------------------
+| Loading Skeleton
+|--------------------------------------------------------------------------
+|
+| A shimmering, shaped skeleton beats a spinner for perceived
+| performance — the eye can already see where content will land.
+|--------------------------------------------------------------------------
+*/
+
+const RequirementsSkeleton = () => (
+  <div className="mt-8 animate-rise-in space-y-6">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={i}
+          style={{ animationDelay: `${i * 60}ms` }}
+          className="animate-rise-in space-y-4 rounded-2xl border border-white/20 bg-white/60 p-5 backdrop-blur-sm"
+        >
+          <div className="skeleton h-12 w-12 rounded-xl" />
+          <div className="skeleton h-3 w-24 rounded-full" />
+          <div className="skeleton h-6 w-16 rounded-full" />
+        </div>
+      ))}
+    </div>
+
+    <div className="skeleton h-16 w-full rounded-2xl" />
+
+    <div className="space-y-3 rounded-2xl border border-white/20 bg-white/60 p-5 backdrop-blur-sm">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          style={{ animationDelay: `${i * 50}ms` }}
+          className="skeleton animate-rise-in h-14 w-full rounded-xl"
+        />
+      ))}
+    </div>
+  </div>
+);
 
 const RequirementsPage = () => {
   const navigate = useNavigate();
@@ -208,19 +311,19 @@ const RequirementsPage = () => {
 
         <button
           onClick={() => navigate("/admin/requirements/add")}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-600/20 transition-all duration-200 hover:bg-blue-700 hover:shadow-xl active:scale-95"
+          className="press-scale group inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30"
         >
-          <FiPlus className="h-4 w-4" />
+          <FiPlus className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
           New Requirement
         </button>
       </div>
 
       {/* Assign Trainer Banner */}
       {assignTrainerId && (
-        <div className="relative mt-6 overflow-hidden rounded-2xl border border-blue-200/80 bg-white/80 px-5 py-4 backdrop-blur-sm dark:border-blue-800/30 dark:bg-slate-800/60">
+        <div className="animate-slide-in-right relative mt-6 overflow-hidden rounded-2xl border border-blue-200/80 bg-white/80 px-5 py-4 backdrop-blur-sm dark:border-blue-800/30 dark:bg-slate-800/60">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 text-sm text-blue-800 dark:text-blue-300">
-              <div className="rounded-full bg-blue-100/70 p-1.5 dark:bg-blue-900/30">
+              <div className="animate-glow-pulse rounded-full bg-blue-100/70 p-1.5 dark:bg-blue-900/30">
                 <FiUserCheck className="h-4 w-4" />
               </div>
               <span>
@@ -233,7 +336,7 @@ const RequirementsPage = () => {
             </div>
             <button
               onClick={clearAssignTrainer}
-              className="inline-flex items-center gap-1 self-start rounded-full bg-blue-100/70 px-4 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-200/80 dark:bg-blue-800/30 dark:text-blue-300 dark:hover:bg-blue-800/50 sm:self-auto"
+              className="press-scale inline-flex items-center gap-1 self-start rounded-full bg-blue-100/70 px-4 py-1.5 text-sm font-medium text-blue-700 transition-colors duration-200 hover:bg-blue-200/80 dark:bg-blue-800/30 dark:text-blue-300 dark:hover:bg-blue-800/50 sm:self-auto"
             >
               <FiX className="h-4 w-4" />
               Cancel
@@ -245,17 +348,9 @@ const RequirementsPage = () => {
 
       {/* Loading State */}
       {loading ? (
-        <div className="relative mt-8 flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-white/20 bg-white/60 p-8 backdrop-blur-xl">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl opacity-30 animate-pulse" />
-            <FiRefreshCw className="relative h-8 w-8 animate-spin text-blue-600" />
-          </div>
-          <p className="mt-4 text-sm font-medium text-slate-500 animate-pulse">
-            Loading requirements…
-          </p>
-        </div>
+        <RequirementsSkeleton />
       ) : error ? (
-        <div className="relative mt-8 overflow-hidden rounded-3xl border border-red-200/80 bg-white/80 p-6 backdrop-blur-sm shadow-lg shadow-red-100/20">
+        <div className="animate-rise-in relative mt-8 overflow-hidden rounded-3xl border border-red-200/80 bg-white/80 p-6 backdrop-blur-sm shadow-lg shadow-red-100/20">
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="rounded-full bg-red-100/70 p-2.5">
               <FiAlertCircle className="h-8 w-8 text-red-600" />
@@ -267,8 +362,9 @@ const RequirementsPage = () => {
             </div>
             <button
               onClick={fetchRequirements}
-              className="rounded-full bg-red-100/80 px-5 py-2 text-sm font-medium text-red-700 transition hover:bg-red-200/80 hover:shadow-md active:scale-95 dark:bg-red-800/30 dark:text-red-300 dark:hover:bg-red-800/50"
+              className="press-scale group inline-flex items-center gap-2 rounded-full bg-red-100/80 px-5 py-2 text-sm font-medium text-red-700 transition-all duration-200 hover:bg-red-200/80 hover:shadow-md dark:bg-red-800/30 dark:text-red-300 dark:hover:bg-red-800/50"
             >
+              <FiRefreshCw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-180" />
               Retry
             </button>
           </div>
@@ -278,55 +374,22 @@ const RequirementsPage = () => {
         <>
           {/* Stats Cards */}
           <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              const isActive = status === stat.filterValue;
-
-              return (
-                <button
-                  key={stat.label}
-                  onClick={() => handleStatClick(stat)}
-                  className={`group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${isActive
-                    ? "border-blue-500 bg-blue-50/80 shadow-blue-100/50 dark:border-blue-400 dark:bg-blue-900/20"
-                    : "border-white/20 bg-white/60 backdrop-blur-sm hover:border-slate-200/80 dark:border-slate-700/50 dark:bg-slate-800/30 dark:hover:border-slate-600/80"
-                    }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg`}
-                    >
-                      <Icon className="h-5 w-5" strokeWidth={2} />
-                    </div>
-                    <span
-                      className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${stat.trendUp
-                        ? "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : "bg-rose-100/80 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                        }`}
-                    >
-                      {stat.trendUp ? (
-                        <FiTrendingUp className="h-3 w-3" />
-                      ) : (
-                        <FiTrendingDown className="h-3 w-3" />
-                      )}
-                      {stat.trend}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                    {stat.label}
-                  </p>
-                  <p className="mt-0.5 text-2xl font-bold text-slate-900 dark:text-white">
-                    {stat.value}
-                  </p>
-                  {isActive && (
-                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-400" />
-                  )}
-                </button>
-              );
-            })}
+            {stats.map((stat, index) => (
+              <StatCard
+                key={stat.label}
+                stat={stat}
+                index={index}
+                isActive={status === stat.filterValue}
+                onClick={() => handleStatClick(stat)}
+              />
+            ))}
           </div>
 
           {/* Filters */}
-          <div className="relative mt-6 overflow-hidden rounded-2xl border border-white/20 bg-white/60 p-4 backdrop-blur-sm shadow-xl shadow-slate-200/30 dark:bg-slate-800/30">
+          <div
+            style={{ animationDelay: "240ms" }}
+            className="animate-rise-in relative mt-6 overflow-hidden rounded-2xl border border-white/20 bg-white/60 p-4 backdrop-blur-sm shadow-xl shadow-slate-200/30 dark:bg-slate-800/30"
+          >
             <RequirementFilters
               search={search}
               setSearch={setSearch}
@@ -342,16 +405,25 @@ const RequirementsPage = () => {
           </div>
 
           {/* Result count */}
-          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+          <p
+            style={{ animationDelay: "280ms" }}
+            className="animate-rise-in mt-4 text-sm text-slate-500 dark:text-slate-400"
+          >
             Showing{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
+            <span
+              key={filteredRequirements.length}
+              className="animate-count-tick inline-block font-semibold text-slate-700 dark:text-slate-200"
+            >
               {filteredRequirements.length}
             </span>{" "}
             requirements
           </p>
 
           {/* Table */}
-          <div className="relative mt-2 overflow-hidden rounded-2xl border border-white/20 bg-white/60 backdrop-blur-sm shadow-xl shadow-slate-200/30 dark:bg-slate-800/30">
+          <div
+            style={{ animationDelay: "320ms" }}
+            className="animate-rise-in relative mt-2 overflow-hidden rounded-2xl border border-white/20 bg-white/60 backdrop-blur-sm shadow-xl shadow-slate-200/30 dark:bg-slate-800/30"
+          >
             <RequirementTable
               requirements={filteredRequirements}
               assignTrainerId={assignTrainerId}

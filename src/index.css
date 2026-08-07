@@ -1,84 +1,9 @@
 @import "tailwindcss";
 
-/* ==========================================================================
-   DESIGN TOKENS
-   ========================================================================== */
-@theme {
-  --font-sans:
-    "Geist", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
-
-  /* The single easing curve used everywhere — this is what makes motion feel
-     "premium" instead of default ease-in-out. Matches Vercel/Linear/Apple. */
-  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-
-  --animate-gradient-xy: gradient-xy 15s ease infinite;
-  --animate-shimmer: shimmer 1.8s var(--ease-premium) infinite;
-  --animate-fade-in-up: fade-in-up 0.6s var(--ease-premium) both;
-  --animate-scale-in: scale-in 0.35s var(--ease-premium) both;
-  --animate-glow-pulse: glow-pulse 2.4s ease-in-out infinite;
-
-  @keyframes gradient-xy {
-    0%,
-    100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-  }
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
-  @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  @keyframes glow-pulse {
-    0%,
-    100% {
-      opacity: 0.5;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
-}
-
-/* ==========================================================================
-   BASE
-   ========================================================================== */
 html,
 body,
 #root {
   min-height: 100%;
-}
-
-html {
-  scroll-behavior: smooth;
 }
 
 body {
@@ -87,27 +12,18 @@ body {
   min-height: 100vh;
   background-color: #f8fafc;
   color: #0f172a;
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 * {
   box-sizing: border-box;
-}
-
-/* Every interactive/transition-bearing element defaults to the premium curve
-   instead of Tailwind's stock ease — this alone makes the whole app feel
-   noticeably smoother without touching component code. */
-button,
-a,
-input,
-textarea,
-select,
-[class*="transition"] {
-  transition-timing-function: var(--ease-premium);
 }
 
 button,
@@ -126,94 +42,203 @@ a {
   text-decoration: none;
 }
 
-/* Tabular numbers by default anywhere stats/metrics render */
-.tabular-nums,
-[class*="text-2xl"],
-[class*="text-3xl"] {
-  font-variant-numeric: tabular-nums;
-}
-
-::selection {
-  background-color: rgba(99, 102, 241, 0.25);
-  color: #1e1b4b;
-}
-
-/* ==========================================================================
-   FOCUS
-   ========================================================================== */
-:focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ==========================================================================
-   SCROLLBAR — thin, rounded, brightens on hover (used across dark surfaces)
-   ========================================================================== */
+/* ===== Custom scrollbar (used in Sidebar) ===== */
 .scrollbar-thin::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 9999px;
-  transition: background-color 0.3s var(--ease-premium);
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(15, 23, 42, 0.15) transparent;
+/* ===== Custom keyframes (optional, but used for extra polish) ===== */
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
 }
+/* You can also use Tailwind's built-in 'animate-pulse' – we already do */
 
-/* ==========================================================================
-   PREMIUM UTILITIES — reusable across pages
-   ========================================================================== */
-
-/* Frosted glass surface */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-/* Soft, layered elevation — Vercel/Linear-style shadow stacking rather than
-   one flat box-shadow. Use in place of shadow-sm/shadow-md for hero cards. */
-.shadow-premium {
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 4px 16px rgba(15, 23, 42, 0.06),
-    0 12px 32px -8px rgba(15, 23, 42, 0.08);
-}
-.shadow-premium-lg {
-  box-shadow:
-    0 2px 4px rgba(15, 23, 42, 0.04),
-    0 8px 24px rgba(15, 23, 42, 0.08),
-    0 24px 48px -12px rgba(15, 23, 42, 0.14);
-}
-
-/* Animated gradient text, e.g. for hero headings */
-.text-gradient-premium {
-  background: linear-gradient(120deg, #4f46e5, #7c3aed 45%, #4f46e5);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: var(--animate-gradient-xy);
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in-up {
-  animation: var(--animate-fade-in-up);
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Motion System — Requirement Management
+|--------------------------------------------------------------------------
+|
+| Shared animation primitives modeled after Stripe/Vercel/Linear-style
+| product UI: quick, physical-feeling easing (never linear), subtle
+| scale/translate instead of big movement, and staggered entrance via
+| the --stagger-delay custom property (set inline per item: e.g.
+| style={{ animationDelay: `${index * 40}ms` }}).
+|
+| Everything here is plain CSS — no animation library required, so this
+| drops straight into the existing Tailwind v4 setup.
+|--------------------------------------------------------------------------
+*/
+
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Entrance: fade + rise, used for cards/rows/sections as they mount */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in 0.5s var(--ease-out-soft) both;
+}
+
+/* Entrance: soft scale-in, used for modals/popovers/badges */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .animate-scale-in {
-  animation: var(--animate-scale-in);
+  animation: scale-in 0.35s var(--ease-spring) both;
 }
-.animate-shimmer {
-  animation: var(--animate-shimmer);
+
+/* Entrance: slide from the right, used for slide-over panels */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s var(--ease-out-soft) both;
+}
+
+/* Shimmer skeleton — replaces bare spinners for loading states */
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    rgba(15, 23, 42, 0.06) 30%,
+    rgba(15, 23, 42, 0.12) 45%,
+    rgba(15, 23, 42, 0.06) 60%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+/* Soft glow pulse — used for "live"/AI/attention-worthy elements */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2.2s var(--ease-smooth) infinite;
+}
+
+/* Count-up number ticks — tiny upward nudge as digits change */
+@keyframes count-tick {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-count-tick {
+  animation: count-tick 0.3s var(--ease-out-soft) both;
+}
+
+/* Shared hover-lift for cards — physical, not floaty */
+.hover-lift {
+  transition:
+    transform 0.25s var(--ease-out-soft),
+    box-shadow 0.25s var(--ease-out-soft),
+    border-color 0.25s var(--ease-out-soft);
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+}
+
+/* Button press feedback used across the requirements UI */
+.press-scale {
+  transition: transform 0.15s var(--ease-out-soft);
+}
+
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+@theme {
+  --animate-gradient-xy: gradient-xy 15s ease infinite;
+  @keyframes gradient-xy {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
 }

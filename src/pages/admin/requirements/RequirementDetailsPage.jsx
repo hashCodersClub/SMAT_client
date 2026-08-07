@@ -5,26 +5,19 @@ import {
   FiAlertCircle,
   FiArrowLeft,
   FiCalendar,
-  FiCheck,
   FiCheckCircle,
   FiClock,
   FiCpu,
   FiEdit2,
-  FiEye,
-  FiHelpCircle,
   FiLoader,
   FiMapPin,
   FiRefreshCw,
-  FiStar,
   FiTrash2,
   FiUser,
   FiUsers,
-  FiX,
-  FiZap,
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
-import opportunitiesApi from "../../../api/opportunitiesApi";
 
 const STATUSES = [
   "SUBMITTED",
@@ -71,14 +64,6 @@ const formatDate = (date) => {
   });
 };
 
-const formatTimeAgo = (date) => {
-  if (!date) return "—";
-  const diffHours = (new Date() - new Date(date)) / (1000 * 60 * 60);
-  if (diffHours < 1) return "Just now";
-  if (diffHours < 24) return `${Math.round(diffHours)}h ago`;
-  return `${Math.round(diffHours / 24)}d ago`;
-};
-
 const getVendorName = (requirement) => {
   if (requirement?.vendorId && typeof requirement.vendorId === "object") {
     return (
@@ -96,8 +81,6 @@ const RequirementDetailsPage = () => {
   const navigate = useNavigate();
 
   const [requirement, setRequirement] = useState(null);
-  const [opportunities, setOpportunities] = useState([]);
-  const [opportunitiesError, setOpportunitiesError] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -107,12 +90,6 @@ const RequirementDetailsPage = () => {
 
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-
-  // Phase F Admin Response View & Phase G Scoring
-  const [candidateFilter, setCandidateFilter] = useState("ALL");
-  const [actionLoadingId, setActionLoadingId] = useState("");
-  const [selectedScoringModal, setSelectedScoringModal] = useState(null);
-  const [selectingOpportunity, setSelectingOpportunity] = useState(null);
 
   /*
   |--------------------------------------------------------------------------
@@ -125,25 +102,9 @@ const RequirementDetailsPage = () => {
       setLoading(true);
       setError("");
 
-      const [response, opportunityResult] = await Promise.all([
-        requirementsApi.getById(id),
-        opportunitiesApi
-          .getByRequirementAdmin(id)
-          .then((data) => ({ data }))
-          .catch((opportunityError) => ({ error: opportunityError })),
-      ]);
+      const response = await requirementsApi.getById(id);
 
       setRequirement(response.requirement);
-      if (opportunityResult.error) {
-        setOpportunities([]);
-        setOpportunitiesError(
-          opportunityResult.error.response?.data?.message ||
-            "Unable to load matched opportunities.",
-        );
-      } else {
-        setOpportunities(opportunityResult.data.candidates || []);
-        setOpportunitiesError("");
-      }
     } catch (error) {
       console.error("Failed to load requirement:", error);
 
@@ -196,26 +157,6 @@ const RequirementDetailsPage = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Admin Action Handlers (Phase F)
-  |--------------------------------------------------------------------------
-  */
-
-  const handleAdminAction = async (opportunityId, action) => {
-    try {
-      setActionLoadingId(opportunityId);
-      await opportunitiesApi.adminAction(opportunityId, action);
-      await loadRequirement();
-    } catch (err) {
-      console.error("Admin action failed:", err);
-      alert(err.response?.data?.message || "Action failed.");
-    } finally {
-      setActionLoadingId("");
-      setSelectingOpportunity(null);
-    }
-  };
-
-  /*
-  |--------------------------------------------------------------------------
   | Delete Requirement
   |--------------------------------------------------------------------------
   */
@@ -247,34 +188,78 @@ const RequirementDetailsPage = () => {
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Loading
+  |--------------------------------------------------------------------------
+  */
+
   if (loading) {
     return (
-      <div className="flex min-h-[450px] items-center justify-center">
-        <div className="text-center">
-          <FiRefreshCw
-            size={25}
-            className="mx-auto animate-spin text-blue-600"
-          />
-
-          <p className="mt-3 text-sm text-slate-500">Loading requirement...</p>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="skeleton h-5 w-40 rounded-full" />
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-3">
+            <div className="skeleton h-8 w-72 rounded-lg" />
+            <div className="skeleton h-4 w-48 rounded-full" />
+          </div>
+          <div className="flex gap-2">
+            <div className="skeleton h-10 w-24 rounded-xl" />
+            <div className="skeleton h-10 w-24 rounded-xl" />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              style={{ animationDelay: `${i * 60}ms` }}
+              className="skeleton animate-rise-in h-24 w-full rounded-2xl"
+            />
+          ))}
+        </div>
+        <div className="grid gap-6 xl:grid-cols-3">
+          <div className="space-y-6 xl:col-span-2">
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                style={{ animationDelay: `${i * 80}ms` }}
+                className="skeleton animate-rise-in h-40 w-full rounded-2xl"
+              />
+            ))}
+          </div>
+          <div className="space-y-6">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={{ animationDelay: `${i * 80}ms` }}
+                className="skeleton animate-rise-in h-32 w-full rounded-2xl"
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Error
+  |--------------------------------------------------------------------------
+  */
+
   if (error || !requirement) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="animate-fade-in-up mx-auto max-w-3xl">
         <button
           type="button"
           onClick={() => navigate("/admin/requirements")}
-          className="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+          className="press-scale mb-5 flex items-center gap-2 text-sm font-semibold text-slate-500 transition-all duration-200 hover:-translate-x-0.5 hover:text-slate-900"
         >
           <FiArrowLeft />
           Back to Requirements
         </button>
 
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+        <div className="animate-rise-in rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
           <FiAlertCircle size={30} className="mx-auto text-red-500" />
 
           <h2 className="mt-3 font-semibold text-red-900">
@@ -288,8 +273,12 @@ const RequirementDetailsPage = () => {
           <button
             type="button"
             onClick={loadRequirement}
-            className="mt-5 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white"
+            className="press-scale group mt-5 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/30"
           >
+            <FiRefreshCw
+              size={14}
+              className="transition-transform duration-500 group-hover:rotate-180"
+            />
             Try Again
           </button>
         </div>
@@ -304,27 +293,25 @@ const RequirementDetailsPage = () => {
       ? requirement.vendorId
       : null;
 
-  // Filtered Candidates
-  const filteredCandidates = opportunities.filter((c) => {
-    if (candidateFilter === "INTERESTED") return c.status === "INTERESTED";
-    if (candidateFilter === "SHORTLISTED") return c.status === "SHORTLISTED";
-    if (candidateFilter === "SELECTED") return c.status === "SELECTED";
-    return true;
-  });
-
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-12">
-      {/* BACK BUTTON */}
+    <div className="animate-fade-in-up mx-auto max-w-7xl space-y-6">
+      {/* ================================================================
+          BACK
+      ================================================================= */}
+
       <button
         type="button"
         onClick={() => navigate("/admin/requirements")}
-        className="flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+        className="press-scale flex items-center gap-2 text-sm font-semibold text-slate-500 transition-all duration-200 hover:-translate-x-0.5 hover:text-slate-900"
       >
         <FiArrowLeft />
         Back to Requirements
       </button>
 
-      {/* HEADER */}
+      {/* ================================================================
+          HEADER
+      ================================================================= */}
+
       <div className="flex flex-col justify-between gap-5 xl:flex-row xl:items-start">
         <div>
           <div className="flex flex-wrap items-center gap-3">
@@ -333,8 +320,10 @@ const RequirementDetailsPage = () => {
             </h1>
 
             <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                statusStyles[requirement.status] || "bg-slate-100 text-slate-700"
+              key={requirement.status}
+              className={`animate-scale-in rounded-full px-3 py-1 text-xs font-semibold ${
+                statusStyles[requirement.status] ||
+                "bg-slate-100 text-slate-700"
               }`}
             >
               {formatLabel(requirement.status)}
@@ -343,9 +332,13 @@ const RequirementDetailsPage = () => {
 
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
             <span>{formatLabel(requirement.trainingType)}</span>
+
             <span>•</span>
+
             <span>{formatLabel(requirement.mode)}</span>
+
             <span>•</span>
+
             <span>
               Source:{" "}
               {requirement.source === "VENDOR_PORTAL"
@@ -356,24 +349,30 @@ const RequirementDetailsPage = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {/* Edit */}
+
           <button
             type="button"
             onClick={() => navigate(`/admin/requirements/${id}/edit`)}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="press-scale flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm"
           >
             <FiEdit2 />
             Edit
           </button>
 
+          {/* Delete */}
+
           <button
             type="button"
             onClick={handleDeleteRequirement}
             disabled={deleting}
-            className="flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="press-scale flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-50 hover:shadow-sm disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50"
           >
             {deleting ? <FiLoader className="animate-spin" /> : <FiTrash2 />}
             {deleting ? "Deleting…" : "Delete"}
           </button>
+
+          {/* Start Sourcing */}
 
           {!["CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"].includes(
             requirement.status,
@@ -381,36 +380,51 @@ const RequirementDetailsPage = () => {
             <button
               type="button"
               onClick={() => navigate(`/admin/requirements/${id}/matches`)}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:from-indigo-700 hover:to-purple-700"
+              className="press-scale flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg hover:shadow-indigo-600/30"
             >
-              <FiCpu />
-              ✨ AI Match Trainers
+              <FiCpu />✨ AI Match Trainers
             </button>
           )}
         </div>
       </div>
 
+      {/* Delete Error */}
       {deleteError && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-5" role="alert">
+        <div
+          className="animate-rise-in rounded-2xl border border-red-200 bg-red-50 p-5"
+          role="alert"
+        >
           <p className="text-sm font-semibold text-red-800">Delete failed</p>
           <p className="mt-1 text-sm text-red-700">{deleteError}</p>
         </div>
       )}
 
-      {/* AI SMART MATCH HIGHLIGHT */}
-      <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-white p-5 sm:p-6 shadow-xs">
+      {/* ================================================================
+          AI SMART MATCH HIGHLIGHT
+      ================================================================= */}
+
+      <section
+        style={{ animationDelay: "60ms" }}
+        className="hover-lift animate-rise-in rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-white p-5 sm:p-6 shadow-xs"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+            <div className="animate-glow-pulse flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
               <FiCpu size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-slate-900">AI Trainer Recommendation Engine</h2>
-                <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase">Automated</span>
+                <h2 className="font-bold text-slate-900">
+                  AI Trainer Recommendation Engine
+                </h2>
+                <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase">
+                  Automated
+                </span>
               </div>
               <p className="mt-1 text-xs text-slate-600">
-                Scans available trainer network against skills, location ({requirement.city || "Remote"}), experience ({requirement.experienceRequired || 0} yrs), and budget.
+                Scans available trainer network against skills, location (
+                {requirement.city || "Remote"}), experience (
+                {requirement.experienceRequired || 0} yrs), and budget.
               </p>
             </div>
           </div>
@@ -418,18 +432,25 @@ const RequirementDetailsPage = () => {
           <button
             type="button"
             onClick={() => navigate(`/admin/requirements/${id}/matches`)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 shrink-0"
+            className="press-scale inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-md shrink-0"
           >
             Run AI Match Analysis &rarr;
           </button>
         </div>
       </section>
 
-      {/* STATUS MANAGEMENT */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+      {/* ================================================================
+          STATUS MANAGEMENT
+      ================================================================= */}
+
+      <section
+        style={{ animationDelay: "120ms" }}
+        className="hover-lift animate-rise-in rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div>
             <h2 className="font-semibold text-slate-900">Requirement Status</h2>
+
             <p className="mt-1 text-sm text-slate-500">
               Manage the operational lifecycle of this requirement.
             </p>
@@ -440,7 +461,7 @@ const RequirementDetailsPage = () => {
               value={requirement.status}
               onChange={handleStatusChange}
               disabled={statusUpdating}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all duration-200 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {STATUSES.map((status) => (
                 <option key={status} value={status}>
@@ -450,37 +471,57 @@ const RequirementDetailsPage = () => {
             </select>
 
             {statusUpdating && (
-              <p className="mt-2 text-xs text-blue-600">Updating status...</p>
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-blue-600">
+                <FiLoader size={12} className="animate-spin" />
+                Updating status...
+              </p>
             )}
           </div>
         </div>
 
         {statusError && (
-          <div className="mt-4 flex gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+          <div className="animate-rise-in mt-4 flex gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700">
             <FiAlertCircle size={17} className="mt-0.5 shrink-0" />
+
             {statusError}
           </div>
         )}
+
+        {/* Progress */}
+
+        <StatusProgress currentStatus={requirement.status} />
       </section>
 
-      {/* QUICK STATS */}
+      {/* ================================================================
+          QUICK STATS
+      ================================================================= */}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <QuickCard
+          index={0}
           icon={FiCalendar}
           label="Start Date"
           value={formatDate(requirement.startDate)}
         />
+
         <QuickCard
+          index={1}
           icon={FiCalendar}
           label="End Date"
           value={formatDate(requirement.endDate)}
         />
+
         <QuickCard
+          index={2}
           icon={FiMapPin}
           label="Location"
-          value={requirement.mode === "ONLINE" ? "Online" : requirement.city || "—"}
+          value={
+            requirement.mode === "ONLINE" ? "Online" : requirement.city || "—"
+          }
         />
+
         <QuickCard
+          index={3}
           icon={FiUsers}
           label="Participants"
           value={requirement.participants || "—"}
@@ -488,241 +529,52 @@ const RequirementDetailsPage = () => {
       </div>
 
       {/* ================================================================
-          PHASE F & G - INTERESTED TRAINERS & SCORED CANDIDATES SECTION
+          CONTENT
       ================================================================= */}
-      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-extrabold text-slate-900">
-                Interested Trainers & Candidates
-              </h2>
-              <span className="rounded-full bg-indigo-50 px-3 py-0.5 text-xs font-bold text-indigo-700 border border-indigo-200">
-                Phase F Response View
-              </span>
-            </div>
-            <p className="mt-1 text-xs font-medium text-slate-500">
-              Review trainer responses, overall opportunity scores, and manage final selection. Admin retains final selection authority.
-            </p>
-          </div>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap gap-1.5">
-            {["ALL", "INTERESTED", "SHORTLISTED", "SELECTED"].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setCandidateFilter(tab)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                  candidateFilter === tab
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {tab === "ALL" ? "All Matched" : formatLabel(tab)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {opportunitiesError ? (
-          <p className="px-6 py-6 text-sm text-red-600">{opportunitiesError}</p>
-        ) : filteredCandidates.length === 0 ? (
-          <div className="px-6 py-12 text-center text-sm font-medium text-slate-400">
-            No trainer candidates found for this view.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 text-left text-xs">
-              <thead className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="px-6 py-3.5">Rank & Trainer</th>
-                  <th className="px-4 py-3.5">Overall Score (Phase G)</th>
-                  <th className="px-4 py-3.5">Match %</th>
-                  <th className="px-4 py-3.5">Response</th>
-                  <th className="px-4 py-3.5">Response Speed</th>
-                  <th className="px-4 py-3.5">Quoted Rate</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredCandidates.map((opportunity, idx) => {
-                  const trainer = opportunity.trainerId || {};
-                  const isSelected = opportunity.status === "SELECTED";
-                  const isShortlisted = opportunity.status === "SHORTLISTED";
-
-                  return (
-                    <tr
-                      key={opportunity._id}
-                      className={`transition hover:bg-slate-50/80 ${
-                        isSelected
-                          ? "bg-emerald-50/60 font-semibold"
-                          : isShortlisted
-                            ? "bg-amber-50/40"
-                            : ""
-                      }`}
-                    >
-                      {/* Trainer Info */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 font-extrabold text-slate-600">
-                            #{idx + 1}
-                          </span>
-                          <div>
-                            <p className="font-extrabold text-slate-900 text-sm">
-                              {trainer.name || "Unknown Trainer"}
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              {trainer.email || "No email"} • {trainer.city || "Remote"}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Phase G Overall Opportunity Score */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-3 py-1 text-xs font-black text-white shadow-xs">
-                            <FiZap size={12} />
-                            {opportunity.overallScore ?? opportunity.matchScore ?? 0}%
-                          </span>
-
-                          <button
-                            type="button"
-                            onClick={() => setSelectedScoringModal(opportunity)}
-                            className="text-slate-400 hover:text-indigo-600 transition"
-                            title="View Score Breakdown"
-                          >
-                            <FiHelpCircle size={15} />
-                          </button>
-                        </div>
-                      </td>
-
-                      {/* Match Score */}
-                      <td className="px-4 py-4 font-bold text-slate-800">
-                        {opportunity.matchScore ?? "—"}%
-                      </td>
-
-                      {/* Response Status */}
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                            opportunity.status === "INTERESTED"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : opportunity.status === "MAYBE"
-                                ? "bg-amber-100 text-amber-800"
-                                : opportunity.status === "SHORTLISTED"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : opportunity.status === "SELECTED"
-                                    ? "bg-green-600 text-white"
-                                    : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {formatLabel(opportunity.status)}
-                        </span>
-                      </td>
-
-                      {/* Response Time */}
-                      <td className="px-4 py-4 font-medium text-slate-500">
-                        {opportunity.respondedAt ? (
-                          <span className="flex items-center gap-1">
-                            <FiClock size={12} />
-                            {formatTimeAgo(opportunity.respondedAt)}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-
-                      {/* Quoted Rate */}
-                      <td className="px-4 py-4 font-bold text-slate-800">
-                        {opportunity.quotedRate
-                          ? `₹${Number(opportunity.quotedRate).toLocaleString("en-IN")}/day`
-                          : "Default rate"}
-                      </td>
-
-                      {/* Admin Actions */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* View Profile */}
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/admin/trainers/${trainer._id}`)}
-                            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition"
-                          >
-                            <FiEye size={12} /> Profile
-                          </button>
-
-                          {/* Shortlist */}
-                          {!isShortlisted && !isSelected && (
-                            <button
-                              type="button"
-                              disabled={actionLoadingId === opportunity._id}
-                              onClick={() => handleAdminAction(opportunity._id, "SHORTLIST")}
-                              className="rounded-lg border border-purple-200 bg-purple-50 px-2.5 py-1.5 text-[11px] font-bold text-purple-700 hover:bg-purple-100 transition disabled:opacity-50"
-                            >
-                              Shortlist
-                            </button>
-                          )}
-
-                          {/* Reject */}
-                          {opportunity.status !== "NOT_SELECTED" && !isSelected && (
-                            <button
-                              type="button"
-                              disabled={actionLoadingId === opportunity._id}
-                              onClick={() => handleAdminAction(opportunity._id, "REJECT")}
-                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-500 hover:bg-red-50 hover:text-red-600 transition disabled:opacity-50"
-                            >
-                              Reject
-                            </button>
-                          )}
-
-                          {/* Select Trainer */}
-                          {!isSelected && (
-                            <button
-                              type="button"
-                              disabled={actionLoadingId === opportunity._id}
-                              onClick={() => setSelectingOpportunity(opportunity)}
-                              className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-emerald-700 transition disabled:opacity-50"
-                            >
-                              <FiCheck size={12} /> Select Trainer
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {/* CONTENT DETAILS */}
       <div className="grid gap-6 xl:grid-cols-3">
+        {/* LEFT */}
+
         <div className="space-y-6 xl:col-span-2">
-          <Section title="Training Information">
-            <Detail label="Training Type" value={formatLabel(requirement.trainingType)} />
-            <Detail label="Delivery Mode" value={formatLabel(requirement.mode)} />
+          {/* Training */}
+
+          <Section title="Training Information" delay={0}>
+            <Detail
+              label="Training Type"
+              value={formatLabel(requirement.trainingType)}
+            />
+
+            <Detail
+              label="Delivery Mode"
+              value={formatLabel(requirement.mode)}
+            />
+
             <Detail
               label="Trainer Experience"
               value={
-                requirement.experienceRequired !== undefined && requirement.experienceRequired !== null
+                requirement.experienceRequired !== undefined &&
+                requirement.experienceRequired !== null
                   ? `${requirement.experienceRequired} years`
                   : "—"
               }
             />
-            <Detail label="Participants" value={requirement.participants || "—"} />
+
+            <Detail
+              label="Participants"
+              value={requirement.participants || "—"}
+            />
+
+            {/* Skills */}
 
             <div className="md:col-span-2">
               <Label>Required Skills</Label>
+
               <div className="mt-2 flex flex-wrap gap-2">
                 {requirement.skills?.length ? (
                   requirement.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700"
+                      className="animate-scale-in rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-colors duration-200 hover:bg-blue-100"
                     >
                       {skill}
                     </span>
@@ -734,7 +586,9 @@ const RequirementDetailsPage = () => {
             </div>
           </Section>
 
-          <Section title="Requirement Description">
+          {/* Description */}
+
+          <Section title="Requirement Description" delay={1}>
             <div className="md:col-span-2">
               <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
                 {requirement.description || "No description provided."}
@@ -742,178 +596,331 @@ const RequirementDetailsPage = () => {
             </div>
           </Section>
 
-          <Section title="Vendor Notes">
+          {/* Vendor Notes */}
+
+          <Section title="Vendor Notes" delay={2}>
             <div className="md:col-span-2">
               <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
-                {requirement.vendorNotes || "No additional notes from the vendor."}
+                {requirement.vendorNotes ||
+                  "No additional notes from the vendor."}
+              </p>
+            </div>
+          </Section>
+
+          {/* Internal Notes */}
+
+          <Section title="Internal Notes" delay={3}>
+            <div className="md:col-span-2">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm leading-7 text-amber-900">
+                  {requirement.internalNotes || "No internal notes added yet."}
+                </p>
+              </div>
+
+              <p className="mt-2 text-xs text-slate-400">
+                Internal notes are not visible to vendors.
               </p>
             </div>
           </Section>
         </div>
 
+        {/* ================================================================
+            RIGHT
+        ================================================================= */}
+
         <div className="space-y-6">
-          <Section title="Vendor">
+          {/* Vendor */}
+
+          <Section title="Vendor" delay={0}>
             <div className="md:col-span-2">
               <div className="flex items-start gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                   <FiUser size={19} />
                 </div>
+
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-900">{vendorName}</p>
+
                   {vendor?.primaryContact?.name && (
-                    <p className="mt-1 text-sm text-slate-500">{vendor.primaryContact.name}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {vendor.primaryContact.name}
+                    </p>
                   )}
+
                   {vendor?.primaryContact?.email && (
-                    <p className="mt-1 break-all text-xs text-slate-400">{vendor.primaryContact.email}</p>
+                    <p className="mt-1 break-all text-xs text-slate-400">
+                      {vendor.primaryContact.email}
+                    </p>
+                  )}
+
+                  {vendor?.primaryContact?.phone && (
+                    <p className="mt-1 text-xs text-slate-400">
+                      {vendor.primaryContact.phone}
+                    </p>
                   )}
                 </div>
               </div>
             </div>
           </Section>
 
-          <Section title="Schedule">
+          {/* Schedule */}
+
+          <Section title="Schedule" delay={1}>
             <div className="space-y-4 md:col-span-2">
-              <SideDetail icon={FiCalendar} label="Start Date" value={formatDate(requirement.startDate)} />
-              <SideDetail icon={FiCalendar} label="End Date" value={formatDate(requirement.endDate)} />
+              <SideDetail
+                icon={FiCalendar}
+                label="Start Date"
+                value={formatDate(requirement.startDate)}
+              />
+
+              <SideDetail
+                icon={FiCalendar}
+                label="End Date"
+                value={formatDate(requirement.endDate)}
+              />
+
+              <SideDetail
+                icon={FiClock}
+                label="Duration"
+                value={
+                  requirement.durationValue
+                    ? `${requirement.durationValue} ${formatLabel(
+                        requirement.durationUnit,
+                      )}`
+                    : "—"
+                }
+              />
+            </div>
+          </Section>
+
+          {/* Location */}
+
+          <Section title="Location" delay={2}>
+            <div className="md:col-span-2">
+              <Detail label="Mode" value={formatLabel(requirement.mode)} />
+
+              <div className="mt-4">
+                <Detail label="City" value={requirement.city || "—"} />
+              </div>
+
+              <div className="mt-4">
+                <Detail label="State" value={requirement.state || "—"} />
+              </div>
+            </div>
+          </Section>
+
+          {/* Commercial */}
+
+          <Section title="Commercial" delay={3}>
+            <div className="md:col-span-2">
+              <Detail
+                label="Budget"
+                value={
+                  Number(requirement.budget) > 0
+                    ? `₹${Number(requirement.budget).toLocaleString("en-IN")}`
+                    : "Not specified"
+                }
+              />
+
+              <div className="mt-4">
+                <Detail
+                  label="Budget Type"
+                  value={
+                    Number(requirement.budget) > 0
+                      ? formatLabel(requirement.budgetType)
+                      : "—"
+                  }
+                />
+              </div>
+
+              <div className="mt-4">
+                <Detail
+                  label="Priority"
+                  value={formatLabel(requirement.priority || "MEDIUM")}
+                />
+              </div>
+            </div>
+          </Section>
+
+          {/* Metadata */}
+
+          <Section title="Record Information" delay={4}>
+            <div className="md:col-span-2">
+              <Detail
+                label="Source"
+                value={
+                  requirement.source === "VENDOR_PORTAL"
+                    ? "Vendor Portal"
+                    : "Admin Portal"
+                }
+              />
+
+              <div className="mt-4">
+                <Detail
+                  label="Created"
+                  value={formatDate(requirement.createdAt)}
+                />
+              </div>
+
+              <div className="mt-4">
+                <Detail
+                  label="Last Updated"
+                  value={formatDate(requirement.updatedAt)}
+                />
+              </div>
             </div>
           </Section>
         </div>
       </div>
-
-      {/* PHASE G SCORING BREAKDOWN MODAL */}
-      {selectedScoringModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-xs font-bold text-indigo-600 uppercase">Phase G Ranking Breakdown</span>
-                <h3 className="text-lg font-extrabold text-slate-900">
-                  {selectedScoringModal.trainerId?.name || "Trainer"}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedScoringModal(null)}
-                className="rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200"
-              >
-                <FiX size={16} />
-              </button>
-            </div>
-
-            <div className="rounded-2xl bg-indigo-50/60 p-4 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-indigo-700 uppercase">Overall Opportunity Score</span>
-                <p className="text-2xl font-black text-indigo-900">
-                  {selectedScoringModal.overallScore ?? selectedScoringModal.matchScore}%
-                </p>
-              </div>
-              <FiZap size={28} className="text-indigo-600" />
-            </div>
-
-            {/* Score Component Breakdown */}
-            <div className="space-y-3 pt-2 text-xs">
-              <ScoreRow label="Match Engine Score (30%)" score={selectedScoringModal.scoringBreakdown?.matchScore?.weighted || 0} max={30} />
-              <ScoreRow label="Trainer Rating / Track Record (20%)" score={selectedScoringModal.scoringBreakdown?.trainerRating?.weighted || 0} max={20} />
-              <ScoreRow label="Response Speed (15%)" score={selectedScoringModal.scoringBreakdown?.responseSpeed?.weighted || 0} max={15} />
-              <ScoreRow label="Availability (15%)" score={selectedScoringModal.scoringBreakdown?.availability?.weighted || 0} max={15} />
-              <ScoreRow label="Past Delivery Performance (10%)" score={selectedScoringModal.scoringBreakdown?.pastDeliveryPerformance?.weighted || 0} max={10} />
-              <ScoreRow label="Margin Potential (10%)" score={selectedScoringModal.scoringBreakdown?.marginPotential?.weighted || 0} max={10} />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setSelectedScoringModal(null)}
-              className="w-full rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* SELECT TRAINER CONFIRMATION DIALOG */}
-      {selectingOpportunity && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl text-center space-y-4">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-              <FiCheckCircle size={26} />
-            </div>
-            <h3 className="text-lg font-extrabold text-slate-900">
-              Confirm Trainer Selection
-            </h3>
-            <p className="text-xs font-medium text-slate-600 leading-relaxed">
-              Select <strong>{selectingOpportunity.trainerId?.name}</strong> for this requirement? Admin retains final selection authority. This will finalize selection and notify the trainer.
-            </p>
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectingOpportunity(null)}
-                className="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={actionLoadingId === selectingOpportunity._id}
-                onClick={() => handleAdminAction(selectingOpportunity._id, "SELECT_TRAINER")}
-                className="flex-1 rounded-xl bg-emerald-600 py-2 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition disabled:opacity-50"
-              >
-                {actionLoadingId === selectingOpportunity._id ? "Selecting..." : "Confirm Selection"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-/* Components */
-const ScoreRow = ({ label, score, max }) => (
-  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-    <span className="font-semibold text-slate-600">{label}</span>
-    <span className="font-bold text-slate-900">{score} / {max} pts</span>
-  </div>
+/*
+|--------------------------------------------------------------------------
+| Status Progress
+|--------------------------------------------------------------------------
+*/
+
+const StatusProgress = ({ currentStatus }) => {
+  const flow = [
+    "SUBMITTED",
+    "OPEN",
+    "SOURCING",
+    "PROFILES_SENT",
+    "SHORTLISTED",
+    "CONFIRMED",
+    "IN_PROGRESS",
+    "COMPLETED",
+  ];
+
+  if (currentStatus === "CANCELLED") {
+    return (
+      <div className="animate-rise-in mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+        <p className="text-sm font-semibold text-red-700">
+          This requirement has been cancelled.
+        </p>
+      </div>
+    );
+  }
+
+  const currentIndex = flow.indexOf(currentStatus);
+
+  return (
+    <div className="mt-6 overflow-x-auto pb-2">
+      <div className="flex min-w-[850px] items-center">
+        {flow.map((status, index) => {
+          const completed = index <= currentIndex;
+
+          const active = index === currentIndex;
+
+          return (
+            <div key={status} className="flex flex-1 items-center">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-500 ease-out ${
+                    active ? "scale-110 shadow-md shadow-blue-200" : ""
+                  } ${
+                    completed
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-slate-200 bg-white text-slate-400"
+                  }`}
+                >
+                  {completed ? (
+                    <FiCheckCircle size={16} className="animate-scale-in" />
+                  ) : (
+                    <span className="text-xs font-semibold">{index + 1}</span>
+                  )}
+                </div>
+
+                <p
+                  className={`mt-2 whitespace-nowrap text-[11px] font-semibold transition-colors duration-300 ${
+                    active
+                      ? "text-blue-600"
+                      : completed
+                        ? "text-slate-700"
+                        : "text-slate-400"
+                  }`}
+                >
+                  {formatLabel(status)}
+                </p>
+              </div>
+
+              {index < flow.length - 1 && (
+                <div
+                  className={`mx-2 mb-5 h-0.5 flex-1 transition-colors duration-500 ${
+                    index < currentIndex ? "bg-blue-600" : "bg-slate-200"
+                  }`}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/*
+|--------------------------------------------------------------------------
+| UI Components
+|--------------------------------------------------------------------------
+*/
+
+const Section = ({ title, delay = 0, children }) => (
+  <section
+    style={{ animationDelay: `${180 + delay * 70}ms` }}
+    className="hover-lift animate-rise-in rounded-2xl border border-slate-200 bg-white p-5 transition-colors duration-200 hover:border-slate-300 sm:p-6"
+  >
+    <h2 className="font-semibold text-slate-900">{title}</h2>
+
+    <div className="mt-5 grid gap-5 md:grid-cols-2">{children}</div>
+  </section>
 );
 
-const Section = ({ title, children }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-    <h2 className="font-semibold text-slate-900 border-b border-slate-100 pb-3 mb-4">{title}</h2>
-    <div className="grid gap-4 md:grid-cols-2">{children}</div>
-  </section>
+const Label = ({ children }) => (
+  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+    {children}
+  </p>
 );
 
 const Detail = ({ label, value }) => (
   <div>
     <Label>{label}</Label>
-    <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
+
+    <p className="mt-1.5 text-sm font-medium text-slate-800">{value}</p>
   </div>
 );
 
-const Label = ({ children }) => (
-  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{children}</span>
+const QuickCard = ({ icon: Icon, label, value, index = 0 }) => (
+  <div
+    style={{ animationDelay: `${index * 60}ms` }}
+    className="hover-lift animate-rise-in rounded-2xl border border-slate-200 bg-white p-5 transition-colors duration-200 hover:border-slate-300"
+  >
+    <div className="flex items-center gap-3">
+      <div className="rounded-xl bg-blue-50 p-3 text-blue-600 transition-transform duration-300 group-hover:scale-110">
+        <Icon size={18} />
+      </div>
+
+      <div>
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+
+        <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+      </div>
+    </div>
+  </div>
 );
 
 const SideDetail = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-3">
-    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+  <div className="group flex items-center gap-3">
+    <div className="rounded-lg bg-slate-100 p-2 text-slate-500 transition-colors duration-200 group-hover:bg-blue-50 group-hover:text-blue-600">
       <Icon size={16} />
     </div>
-    <div>
-      <Label>{label}</Label>
-      <p className="text-sm font-semibold text-slate-800">{value}</p>
-    </div>
-  </div>
-);
 
-const QuickCard = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-white p-4">
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-      <Icon size={18} />
-    </div>
     <div>
-      <span className="text-xs font-semibold text-slate-400">{label}</span>
-      <p className="text-sm font-extrabold text-slate-900">{value}</p>
+      <p className="text-xs text-slate-400">{label}</p>
+
+      <p className="text-sm font-medium text-slate-800">{value}</p>
     </div>
   </div>
 );
