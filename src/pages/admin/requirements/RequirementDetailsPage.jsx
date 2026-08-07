@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
+import opportunitiesApi from "../../../api/opportunitiesApi";
 
 const STATUSES = [
   "SUBMITTED",
@@ -81,6 +82,8 @@ const RequirementDetailsPage = () => {
   const navigate = useNavigate();
 
   const [requirement, setRequirement] = useState(null);
+  const [opportunities, setOpportunities] = useState([]);
+  const [opportunitiesError, setOpportunitiesError] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -102,9 +105,25 @@ const RequirementDetailsPage = () => {
       setLoading(true);
       setError("");
 
-      const response = await requirementsApi.getById(id);
+      const [response, opportunityResult] = await Promise.all([
+        requirementsApi.getById(id),
+        opportunitiesApi
+          .getAll({ requirementId: id, limit: 100 })
+          .then((data) => ({ data }))
+          .catch((opportunityError) => ({ error: opportunityError })),
+      ]);
 
       setRequirement(response.requirement);
+      if (opportunityResult.error) {
+        setOpportunities([]);
+        setOpportunitiesError(
+          opportunityResult.error.response?.data?.message ||
+            "Unable to load matched opportunities.",
+        );
+      } else {
+        setOpportunities(opportunityResult.data.opportunities || []);
+        setOpportunitiesError("");
+      }
     } catch (error) {
       console.error("Failed to load requirement:", error);
 
@@ -471,6 +490,63 @@ const RequirementDetailsPage = () => {
           value={requirement.participants || "—"}
         />
       </div>
+
+      {/* ================================================================
+          MATCHED OPPORTUNITIES
+      ================================================================= */}
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div>
+            <h2 className="font-semibold text-slate-900">Matched Opportunities</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Automatically generated matches. Opportunity responses and trainer actions are not enabled yet.
+            </p>
+          </div>
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+            {opportunities.length} matched
+          </span>
+        </div>
+
+        {opportunitiesError ? (
+          <p className="px-5 py-5 text-sm text-red-600 sm:px-6">{opportunitiesError}</p>
+        ) : opportunities.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-slate-500 sm:px-6">
+            No opportunities have been generated for this requirement yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-5 py-3 font-semibold sm:px-6">Trainer</th>
+                  <th className="px-5 py-3 font-semibold">Match score</th>
+                  <th className="px-5 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold">Created</th>
+                  <th className="px-5 py-3 font-semibold">Response deadline</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {opportunities.map((opportunity) => (
+                  <tr key={opportunity._id}>
+                    <td className="px-5 py-4 font-medium text-slate-900 sm:px-6">
+                      {opportunity.trainerId?.name || "Unknown trainer"}
+                    </td>
+                    <td className="px-5 py-4">
+                      {opportunity.matchScore === null || opportunity.matchScore === undefined
+                        ? "—"
+                        : `${opportunity.matchScore}%`}
+                    </td>
+                    <td className="px-5 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{formatLabel(opportunity.status)}</span></td>
+                    <td className="px-5 py-4">{formatDate(opportunity.createdAt)}</td>
+                    <td className="px-5 py-4">{formatDate(opportunity.expiresAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {/* ================================================================
           CONTENT
