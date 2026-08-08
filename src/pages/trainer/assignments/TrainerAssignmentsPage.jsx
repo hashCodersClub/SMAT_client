@@ -58,6 +58,34 @@ const formatDate = (value) => {
 
 /*
 |--------------------------------------------------------------------------
+| Skeleton
+|--------------------------------------------------------------------------
+*/
+
+const AssignmentsSkeleton = () => (
+  <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="space-y-2">
+      <div className="skeleton h-8 w-56 rounded-lg" />
+      <div className="skeleton h-4 w-72 rounded-full" />
+    </div>
+    <div className="flex gap-2">
+      <div className="skeleton h-10 w-28 rounded-xl" />
+      <div className="skeleton h-10 w-24 rounded-xl" />
+    </div>
+    <div className="space-y-4">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          style={{ animationDelay: `${i * 70}ms` }}
+          className="skeleton animate-rise-in h-28 w-full rounded-2xl"
+        />
+      ))}
+    </div>
+  </div>
+);
+
+/*
+|--------------------------------------------------------------------------
 | Main Component
 |--------------------------------------------------------------------------
 */
@@ -99,6 +127,16 @@ const TrainerAssignmentsPage = () => {
     );
   }, [assignments, tab]);
 
+  const upcomingCount = useMemo(
+    () =>
+      assignments.filter(
+        (assignment) => !["COMPLETED", "CANCELLED"].includes(assignment.status),
+      ).length,
+    [assignments],
+  );
+
+  const pastCount = assignments.length - upcomingCount;
+
   /*
   |--------------------------------------------------------------------------
   | Loading State
@@ -106,16 +144,7 @@ const TrainerAssignmentsPage = () => {
   */
 
   if (loading) {
-    return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm">
-        <div className="text-center">
-          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-indigo-600" />
-          <p className="mt-3 text-sm text-slate-500">
-            Loading your assignments...
-          </p>
-        </div>
-      </div>
-    );
+    return <AssignmentsSkeleton />;
   }
 
   /*
@@ -125,7 +154,7 @@ const TrainerAssignmentsPage = () => {
   */
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="animate-fade-in-up mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
@@ -138,7 +167,7 @@ const TrainerAssignmentsPage = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="animate-rise-in flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -146,30 +175,44 @@ const TrainerAssignmentsPage = () => {
 
       {/* Tabs */}
       <div className="flex gap-2">
-        {TABS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => setTab(item.key)}
-            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
-              tab === item.key
-                ? "bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20"
-                : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+        {TABS.map((item) => {
+          const count = item.key === "UPCOMING" ? upcomingCount : pastCount;
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setTab(item.key)}
+              className={`press-scale flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                tab === item.key
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-2 ring-indigo-500/20"
+                  : "bg-white text-slate-600 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900 hover:shadow-sm"
+              }`}
+            >
+              {item.label}
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-xs font-bold ${
+                  tab === item.key
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Assignments List */}
       <div className="space-y-4">
-        {filtered.map((assignment) => {
+        {filtered.map((assignment, index) => {
           const StatusIcon = STATUS_ICONS[assignment.status] || FiBriefcase;
           return (
             <div
               key={assignment._id}
-              className="group rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:shadow-md hover:border-indigo-200"
+              style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}
+              className="hover-lift animate-rise-in group rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition-colors duration-200 hover:border-indigo-200"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 flex-1">
@@ -198,7 +241,7 @@ const TrainerAssignmentsPage = () => {
                 </div>
 
                 <div className="flex items-center gap-4 self-start lg:self-auto">
-                  <div className="rounded-xl bg-slate-50 px-4 py-2.5 text-right ring-1 ring-slate-200/50">
+                  <div className="rounded-xl bg-slate-50 px-4 py-2.5 text-right ring-1 ring-slate-200/50 transition-colors duration-200 group-hover:bg-indigo-50/60 group-hover:ring-indigo-200/50">
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                       Your Rate
                     </p>
@@ -224,7 +267,7 @@ const TrainerAssignmentsPage = () => {
         })}
 
         {!filtered.length && (
-          <div className="rounded-2xl border border-slate-200 bg-white/80 px-6 py-16 text-center shadow-sm">
+          <div className="animate-scale-in rounded-2xl border border-slate-200 bg-white/80 px-6 py-16 text-center shadow-sm">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
               <FiBriefcase className="h-6 w-6" />
             </div>
@@ -254,7 +297,7 @@ const StatusBadge = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${style}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-transform duration-200 hover:scale-105 ${style}`}
     >
       <Icon className="h-3 w-3" />
       {label}
