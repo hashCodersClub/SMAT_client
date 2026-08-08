@@ -103,7 +103,7 @@ const TrainerAvailabilityPage = () => {
 
   useEffect(() => {
     loadAvailability();
-  }, []);
+  }, [loadAvailability]);
 
   /*
   |--------------------------------------------------------------------------
