@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Cropper from "react-easy-crop";
 import { FiCheck, FiMinus, FiPlus, FiX, FiZoomIn } from "react-icons/fi";
 
@@ -62,7 +63,7 @@ const AvatarCropModal = ({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-md animate-fade-in overflow-hidden"
       role="dialog"
@@ -178,7 +179,8 @@ const AvatarCropModal = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
