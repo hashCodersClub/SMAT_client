@@ -16,7 +16,7 @@ import NotificationBell from "../notifications/NotificationBell";
 
 const Navbar = ({
   setSidebarOpen,
-  title = "Nxthack",
+  title = "Trainexus",
   subtitle = "",
   searchPlaceholder = "Search...",
   profilePath = "/settings",
@@ -92,7 +92,7 @@ const Navbar = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/75 backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] dark:border-white/10 dark:bg-slate-900/75">
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-slate-900/80">
       <div className="flex h-20 items-center justify-between px-4 md:px-6">
         {/* ================================================================
             LEFT
@@ -101,14 +101,14 @@ const Navbar = ({
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-slate-100 active:scale-95 dark:text-slate-400 dark:hover:bg-white/5 lg:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5 lg:hidden"
             aria-label="Open navigation"
           >
             <Menu className="h-5 w-5" />
           </button>
 
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white">
               {title}
             </h1>
             {subtitle && (
@@ -126,7 +126,7 @@ const Navbar = ({
           {/* Search Bar */}
           <div
             className={`
-              relative flex items-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
+              relative flex items-center transition-all duration-300
               ${searchFocused ? "w-64 md:w-80" : "w-40 md:w-56"}
             `}
           >
@@ -144,7 +144,7 @@ const Navbar = ({
               placeholder={searchPlaceholder}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className={`h-10 w-full rounded-xl border border-slate-200/80 bg-slate-100/70 pl-10 pr-4 text-xs font-medium text-slate-900 outline-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:shadow-[0_0_0_4px_rgba(99,102,241,0.12),0_8px_20px_-8px_rgba(99,102,241,0.35)] dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-indigo-400`}
+              className="h-10 w-full rounded-xl border border-slate-200/80 bg-slate-100/70 pl-10 pr-4 text-xs font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-indigo-400"
             />
             <kbd className="absolute right-3 hidden items-center gap-0.5 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 shadow-xs dark:border-slate-800 dark:bg-slate-800 md:flex">
               <span>⌘</span>
@@ -170,7 +170,7 @@ const Navbar = ({
             <button
               type="button"
               onClick={() => setProfileOpen((current) => !current)}
-              className={`group flex items-center gap-2.5 rounded-2xl p-1.5 pr-3 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98] ${
+              className={`group flex items-center gap-2.5 rounded-2xl p-1.5 pr-3 transition duration-200 ${
                 profileOpen
                   ? "bg-slate-100 dark:bg-white/10"
                   : "hover:bg-slate-100 dark:hover:bg-white/5"
@@ -183,7 +183,7 @@ const Navbar = ({
                     src={avatarUrl}
                     alt={user?.name || "User avatar"}
                     onError={() => setImageError(true)}
-                    className="h-10 w-10 rounded-xl object-cover ring-2 ring-indigo-500/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:ring-indigo-500/50"
+                    className="h-10 w-10 rounded-xl object-cover ring-2 ring-indigo-500/20 transition-all duration-300 group-hover:ring-indigo-500/50"
                   />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-xs font-bold text-white shadow-md shadow-indigo-500/20 ring-2 ring-white dark:ring-slate-900">
@@ -196,7 +196,7 @@ const Navbar = ({
 
               {/* User Label (Desktop) */}
               <div className="hidden min-w-0 text-left sm:block">
-                <p className="max-w-[130px] truncate text-xs font-semibold text-slate-900 dark:text-white">
+                <p className="max-w-[130px] truncate text-xs font-bold text-slate-900 dark:text-white">
                   {user?.name || "User"}
                 </p>
                 <span className="inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
@@ -205,7 +205,7 @@ const Navbar = ({
               </div>
 
               <ChevronDown
-                className={`h-4 w-4 text-slate-400 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
                   profileOpen ? "rotate-180" : ""
                 }`}
               />
@@ -223,7 +223,7 @@ const Navbar = ({
                   onClick={() => setProfileOpen(false)}
                 />
 
-                <div className="animate-scale-in absolute right-0 top-14 z-50 w-72 origin-top-right overflow-hidden rounded-2xl border border-white/20 bg-white/95 p-2 backdrop-blur-2xl shadow-2xl shadow-slate-900/15 dark:border-white/10 dark:bg-slate-900/95">
+                <div className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border border-white/20 bg-white/95 p-2 backdrop-blur-2xl shadow-2xl shadow-slate-900/15 dark:border-white/10 dark:bg-slate-900/95">
                   {/* User Profile Header */}
                   <div className="flex items-center gap-3 rounded-xl bg-slate-50/80 p-3 dark:bg-white/5">
                     {avatarUrl && !imageError ? (
@@ -238,7 +238,7 @@ const Navbar = ({
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                      <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
                         {user?.name || "User"}
                       </p>
                       <p className="truncate text-xs text-slate-500 dark:text-slate-400">
@@ -259,7 +259,7 @@ const Navbar = ({
                         setProfileOpen(false);
                         navigate(profilePath);
                       }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                     >
                       <User size={16} className="text-slate-400" />
                       My Profile
@@ -271,7 +271,7 @@ const Navbar = ({
                         setProfileOpen(false);
                         navigate(settingsPath);
                       }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                     >
                       <Settings size={16} className="text-slate-400" />
                       Account Settings
@@ -283,7 +283,7 @@ const Navbar = ({
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-rose-600 transition-colors duration-200 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
                     >
                       <LogOut size={16} />
                       Sign Out

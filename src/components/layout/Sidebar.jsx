@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { FiX } from "react-icons/fi";
-import {
-  ChevronRight,
-  LogOut,
-} from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import trainexusMark from "../../assets/logos/trainexus.dark.png";
+import trainexusLogo from "../../assets/logos/trainexus.dark.png";
+import trainexusMark from "../../assets/logos/trainexus-mark.dark.png";
 
 const StatusDot = ({ status = "online" }) => {
   const colors = {
@@ -56,7 +54,8 @@ export const resolveAvatarUrl = (user) => {
     return rawUrl;
   }
 
-  const apiBase = import.meta.env.VITE_API_URL || "https://api.trainexus.in/api";
+  const apiBase =
+    import.meta.env.VITE_API_URL || "https://api.trainexus.in/api";
   const origin = apiBase.replace(/\/api\/?$/, "");
   return `${origin}/${rawUrl.replace(/^\//, "")}`;
 };
@@ -146,7 +145,10 @@ const Sidebar = ({
         <div className="absolute inset-0 border-r border-white/10 shadow-2xl shadow-indigo-500/10" />
 
         {/* Sidebar Content */}
-        <div className="relative flex h-full flex-col text-white" style={{ color: "#ffffff" }}>
+        <div
+          className="relative flex h-full flex-col text-white"
+          style={{ color: "#ffffff" }}
+        >
           {/* Brand Header */}
           <div className="flex h-20 items-center justify-between border-b border-white/10 px-4">
             <div
@@ -154,28 +156,26 @@ const Sidebar = ({
                 isCollapsed ? "w-full justify-center" : ""
               }`}
             >
-              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
+              {isCollapsed ? (
+                // Collapsed: icon mark only
                 <img
                   src={trainexusMark}
                   alt="Trainexus"
-                  className="relative z-10 h-6 w-6 object-contain"
+                  className="h-9 w-9 object-contain"
                 />
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/50 to-purple-600/50 blur-xl" />
-              </div>
-              <div
-                className={`transition-all duration-500 ${
-                  isCollapsed
-                    ? "w-0 scale-0 opacity-0"
-                    : "w-auto scale-100 opacity-100"
-                }`}
-              >
-                <h1 className="text-lg font-bold tracking-tight text-white" style={{ color: "#ffffff" }}>
-                  NXTHACK
-                </h1>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-indigo-300">
-                  {portalName}
-                </p>
-              </div>
+              ) : (
+                // Expanded: full logo (icon + wordmark already baked in), portal name below
+                <div className="flex flex-col items-start gap-1">
+                  <img
+                    src={trainexusLogo}
+                    alt="Trainexus"
+                    className="h-12 w-auto object-contain"
+                  />
+                  <p className="pl-8 text-[10px] font-semibold uppercase tracking-[0.15em] text-indigo-300">
+                    {portalName}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Desktop Collapse Button */}
@@ -253,9 +253,13 @@ const Sidebar = ({
 
                               <Icon
                                 className={`h-5 w-5 shrink-0 transition-all duration-300 ${
-                                  isActive ? "text-indigo-300" : "text-white group-hover:text-white"
+                                  isActive
+                                    ? "text-indigo-300"
+                                    : "text-white group-hover:text-white"
                                 }`}
-                                style={{ color: isActive ? "#a5b4fc" : "#ffffff" }}
+                                style={{
+                                  color: isActive ? "#a5b4fc" : "#ffffff",
+                                }}
                               />
 
                               <span
@@ -316,10 +320,16 @@ const Sidebar = ({
                     : "w-auto scale-100 opacity-100"
                 }`}
               >
-                <p className="truncate text-sm font-semibold text-white leading-tight" style={{ color: "#ffffff" }}>
+                <p
+                  className="truncate text-sm font-semibold text-white leading-tight"
+                  style={{ color: "#ffffff" }}
+                >
                   {user?.name || "User"}
                 </p>
-                <p className="truncate text-xs text-white/80" style={{ color: "rgba(255, 255, 255, 0.8)" }}>
+                <p
+                  className="truncate text-xs text-white/80"
+                  style={{ color: "rgba(255, 255, 255, 0.8)" }}
+                >
                   {user?.email || ""}
                 </p>
               </div>
