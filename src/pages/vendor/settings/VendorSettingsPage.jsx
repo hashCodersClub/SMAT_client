@@ -164,10 +164,10 @@ const VendorSettingsPage = () => {
       </div>
 
       {/* Change Password */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-            <FiLock size={20} className="text-blue-600" />
+            <FiLock size={20} className="text-indigo-600" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
@@ -204,7 +204,7 @@ const VendorSettingsPage = () => {
               value={passwordForm.currentPassword}
               onChange={handlePasswordChange}
               required
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
             />
           </div>
 
@@ -220,7 +220,7 @@ const VendorSettingsPage = () => {
                 onChange={handlePasswordChange}
                 required
                 minLength={8}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </div>
 
@@ -235,7 +235,7 @@ const VendorSettingsPage = () => {
                 onChange={handlePasswordChange}
                 required
                 minLength={8}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </div>
           </div>
@@ -244,7 +244,7 @@ const VendorSettingsPage = () => {
             <button
               type="submit"
               disabled={passwordSaving}
-              className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+              className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition-all duration-200 hover:shadow-md hover:shadow-indigo-600/30 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
             >
               {passwordSaving ? "Updating..." : "Update Password"}
             </button>
@@ -253,11 +253,11 @@ const VendorSettingsPage = () => {
       </div>
 
       {/* Notifications & Preferences */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-              <FiBell size={20} className="text-blue-600" />
+              <FiBell size={20} className="text-indigo-600" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
@@ -300,7 +300,7 @@ const VendorSettingsPage = () => {
               aria-label="Toggle email notifications"
             >
               {notifications.email ? (
-                <FiToggleRight className="text-blue-600" />
+                <FiToggleRight className="text-indigo-600" />
               ) : (
                 <FiToggleLeft />
               )}
@@ -322,7 +322,7 @@ const VendorSettingsPage = () => {
               aria-label="Toggle SMS notifications"
             >
               {notifications.sms ? (
-                <FiToggleRight className="text-blue-600" />
+                <FiToggleRight className="text-indigo-600" />
               ) : (
                 <FiToggleLeft />
               )}
@@ -332,10 +332,10 @@ const VendorSettingsPage = () => {
       </div>
 
       {/* Preferences */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-            <FiGlobe size={20} className="text-blue-600" />
+            <FiGlobe size={20} className="text-indigo-600" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
@@ -353,7 +353,7 @@ const VendorSettingsPage = () => {
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
             disabled={prefsLoading}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50"
           >
             <option value="IST (UTC+5:30)">IST (UTC+5:30)</option>
             <option value="EST (UTC-5:00)">EST (UTC-5:00)</option>
@@ -366,7 +366,7 @@ const VendorSettingsPage = () => {
             type="button"
             onClick={handleSavePreferences}
             disabled={prefsSaving || prefsLoading}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition-all duration-200 hover:shadow-md hover:shadow-indigo-600/30 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
           >
             <FiSave size={16} />
             {prefsSaving ? "Saving..." : "Save Preferences"}

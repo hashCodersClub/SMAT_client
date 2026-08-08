@@ -23,7 +23,7 @@ import requirementsApi from "../../../api/requirementsApi";
 
 const statusStyles = {
   DRAFT: "bg-slate-100 text-slate-700",
-  SUBMITTED: "bg-blue-50 text-blue-700",
+  SUBMITTED: "bg-indigo-50 text-indigo-700",
   OPEN: "bg-indigo-50 text-indigo-700",
   SOURCING: "bg-amber-50 text-amber-700",
   PROFILES_SENT: "bg-purple-50 text-purple-700",
@@ -123,7 +123,9 @@ const VendorRequirementsPage = () => {
       } catch (error) {
         if (isSubscribed) {
           console.error("Failed to load requirements:", error);
-          setError(error.response?.data?.message || "Unable to load requirements.");
+          setError(
+            error.response?.data?.message || "Unable to load requirements.",
+          );
         }
       } finally {
         if (isSubscribed) {
@@ -201,7 +203,7 @@ const VendorRequirementsPage = () => {
         <div className="text-center">
           <FiRefreshCw
             size={24}
-            className="mx-auto animate-spin text-blue-600"
+            className="mx-auto animate-spin text-indigo-600"
           />
 
           <p className="mt-3 text-sm text-slate-500">Loading requirements...</p>
@@ -233,8 +235,7 @@ const VendorRequirementsPage = () => {
             onClick={() => navigate("/admin/requirements/smart")}
             className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:from-indigo-700 hover:to-purple-700"
           >
-            <FiCpu />
-            ✨ AI Requirement Parser
+            <FiCpu />✨ AI Requirement Parser
           </button>
 
           <button
@@ -288,7 +289,7 @@ const VendorRequirementsPage = () => {
           FILTERS
       ================================================================= */}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row">
           <div className="relative flex-1">
             <FiSearch
@@ -301,14 +302,14 @@ const VendorRequirementsPage = () => {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search requirement, skill or city..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white"
             />
           </div>
 
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 md:w-52"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-500 md:w-52"
           >
             <option value="">All Statuses</option>
 
@@ -362,7 +363,7 @@ const VendorRequirementsPage = () => {
 
       {!filteredRequirements.length ? (
         <div className="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
             <FiSearch size={21} />
           </div>
 
@@ -380,7 +381,7 @@ const VendorRequirementsPage = () => {
             <button
               type="button"
               onClick={() => navigate("/vendor/requirements/add")}
-              className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              className="mt-5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition-all duration-200 hover:shadow-md hover:shadow-indigo-600/30 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.98]"
             >
               Create First Requirement
             </button>
@@ -431,7 +432,7 @@ const VendorRequirementsPage = () => {
                         {requirement.skills?.slice(0, 3).map((skill) => (
                           <span
                             key={skill}
-                            className="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700"
+                            className="rounded-md bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700"
                           >
                             {skill}
                           </span>
@@ -520,7 +521,7 @@ const VendorRequirementsPage = () => {
                         onClick={() =>
                           navigate(`/vendor/requirements/${requirement._id}`)
                         }
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-50"
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
                       >
                         <FiEye />
                         View
@@ -544,7 +545,7 @@ const VendorRequirementsPage = () => {
 */
 
 const StatCard = ({ label, value }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-5">
+  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <p className="text-sm font-medium text-slate-500">{label}</p>
 
     <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>

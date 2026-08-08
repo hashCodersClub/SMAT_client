@@ -27,7 +27,7 @@ import assignmentsApi from "../../../api/assignmentsApi";
 
 const STATUS_STYLES = {
   PROPOSED: "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20",
-  CONFIRMED: "bg-blue-50 text-blue-700 ring-1 ring-blue-600/20",
+  CONFIRMED: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/20",
   ACTIVE: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
   COMPLETED: "bg-slate-100 text-slate-600 ring-1 ring-slate-600/20",
   CANCELLED: "bg-red-50 text-red-600 ring-1 ring-red-600/20",
@@ -121,7 +121,7 @@ const VendorAssignmentsPage = () => {
     return (
       <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-200 bg-white">
         <div className="text-center">
-          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-blue-600" />
+          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-indigo-600" />
           <p className="mt-3 text-sm text-slate-500">Loading assignments...</p>
         </div>
       </div>
@@ -163,7 +163,7 @@ const VendorAssignmentsPage = () => {
             onClick={() => setTab(item.key)}
             className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
               tab === item.key
-                ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/20"
+                ? "bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/20"
                 : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >

@@ -225,7 +225,7 @@ const EditVendorRequirementPage = () => {
         <div className="text-center">
           <FiRefreshCw
             size={24}
-            className="mx-auto animate-spin text-blue-600"
+            className="mx-auto animate-spin text-indigo-600"
           />
 
           <p className="mt-3 text-sm text-slate-500">Loading requirement...</p>
@@ -506,7 +506,7 @@ const EditVendorRequirementPage = () => {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition-all duration-200 hover:shadow-md hover:shadow-indigo-600/30 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
@@ -517,7 +517,7 @@ const EditVendorRequirementPage = () => {
 };
 
 const Section = ({ title, description, children }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
     <h2 className="font-semibold text-slate-900">{title}</h2>
 
     <p className="mt-1 text-sm text-slate-500">{description}</p>
@@ -536,7 +536,7 @@ const Input = ({ label, ...props }) => (
 
     <input
       {...props}
-      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
     />
   </div>
 );
@@ -549,7 +549,7 @@ const Select = ({ label, options, ...props }) => (
 
     <select
       {...props}
-      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
     >
       {options.map(([value, text]) => (
         <option key={value} value={value}>
@@ -569,7 +569,7 @@ const Textarea = ({ label, ...props }) => (
     <textarea
       {...props}
       rows={5}
-      className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
     />
   </div>
 );

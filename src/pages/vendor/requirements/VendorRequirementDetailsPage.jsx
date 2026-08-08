@@ -16,7 +16,7 @@ import requirementsApi from "../../../api/requirementsApi";
 
 const statusStyles = {
   DRAFT: "bg-slate-100 text-slate-700",
-  SUBMITTED: "bg-blue-50 text-blue-700",
+  SUBMITTED: "bg-indigo-50 text-indigo-700",
   OPEN: "bg-indigo-50 text-indigo-700",
   SOURCING: "bg-amber-50 text-amber-700",
   PROFILES_SENT: "bg-purple-50 text-purple-700",
@@ -107,7 +107,7 @@ const VendorRequirementDetailsPage = () => {
         <div className="text-center">
           <FiRefreshCw
             size={24}
-            className="mx-auto animate-spin text-blue-600"
+            className="mx-auto animate-spin text-indigo-600"
           />
 
           <p className="mt-3 text-sm text-slate-500">Loading requirement...</p>
@@ -202,12 +202,12 @@ const VendorRequirementDetailsPage = () => {
 
       {/* Status information */}
 
-      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+      <div className="rounded-2xl border border-blue-200 bg-indigo-50 p-5">
         <p className="text-sm font-semibold text-blue-900">
           Current status: {formatLabel(requirement.status)}
         </p>
 
-        <p className="mt-1 text-sm leading-6 text-blue-700">
+        <p className="mt-1 text-sm leading-6 text-indigo-700">
           Nxthack's operations team manages the sourcing and fulfillment status
           of your requirement.
         </p>
@@ -279,7 +279,7 @@ const VendorRequirementDetailsPage = () => {
                   requirement.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700"
+                      className="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700"
                     >
                       {skill}
                     </span>
@@ -385,7 +385,7 @@ const VendorRequirementDetailsPage = () => {
 };
 
 const Section = ({ title, children }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
     <h2 className="font-semibold text-slate-900">{title}</h2>
 
     <div className="mt-5 grid gap-5 md:grid-cols-2">{children}</div>
@@ -403,9 +403,9 @@ const Detail = ({ label, value }) => (
 );
 
 const QuickCard = ({ icon: Icon, label, value }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-5">
+  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className="flex items-center gap-3">
-      <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
+      <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
         <Icon size={18} />
       </div>
 

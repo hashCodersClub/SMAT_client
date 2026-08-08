@@ -254,7 +254,7 @@ const VendorProfilePage = () => {
     return (
       <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-200 bg-white">
         <div className="text-center">
-          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-blue-600" />
+          <FiRefreshCw className="mx-auto h-6 w-6 animate-spin text-indigo-600" />
           <p className="mt-3 text-sm text-slate-500">Loading your profile...</p>
         </div>
       </div>
@@ -294,7 +294,7 @@ const VendorProfilePage = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Logo / Avatar */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Company Logo</h2>
 
           <p className="mt-1 text-sm text-slate-500">
@@ -356,7 +356,7 @@ const VendorProfilePage = () => {
         </div>
 
         {/* Company Information */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">
             Company Information
           </h2>
@@ -369,7 +369,7 @@ const VendorProfilePage = () => {
                 value={form.companyName}
                 onChange={handleChange}
                 required
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </Field>
 
@@ -378,7 +378,7 @@ const VendorProfilePage = () => {
                 name="companyType"
                 value={form.companyType}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               >
                 {COMPANY_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -395,7 +395,7 @@ const VendorProfilePage = () => {
                 value={form.website}
                 onChange={handleChange}
                 placeholder="https://"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </Field>
 
@@ -405,14 +405,14 @@ const VendorProfilePage = () => {
                 name="gstNumber"
                 value={form.gstNumber}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </Field>
           </div>
         </div>
 
         {/* Location */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Location</h2>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -422,7 +422,7 @@ const VendorProfilePage = () => {
                 name="city"
                 value={form.city}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </Field>
 
@@ -432,7 +432,7 @@ const VendorProfilePage = () => {
                 name="state"
                 value={form.state}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </Field>
 
@@ -442,7 +442,7 @@ const VendorProfilePage = () => {
                 name="country"
                 value={form.country}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </Field>
 
@@ -452,14 +452,14 @@ const VendorProfilePage = () => {
                 value={form.address}
                 onChange={handleChange}
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               />
             </Field>
           </div>
         </div>
 
         {/* Contacts */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Contacts</h2>
 
@@ -510,7 +510,7 @@ const VendorProfilePage = () => {
                       onChange={(e) =>
                         handleContactChange(index, "name", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </Field>
 
@@ -525,7 +525,7 @@ const VendorProfilePage = () => {
                           e.target.value,
                         )
                       }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </Field>
 
@@ -536,7 +536,7 @@ const VendorProfilePage = () => {
                       onChange={(e) =>
                         handleContactChange(index, "email", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </Field>
 
@@ -547,7 +547,7 @@ const VendorProfilePage = () => {
                       onChange={(e) =>
                         handleContactChange(index, "phone", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </Field>
 
@@ -558,7 +558,7 @@ const VendorProfilePage = () => {
                       onChange={(e) =>
                         handleContactChange(index, "whatsapp", e.target.value)
                       }
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </Field>
                 </div>
@@ -571,7 +571,7 @@ const VendorProfilePage = () => {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition-all duration-200 hover:shadow-md hover:shadow-indigo-600/30 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
           >
             <FiSave size={16} />
             {saving ? "Saving..." : "Save Changes"}
