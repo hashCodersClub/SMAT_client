@@ -101,7 +101,7 @@ const INITIAL_FORM = {
 */
 
 const TrainerProfilePage = () => {
-  const { refreshUser } = useAuth();
+  const { refreshUser, updateUser } = useAuth();
   const [form, setForm] = useState(INITIAL_FORM);
 
   const [loading, setLoading] = useState(true);
@@ -700,7 +700,8 @@ const TrainerProfilePage = () => {
 
       await loadProfile();
 
-      const updatedPhotoUrl = response?.trainer?.profilePhotoUrl || response?.profilePhotoUrl;
+      const updatedPhotoUrl =
+        response?.trainer?.profilePhotoUrl || response?.profilePhotoUrl;
       if (updatedPhotoUrl) {
         updateUser((prev) => ({
           ...prev,
