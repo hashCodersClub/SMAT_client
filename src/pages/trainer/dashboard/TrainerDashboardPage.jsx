@@ -13,7 +13,7 @@ import {
 
 import { useAuth } from "../../../context/AuthContext";
 
-import outreachApi from "../../../api/outreachApi";
+import opportunitiesApi from "../../../api/opportunitiesApi";
 import assignmentsApi from "../../../api/assignmentsApi";
 import trainersApi from "../../../api/trainersApi";
 import { useCountUp } from "../../../hooks/useCountUp";
@@ -135,6 +135,7 @@ const TrainerDashboardPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [opportunities, setOpportunities] = useState([]);
+  const [pendingOpportunityCount, setPendingOpportunityCount] = useState(0);
   const [assignments, setAssignments] = useState([]);
   const [profileCompletion, setProfileCompletion] = useState(0);
 
@@ -143,14 +144,28 @@ const TrainerDashboardPage = () => {
       try {
         setLoading(true);
 
-        const [outreachResponse, assignmentsResponse, profileResponse] =
-          await Promise.all([
-            outreachApi.getMine(),
-            assignmentsApi.getMine(),
-            trainersApi.getMyProfile().catch(() => null),
-          ]);
+        const [
+          opportunitiesResponse,
+          opportunityStatsResponse,
+          assignmentsResponse,
+          profileResponse,
+        ] = await Promise.all([
+          opportunitiesApi.getMine({
+            status: "PENDING",
+            sort: "NEWEST",
+            limit: 5,
+          }),
+          opportunitiesApi.getMineStats().catch(() => null),
+          assignmentsApi.getMine(),
+          trainersApi.getMyProfile().catch(() => null),
+        ]);
 
-        setOpportunities(outreachResponse?.outreach || []);
+        setOpportunities(opportunitiesResponse?.opportunities || []);
+        setPendingOpportunityCount(
+          opportunityStatsResponse?.stats?.pendingOpportunities ??
+            opportunitiesResponse?.opportunities?.length ??
+            0,
+        );
         setAssignments(assignmentsResponse?.data || []);
         setProfileCompletion(profileResponse?.trainer?.profileCompletion ?? 0);
       } catch (err) {
@@ -163,9 +178,9 @@ const TrainerDashboardPage = () => {
     load();
   }, []);
 
-  const newOpportunities = opportunities.filter((record) =>
-    ["NOT_CONTACTED", "CONTACTED"].includes(record.outreachStatus),
-  );
+  // The API call above already scopes to pending/unresponded opportunities;
+  // this is just the list to preview (max 5), not the count.
+  const newOpportunities = opportunities;
 
   const upcomingAssignments = assignments.filter(
     (assignment) => !["COMPLETED", "CANCELLED"].includes(assignment.status),
@@ -179,9 +194,9 @@ const TrainerDashboardPage = () => {
     () =>
       getNextAction({
         profileCompletion,
-        newOpportunitiesCount: newOpportunities.length,
+        newOpportunitiesCount: pendingOpportunityCount,
       }),
-    [profileCompletion, newOpportunities.length],
+    [profileCompletion, pendingOpportunityCount],
   );
 
   const toneStyle = TONE_STYLES[nextAction.tone];
@@ -263,7 +278,7 @@ const TrainerDashboardPage = () => {
           index={0}
           icon={FiClipboard}
           label="New Opportunities"
-          value={newOpportunities.length}
+          value={pendingOpportunityCount}
           onClick={() => navigate("/trainer/opportunities")}
           color="blue"
         />
@@ -318,30 +333,33 @@ const TrainerDashboardPage = () => {
             </p>
           )}
 
-          {newOpportunities.slice(0, 3).map((record, index) => (
-            <button
-              key={record._id}
-              type="button"
-              style={{ animationDelay: `${index * 50}ms` }}
-              onClick={() => navigate("/trainer/opportunities")}
-              className="press-scale animate-rise-in group flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200/60 bg-white/50 px-5 py-4 text-left shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300/80 hover:bg-blue-50/70 hover:shadow-md"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-bold text-slate-800 group-hover:text-blue-700">
-                  {record.requirementId?.title || "Training Requirement"}
-                </p>
+          {newOpportunities.slice(0, 3).map((record, index) => {
+            const requirement =
+              record.requirementId || record.requirementSnapshot || {};
+            return (
+              <button
+                key={record._id}
+                type="button"
+                style={{ animationDelay: `${index * 50}ms` }}
+                onClick={() => navigate("/trainer/opportunities")}
+                className="press-scale animate-rise-in group flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200/60 bg-white/50 px-5 py-4 text-left shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300/80 hover:bg-blue-50/70 hover:shadow-md"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-bold text-slate-800 group-hover:text-blue-700">
+                    {requirement.title || "Training Requirement"}
+                  </p>
 
-                <p className="mt-1 truncate text-sm font-medium text-slate-500">
-                  {record.requirementId?.vendorId?.companyName || "Vendor"} •{" "}
-                  {record.requirementId?.city || "Online"}
-                </p>
-              </div>
+                  <p className="mt-1 truncate text-sm font-medium text-slate-500">
+                    Corporate Client • {requirement.city || "Online"}
+                  </p>
+                </div>
 
-              <span className="shrink-0 rounded-full border border-blue-200/60 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 px-3.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
-                {formatDate(record.requirementId?.startDate)}
-              </span>
-            </button>
-          ))}
+                <span className="shrink-0 rounded-full border border-blue-200/60 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 px-3.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
+                  {formatDate(requirement.startDate)}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

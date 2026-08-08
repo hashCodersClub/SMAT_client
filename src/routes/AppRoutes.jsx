@@ -17,60 +17,135 @@ const PageFallback = () => (
 
 // Public / Auth Pages
 const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
-const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const ForgotPasswordPage = lazy(
+  () => import("../pages/auth/ForgotPasswordPage"),
+);
 const ResetPasswordPage = lazy(() => import("../pages/auth/ResetPasswordPage"));
-const VendorRegisterPage = lazy(() => import("../pages/auth/VendorRegisterPage"));
-const TrainerAcceptInvitePage = lazy(() => import("../pages/auth/TrainerAcceptInvitePage"));
+const VendorRegisterPage = lazy(
+  () => import("../pages/auth/VendorRegisterPage"),
+);
+const TrainerAcceptInvitePage = lazy(
+  () => import("../pages/auth/TrainerAcceptInvitePage"),
+);
 
 // Shared Pages
 const NotFoundPage = lazy(() => import("../pages/shared/NotFoundPage"));
-const NotificationsPage = lazy(() => import("../pages/shared/notification/NotificationsPage"));
+const NotificationsPage = lazy(
+  () => import("../pages/shared/notification/NotificationsPage"),
+);
 
 // Admin Pages
 const DashboardPage = lazy(() => import("../pages/admin/DashboardPage"));
 const TrainersPage = lazy(() => import("../pages/admin/trainers/TrainersPage"));
-const AddTrainerPage = lazy(() => import("../pages/admin/trainers/AddTrainerPage"));
-const TrainerDetailsPage = lazy(() => import("../pages/admin/trainers/TrainerDetailsPage"));
-const EditTrainerPage = lazy(() => import("../pages/admin/trainers/EditTrainerPage"));
-const AdminTrainerAvailabilityPage = lazy(() => import("../pages/admin/trainers/AdminTrainerAvailabilityPage"));
+const AddTrainerPage = lazy(
+  () => import("../pages/admin/trainers/AddTrainerPage"),
+);
+const TrainerDetailsPage = lazy(
+  () => import("../pages/admin/trainers/TrainerDetailsPage"),
+);
+const EditTrainerPage = lazy(
+  () => import("../pages/admin/trainers/EditTrainerPage"),
+);
+const AdminTrainerAvailabilityPage = lazy(
+  () => import("../pages/admin/trainers/AdminTrainerAvailabilityPage"),
+);
 
-const RequirementsPage = lazy(() => import("../pages/admin/requirements/RequirementsPage"));
-const AddRequirementPage = lazy(() => import("../pages/admin/requirements/AddRequirementPage"));
-const RequirementDetailsPage = lazy(() => import("../pages/admin/requirements/RequirementDetailsPage"));
-const EditRequirementPage = lazy(() => import("../pages/admin/requirements/EditRequirementPage"));
-const SmartRequirementPage = lazy(() => import("../pages/admin/requirements/SmartRequirementPage"));
-const TrainerMatchesPage = lazy(() => import("../pages/admin/requirements/TrainerMatchesPage"));
-const RequirementOutreachPage = lazy(() => import("../pages/admin/requirements/RequirementOutreachPage"));
-const VendorSelectionPage = lazy(() => import("../pages/admin/requirements/VendorSelectionPage"));
+const RequirementsPage = lazy(
+  () => import("../pages/admin/requirements/RequirementsPage"),
+);
+const AddRequirementPage = lazy(
+  () => import("../pages/admin/requirements/AddRequirementPage"),
+);
+const RequirementDetailsPage = lazy(
+  () => import("../pages/admin/requirements/RequirementDetailsPage"),
+);
+const EditRequirementPage = lazy(
+  () => import("../pages/admin/requirements/EditRequirementPage"),
+);
+const SmartRequirementPage = lazy(
+  () => import("../pages/admin/requirements/SmartRequirementPage"),
+);
+const TrainerMatchesPage = lazy(
+  () => import("../pages/admin/requirements/TrainerMatchesPage"),
+);
+const OpportunityPipelinePage = lazy(
+  () => import("../pages/admin/requirements/OpportunityPipelinePage"),
+);
+const RequirementOutreachPage = lazy(
+  () => import("../pages/admin/requirements/RequirementOutreachPage"),
+);
+const VendorSelectionPage = lazy(
+  () => import("../pages/admin/requirements/VendorSelectionPage"),
+);
 
 const VendorsPage = lazy(() => import("../pages/admin/vendors/VendorsPage"));
-const AddVendorPage = lazy(() => import("../pages/admin/vendors/AddVendorPage"));
-const VendorDetailsPage = lazy(() => import("../pages/admin/vendors/VendorDetailsPage"));
-const EditVendorPage = lazy(() => import("../pages/admin/vendors/EditVendorPage"));
+const AddVendorPage = lazy(
+  () => import("../pages/admin/vendors/AddVendorPage"),
+);
+const VendorDetailsPage = lazy(
+  () => import("../pages/admin/vendors/VendorDetailsPage"),
+);
+const EditVendorPage = lazy(
+  () => import("../pages/admin/vendors/EditVendorPage"),
+);
 
-const AssignmentsPage = lazy(() => import("../pages/admin/assignments/AssignmentsPage"));
-const CreateAssignmentPage = lazy(() => import("../pages/admin/assignments/CreateAssignmentPage"));
-const AssignmentDetailsPage = lazy(() => import("../pages/admin/assignments/AssignmentDetailsPage"));
+const AssignmentsPage = lazy(
+  () => import("../pages/admin/assignments/AssignmentsPage"),
+);
+const CreateAssignmentPage = lazy(
+  () => import("../pages/admin/assignments/CreateAssignmentPage"),
+);
+const AssignmentDetailsPage = lazy(
+  () => import("../pages/admin/assignments/AssignmentDetailsPage"),
+);
 
 const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
 
 // Vendor Portal Pages
-const VendorDashboardPage = lazy(() => import("../pages/vendor/dashboard/VendorDashboardPage"));
-const VendorRequirementsPage = lazy(() => import("../pages/vendor/requirements/VendorRequirementsPage"));
-const AddVendorRequirementPage = lazy(() => import("../pages/vendor/requirements/AddVendorRequirementPage"));
-const VendorRequirementDetailsPage = lazy(() => import("../pages/vendor/requirements/VendorRequirementDetailsPage"));
-const EditVendorRequirementPage = lazy(() => import("../pages/vendor/requirements/EditVendorRequirementPage"));
-const VendorProfilePage = lazy(() => import("../pages/vendor/profile/VendorProfilePage"));
-const VendorSettingsPage = lazy(() => import("../pages/vendor/settings/VendorSettingsPage"));
-const VendorAssignmentsPage = lazy(() => import("../pages/vendor/assignments/VendorAssignmentsPage"));
+const VendorDashboardPage = lazy(
+  () => import("../pages/vendor/dashboard/VendorDashboardPage"),
+);
+const VendorRequirementsPage = lazy(
+  () => import("../pages/vendor/requirements/VendorRequirementsPage"),
+);
+const AddVendorRequirementPage = lazy(
+  () => import("../pages/vendor/requirements/AddVendorRequirementPage"),
+);
+const VendorRequirementDetailsPage = lazy(
+  () => import("../pages/vendor/requirements/VendorRequirementDetailsPage"),
+);
+const EditVendorRequirementPage = lazy(
+  () => import("../pages/vendor/requirements/EditVendorRequirementPage"),
+);
+const VendorProfilePage = lazy(
+  () => import("../pages/vendor/profile/VendorProfilePage"),
+);
+const VendorSettingsPage = lazy(
+  () => import("../pages/vendor/settings/VendorSettingsPage"),
+);
+const VendorAssignmentsPage = lazy(
+  () => import("../pages/vendor/assignments/VendorAssignmentsPage"),
+);
 
 // Trainer Portal Pages
-const TrainerDashboardPage = lazy(() => import("../pages/trainer/dashboard/TrainerDashboardPage"));
-const TrainerProfilePage = lazy(() => import("../pages/trainer/profile/TrainerProfilePage"));
-const TrainerAvailabilityPage = lazy(() => import("../pages/trainer/availability/TrainerAvailabilityPage"));
-const TrainerOpportunitiesPage = lazy(() => import("../pages/trainer/opportunities/TrainerOpportunitiesPage"));
-const TrainerAssignmentsPage = lazy(() => import("../pages/trainer/assignments/TrainerAssignmentsPage"));
-const TrainerSettingsPage = lazy(() => import("../pages/trainer/settings/TrainerSettingsPage"));
+const TrainerDashboardPage = lazy(
+  () => import("../pages/trainer/dashboard/TrainerDashboardPage"),
+);
+const TrainerProfilePage = lazy(
+  () => import("../pages/trainer/profile/TrainerProfilePage"),
+);
+const TrainerAvailabilityPage = lazy(
+  () => import("../pages/trainer/availability/TrainerAvailabilityPage"),
+);
+const TrainerOpportunitiesPage = lazy(
+  () => import("../pages/trainer/opportunities/TrainerOpportunitiesPage"),
+);
+const TrainerAssignmentsPage = lazy(
+  () => import("../pages/trainer/assignments/TrainerAssignmentsPage"),
+);
+const TrainerSettingsPage = lazy(
+  () => import("../pages/trainer/settings/TrainerSettingsPage"),
+);
 
 const AppRoutes = () => {
   return (
@@ -130,7 +205,10 @@ const AppRoutes = () => {
 
             <Route path="/admin/trainers/add" element={<AddTrainerPage />} />
 
-            <Route path="/admin/trainers/:id" element={<TrainerDetailsPage />} />
+            <Route
+              path="/admin/trainers/:id"
+              element={<TrainerDetailsPage />}
+            />
 
             <Route
               path="/admin/trainers/:id/edit"
@@ -174,6 +252,11 @@ const AppRoutes = () => {
             />
 
             <Route
+              path="/admin/requirements/:id/opportunities"
+              element={<OpportunityPipelinePage />}
+            />
+
+            <Route
               path="/admin/requirements/:id/outreach"
               element={<RequirementOutreachPage />}
             />
@@ -198,7 +281,10 @@ const AppRoutes = () => {
 
             <Route path="/admin/vendors/:id" element={<VendorDetailsPage />} />
 
-            <Route path="/admin/vendors/:id/edit" element={<EditVendorPage />} />
+            <Route
+              path="/admin/vendors/:id/edit"
+              element={<EditVendorPage />}
+            />
 
             {/* ------------------------------------------------------------
               ASSIGNMENTS
@@ -221,7 +307,10 @@ const AppRoutes = () => {
               NOTIFICATIONS
           ------------------------------------------------------------- */}
 
-            <Route path="/admin/notifications" element={<NotificationsPage />} />
+            <Route
+              path="/admin/notifications"
+              element={<NotificationsPage />}
+            />
           </Route>
         </Route>
 
@@ -267,7 +356,10 @@ const AppRoutes = () => {
 
             <Route path="/vendor/settings" element={<VendorSettingsPage />} />
 
-            <Route path="/vendor/notifications" element={<NotificationsPage />} />
+            <Route
+              path="/vendor/notifications"
+              element={<NotificationsPage />}
+            />
           </Route>
         </Route>
 
@@ -282,7 +374,10 @@ const AppRoutes = () => {
               element={<Navigate to="/trainer/dashboard" replace />}
             />
 
-            <Route path="/trainer/dashboard" element={<TrainerDashboardPage />} />
+            <Route
+              path="/trainer/dashboard"
+              element={<TrainerDashboardPage />}
+            />
 
             <Route
               path="/trainer/opportunities"

@@ -30,12 +30,24 @@ const opportunitiesApi = {
 
   // Admin response review & selection endpoints
   getByRequirementAdmin: async (requirementId) => {
-    const response = await api.get(`/opportunities/requirement/${requirementId}`);
+    const response = await api.get(
+      `/opportunities/requirement/${requirementId}`,
+    );
+    return response.data;
+  },
+
+  // Vendor portal: read-only sourcing status for a requirement they own
+  getByRequirementVendor: async (requirementId) => {
+    const response = await api.get(
+      `/opportunities/requirement/${requirementId}/vendor-summary`,
+    );
     return response.data;
   },
 
   adminAction: async (id, action) => {
-    const response = await api.post(`/opportunities/${id}/admin-action`, { action });
+    const response = await api.post(`/opportunities/${id}/admin-action`, {
+      action,
+    });
     return response.data;
   },
 };

@@ -19,6 +19,22 @@ import {
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
+import opportunitiesApi from "../../../api/opportunitiesApi";
+import ActivityTimeline from "../../../components/ui/ActivityTimeline";
+import { buildRequirementTimeline } from "../../../utils/requirementTimeline";
+
+/*
+|--------------------------------------------------------------------------
+| Timeline Auto-Refresh
+|--------------------------------------------------------------------------
+|
+| The requirement's opportunity pool changes from outside this page —
+| trainers accept/reject and vendors move demos forward from their own
+| screens. Polling keeps the "Trainer Interaction Timeline" section below
+| current without the admin needing to hit refresh manually.
+|--------------------------------------------------------------------------
+*/
+const TIMELINE_POLL_INTERVAL_MS = 15000;
 
 const STATUSES = [
   "SUBMITTED",
@@ -94,6 +110,16 @@ const RequirementDetailsPage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | Trainer Interaction Timeline
+  |--------------------------------------------------------------------------
+  */
+
+  const [timelineEvents, setTimelineEvents] = useState([]);
+  const [timelineLoading, setTimelineLoading] = useState(true);
+  const [timelineError, setTimelineError] = useState("");
+
+  /*
+  |--------------------------------------------------------------------------
   | Load Requirement
   |--------------------------------------------------------------------------
   */
@@ -118,6 +144,58 @@ const RequirementDetailsPage = () => {
   useEffect(() => {
     loadRequirement();
   }, [loadRequirement]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load & Poll Timeline
+  |--------------------------------------------------------------------------
+  |
+  | Opportunities (and their per-trainer auditTrail) are what actually
+  | change as the top-matched trainers get notified and respond, so the
+  | timeline is derived from the same admin pipeline endpoint the
+  | Opportunity Pipeline page uses — just flattened into one feed here.
+  |--------------------------------------------------------------------------
+  */
+
+  const loadTimeline = useCallback(
+    async ({ silent = false } = {}) => {
+      try {
+        if (!silent) setTimelineLoading(true);
+        setTimelineError("");
+
+        const response = await opportunitiesApi.getByRequirementAdmin(id);
+
+        setTimelineEvents(buildRequirementTimeline(response.candidates || []));
+      } catch (error) {
+        console.error("Failed to load requirement timeline:", error);
+
+        // A requirement with no opportunities generated yet isn't an
+        // error the admin needs to see — just an empty timeline.
+        setTimelineEvents([]);
+
+        if (!silent) {
+          setTimelineError(
+            error.response?.data?.message ||
+              "Unable to load trainer interaction history.",
+          );
+        }
+      } finally {
+        if (!silent) setTimelineLoading(false);
+      }
+    },
+    [id],
+  );
+
+  useEffect(() => {
+    loadTimeline();
+
+    const interval = setInterval(
+      () => loadTimeline({ silent: true }),
+      TIMELINE_POLL_INTERVAL_MS,
+    );
+
+    return () => clearInterval(interval);
+  }, [loadTimeline]);
 
   /*
   |--------------------------------------------------------------------------
@@ -501,6 +579,61 @@ const RequirementDetailsPage = () => {
         {/* Progress */}
 
         <StatusProgress currentStatus={requirement.status} />
+      </section>
+
+      {/* ================================================================
+          TRAINER INTERACTION TIMELINE
+          Auto-refreshing feed of every notification sent and every
+          trainer/vendor action taken on this requirement's opportunities.
+      ================================================================= */}
+
+      <section
+        style={{ animationDelay: "150ms" }}
+        className="hover-lift animate-rise-in rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
+        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="font-semibold text-slate-900">
+              Trainer Interaction Timeline
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Live activity as matched trainers are notified and respond.
+              Updates automatically — no need to refresh.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => loadTimeline()}
+            className="press-scale flex items-center gap-1.5 self-start text-xs font-semibold text-slate-500 hover:text-slate-900 sm:self-auto"
+          >
+            <FiRefreshCw
+              size={13}
+              className={timelineLoading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+        </div>
+
+        {timelineError && (
+          <div className="animate-rise-in mt-4 flex gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            <FiAlertCircle size={17} className="mt-0.5 shrink-0" />
+            {timelineError}
+          </div>
+        )}
+
+        <div className="mt-4">
+          {timelineLoading ? (
+            <p className="py-6 text-center text-sm text-slate-500">
+              Loading activity…
+            </p>
+          ) : (
+            <ActivityTimeline
+              events={timelineEvents}
+              emptyMessage="No trainer activity yet. Once opportunities are generated for this requirement, notifications and responses will appear here."
+            />
+          )}
+        </div>
       </section>
 
       {/* ================================================================

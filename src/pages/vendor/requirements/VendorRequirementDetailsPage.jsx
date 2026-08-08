@@ -5,14 +5,31 @@ import {
   FiAlertCircle,
   FiArrowLeft,
   FiCalendar,
+  FiCheck,
   FiClock,
   FiEdit2,
+  FiEye,
   FiMapPin,
   FiRefreshCw,
+  FiSend,
+  FiStar,
   FiUsers,
+  FiX,
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
+import opportunitiesApi from "../../../api/opportunitiesApi";
+import {
+  OPPORTUNITY_STATUS_STYLES,
+  formatStatusLabel,
+} from "../../../constants/statuses";
+import ActivityTimeline from "../../../components/ui/ActivityTimeline";
+import { buildRequirementTimeline } from "../../../utils/requirementTimeline";
+
+// Trainer sourcing changes from outside this page (trainers responding,
+// admin/ops moving demos forward), so re-poll instead of relying on the
+// vendor to click "Refresh" to see the latest status.
+const SOURCING_POLL_INTERVAL_MS = 15000;
 
 const statusStyles = {
   DRAFT: "bg-slate-100 text-slate-700",
@@ -52,6 +69,9 @@ const VendorRequirementDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [sourcing, setSourcing] = useState(null);
+  const [sourcingLoading, setSourcingLoading] = useState(true);
+
   const loadRequirement = useCallback(async () => {
     try {
       setLoading(true);
@@ -72,34 +92,37 @@ const VendorRequirementDetailsPage = () => {
   }, [id]);
 
   useEffect(() => {
-    let ignore = false;
-    const fetchRequirement = async () => {
-      try {
-        setError("");
-        const response = await requirementsApi.getMineById(id);
-        if (!ignore) {
-          setRequirement(response.requirement);
-        }
-      } catch (error) {
-        if (!ignore) {
-          console.error("Failed to load requirement:", error);
-          setError(
-            error.response?.data?.message || "Unable to load this requirement.",
-          );
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
+    loadRequirement();
+  }, [loadRequirement]);
 
-    fetchRequirement();
-
-    return () => {
-      ignore = true;
-    };
+  const loadSourcing = useCallback(async () => {
+    try {
+      setSourcingLoading(true);
+      const response = await opportunitiesApi.getByRequirementVendor(id);
+      setSourcing({
+        candidates: response.candidates || [],
+        stats: response.stats || null,
+      });
+    } catch (error) {
+      // A requirement that hasn't been sourced yet (still DRAFT, or
+      // matching hasn't run) simply has nothing to show here — not an
+      // error the vendor needs to see.
+      console.error("Failed to load sourcing status:", error);
+      setSourcing({ candidates: [], stats: null });
+    } finally {
+      setSourcingLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    loadSourcing();
+
+    const interval = setInterval(loadSourcing, SOURCING_POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [loadSourcing]);
+
+  const timelineEvents = buildRequirementTimeline(sourcing?.candidates || []);
 
   if (loading) {
     return (
@@ -200,17 +223,126 @@ const VendorRequirementDetailsPage = () => {
         </div>
       </div>
 
-      {/* Status information */}
+      {/* Trainer Sourcing Status */}
 
-      <div className="rounded-2xl border border-blue-200 bg-indigo-50 p-5">
-        <p className="text-sm font-semibold text-blue-900">
-          Current status: {formatLabel(requirement.status)}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold text-slate-900">Trainer Sourcing</h2>
+          <button
+            type="button"
+            onClick={loadSourcing}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900"
+          >
+            <FiRefreshCw
+              size={13}
+              className={sourcingLoading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+        </div>
+
+        {sourcingLoading && !sourcing ? (
+          <p className="mt-3 text-sm text-slate-500">
+            Loading sourcing status...
+          </p>
+        ) : !sourcing?.candidates?.length ? (
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            {["DRAFT", "SUBMITTED"].includes(requirement.status)
+              ? "Trainers haven't been matched yet — this updates automatically once your requirement is picked up."
+              : "No trainers have been contacted for this requirement yet."}
+          </p>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <SourcingStat
+                label="Contacted"
+                value={sourcing.stats?.totalContacted ?? 0}
+              />
+              <SourcingStat
+                label="Notified"
+                value={sourcing.stats?.notified ?? 0}
+              />
+              <SourcingStat
+                label="Viewed"
+                value={sourcing.stats?.viewed ?? 0}
+                icon={FiEye}
+              />
+              <SourcingStat
+                label="Interested"
+                value={sourcing.stats?.interested ?? 0}
+                icon={FiCheck}
+                tone="emerald"
+              />
+              <SourcingStat
+                label="Declined"
+                value={sourcing.stats?.declined ?? 0}
+                icon={FiX}
+                tone="slate"
+              />
+              <SourcingStat
+                label="Shortlisted"
+                value={sourcing.stats?.shortlisted ?? 0}
+                icon={FiStar}
+                tone="purple"
+              />
+            </div>
+
+            <div className="mt-5 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-100">
+              {sourcing.candidates.map((candidate) => (
+                <div
+                  key={candidate._id}
+                  className="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3"
+                >
+                  <div className="flex items-center gap-2 text-sm">
+                    <FiSend size={14} className="text-slate-400" />
+                    <span className="font-semibold text-slate-800">
+                      {candidate.trainerName}
+                    </span>
+                    {candidate.city && (
+                      <span className="text-xs text-slate-400">
+                        • {candidate.city}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {candidate.quotedRate ? (
+                      <span className="text-xs font-medium text-slate-500">
+                        ₹{Number(candidate.quotedRate).toLocaleString("en-IN")}
+                        /day
+                      </span>
+                    ) : null}
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${
+                        OPPORTUNITY_STATUS_STYLES[candidate.status] ||
+                        "bg-slate-100 text-slate-700 ring-slate-200"
+                      }`}
+                    >
+                      {formatStatusLabel(candidate.status)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Trainer Interaction Timeline */}
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <h2 className="font-semibold text-slate-900">Activity Timeline</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Live updates as trainers are notified and respond. Refreshes
+          automatically.
         </p>
 
-        <p className="mt-1 text-sm leading-6 text-indigo-700">
-          Nxthack's operations team manages the sourcing and fulfillment status
-          of your requirement.
-        </p>
+        <div className="mt-4">
+          <ActivityTimeline
+            events={timelineEvents}
+            emptyMessage="No trainer activity yet."
+          />
+        </div>
       </div>
 
       {/* Quick details */}
@@ -417,6 +549,27 @@ const QuickCard = ({ icon: Icon, label, value }) => (
     </div>
   </div>
 );
+
+const SourcingStat = ({ label, value, icon: Icon, tone = "indigo" }) => {
+  const toneStyles = {
+    indigo: "bg-indigo-50 text-indigo-700",
+    emerald: "bg-emerald-50 text-emerald-700",
+    slate: "bg-slate-100 text-slate-600",
+    purple: "bg-purple-50 text-purple-700",
+  };
+
+  return (
+    <div
+      className={`rounded-xl p-3 text-center ${toneStyles[tone] || toneStyles.indigo}`}
+    >
+      {Icon ? <Icon size={14} className="mx-auto mb-1" /> : null}
+      <p className="text-lg font-extrabold leading-none">{value}</p>
+      <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide opacity-80">
+        {label}
+      </p>
+    </div>
+  );
+};
 
 const SideDetail = ({ icon: Icon, label, value }) => (
   <div className="flex items-center gap-3">
