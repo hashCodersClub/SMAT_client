@@ -14,9 +14,14 @@ import {
   FiRefreshCw,
   FiTrash2,
   FiLoader,
+  FiSend,
+  FiUserCheck,
+  FiClock,
+  FiX,
 } from "react-icons/fi";
 
 import vendorsApi from "../../../api/vendorsApi";
+import vendorInvitationApi from "../../../api/vendorInvitationApi";
 import VendorPortalUsers from "../../../components/admin/vendors/VendorPortalUsers";
 
 /* ==========================================================================
@@ -47,6 +52,10 @@ const VendorDetailsPage = () => {
 
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  const [inviting, setInviting] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState("");
+  const [inviteError, setInviteError] = useState("");
 
   /*
   |--------------------------------------------------------------------------
@@ -82,6 +91,49 @@ const VendorDetailsPage = () => {
   useEffect(() => {
     fetchVendor();
   }, [id]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Send / Resend Portal Invitation
+  |--------------------------------------------------------------------------
+  |
+  | Mirrors the Trainer Portal Access flow (handleSendInvitation in
+  | TrainerDetailsPage.jsx). Uses the vendor's primary contact by default —
+  | the backend falls back to it automatically when no name/email is sent.
+  |--------------------------------------------------------------------------
+  */
+
+  const handleSendInvitation = async () => {
+    const vendorId = vendor?._id || vendor?.id || id;
+
+    if (!vendorId) {
+      setInviteError("Vendor ID is missing.");
+      return;
+    }
+
+    try {
+      setInviting(true);
+      setInviteSuccess("");
+      setInviteError("");
+
+      const response = await vendorInvitationApi.invite(vendorId);
+
+      setInviteSuccess(
+        response?.message || "Vendor portal invitation sent successfully.",
+      );
+
+      await fetchVendor();
+    } catch (err) {
+      console.error("Failed to send vendor invitation:", err);
+
+      setInviteError(
+        err.response?.data?.message ||
+          "Unable to send vendor portal invitation.",
+      );
+    } finally {
+      setInviting(false);
+    }
+  };
 
   /*
   |--------------------------------------------------------------------------
@@ -185,6 +237,15 @@ const VendorDetailsPage = () => {
     vendor.contacts?.[0] ||
     null;
 
+  /*
+  |--------------------------------------------------------------------------
+  | Portal Status
+  |--------------------------------------------------------------------------
+  */
+
+  const portalActive = Boolean(vendor.portalEnabled);
+  const inviteEmail = primaryContact?.email;
+
   return (
     <div className="relative mx-auto max-w-7xl animate-fade-in-up px-4 py-6 sm:px-6 lg:px-8">
       {/* Background orbs */}
@@ -230,6 +291,18 @@ const VendorDetailsPage = () => {
             )}
           </div>
           <div className="flex h-fit shrink-0 flex-wrap gap-2">
+            {!portalActive && (
+              <button
+                type="button"
+                onClick={handleSendInvitation}
+                disabled={inviting || !inviteEmail}
+                className="inline-flex items-center gap-2 rounded-xl border border-blue-200/80 bg-blue-50/80 px-4 py-2.5 text-sm font-medium text-blue-700 backdrop-blur-sm transition hover:bg-blue-100/80 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/30"
+              >
+                {inviting ? <FiLoader className="animate-spin" /> : <FiSend />}
+                {inviting ? "Sending…" : "Send Portal Invitation"}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => navigate(`/admin/vendors/${vendor._id}/edit`)}
@@ -272,6 +345,199 @@ const VendorDetailsPage = () => {
           <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-red-300 to-red-500/60" />
         </div>
       )}
+
+      {inviteSuccess && (
+        <div
+          className="relative mt-6 overflow-hidden rounded-2xl border border-emerald-200/80 bg-white/80 p-5 backdrop-blur-sm shadow-lg shadow-emerald-100/30"
+          role="alert"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100/70 text-emerald-600 shadow-inner">
+              <FiCheckCircle size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-emerald-800">
+                Invitation sent
+              </p>
+              <p className="mt-1 text-sm text-emerald-700">{inviteSuccess}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setInviteSuccess("")}
+              className="text-emerald-500 hover:text-emerald-800"
+            >
+              <FiX className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-300 to-emerald-500/60" />
+        </div>
+      )}
+
+      {inviteError && (
+        <div
+          className="relative mt-6 overflow-hidden rounded-2xl border border-red-200/80 bg-white/80 p-5 backdrop-blur-sm shadow-lg shadow-red-100/30"
+          role="alert"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100/70 text-red-600 shadow-inner">
+              <FiAlertCircle size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-800">
+                Invitation failed
+              </p>
+              <p className="mt-1 text-sm text-red-700">{inviteError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setInviteError("")}
+              className="text-red-500 hover:text-red-800"
+            >
+              <FiX className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-red-300 to-red-500/60" />
+        </div>
+      )}
+
+      {/* Vendor Portal Access & Onboarding Workflow */}
+      <section className="relative mt-6 overflow-hidden rounded-3xl border border-white/20 bg-white/70 p-6 backdrop-blur-xl shadow-xl shadow-slate-200/40 transition-all duration-300 dark:bg-slate-800/40">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-4">
+            <div
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ${
+                portalActive
+                  ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-emerald-500/20"
+                  : "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/20"
+              }`}
+            >
+              {portalActive ? <FiUserCheck size={22} /> : <FiClock size={22} />}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Vendor Portal Access
+                </h2>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    portalActive
+                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                      : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                  }`}
+                >
+                  {portalActive ? "ACTIVE" : "PENDING"}
+                </span>
+              </div>
+
+              {portalActive ? (
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Portal access is active. The vendor can sign in to submit
+                  requirements, track assignments, and manage their profile.
+                </p>
+              ) : (
+                <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  {inviteEmail ? (
+                    <>
+                      Send an activation link to{" "}
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {inviteEmail}
+                      </span>{" "}
+                      so the vendor can set up their password.
+                    </>
+                  ) : (
+                    "Add a primary contact email to this vendor before sending a portal invitation."
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {!portalActive && inviteEmail && (
+            <button
+              type="button"
+              onClick={handleSendInvitation}
+              disabled={inviting}
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-95 disabled:opacity-50"
+            >
+              {inviting ? <FiLoader className="animate-spin" /> : <FiSend />}
+              {inviting ? "Sending..." : "Send Invitation Email"}
+            </button>
+          )}
+        </div>
+
+        {/* Onboarding Workflow Stepper */}
+        <div className="mt-6 border-t border-slate-200/60 pt-5 dark:border-white/10">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Vendor Onboarding Workflow
+          </p>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white shadow-xs">
+                ✓
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  1. Vendor Added
+                </p>
+                <p className="text-[10px] text-slate-500">By Admin</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs ${inviteEmail ? "bg-emerald-500" : "bg-amber-500"}`}
+              >
+                {inviteEmail ? "✓" : "2"}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  2. Email Dispatched
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  {inviteEmail
+                    ? "Activation Link Sent"
+                    : "Contact Email Required"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs ${portalActive ? "bg-emerald-500" : "bg-amber-400"}`}
+              >
+                {portalActive ? "✓" : "3"}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  3. Password Setup
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  {portalActive ? "Completed by Vendor" : "Pending Action"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/80 p-3 dark:bg-slate-900/40">
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs ${portalActive ? "bg-emerald-500" : "bg-slate-300"}`}
+              >
+                {portalActive ? "✓" : "4"}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  4. Portal Activated
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  {portalActive ? "Ready for Login" : "Awaiting Setup"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 opacity-30" />
+      </section>
 
       {/* Main Grid */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
