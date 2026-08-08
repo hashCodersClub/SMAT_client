@@ -14,6 +14,7 @@ import {
   FiZap,
 } from "react-icons/fi";
 import opportunitiesApi from "../../../api/opportunitiesApi";
+import demoSessionsApi from "../../../api/demoSessionsApi";
 import MatchInsight from "../../../components/opportunities/MatchInsight";
 import OpportunityDetailModal from "../../../components/opportunities/OpportunityDetailModal";
 
@@ -57,7 +58,12 @@ const TrainerOpportunitiesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("NEWEST");
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  });
 
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -66,6 +72,7 @@ const TrainerOpportunitiesPage = () => {
   // Confirmation modal state for inline "Interested" click
   const [confirmingRecord, setConfirmingRecord] = useState(null);
   const [quotedRateDrafts, setQuotedRateDrafts] = useState({});
+  const [demoActionLoading, setDemoActionLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -104,10 +111,15 @@ const TrainerOpportunitiesPage = () => {
   const handleRespond = async (opportunityId, responsePayload) => {
     try {
       setRespondingId(opportunityId);
-      const res = await opportunitiesApi.respondMine(opportunityId, responsePayload);
+      const res = await opportunitiesApi.respondMine(
+        opportunityId,
+        responsePayload,
+      );
 
       setRecords((prev) =>
-        prev.map((item) => (item._id === opportunityId ? res.opportunity : item)),
+        prev.map((item) =>
+          item._id === opportunityId ? res.opportunity : item,
+        ),
       );
 
       if (selectedOpportunity && selectedOpportunity._id === opportunityId) {
@@ -130,8 +142,69 @@ const TrainerOpportunitiesPage = () => {
     const draftRate = quotedRateDrafts[record._id];
     handleRespond(record._id, {
       status: "INTERESTED",
-      ...(draftRate !== undefined && draftRate !== "" ? { quotedRate: Number(draftRate) } : {}),
+      ...(draftRate !== undefined && draftRate !== ""
+        ? { quotedRate: Number(draftRate) }
+        : {}),
     });
+  };
+
+  const refreshSelectedOpportunity = async () => {
+    if (!selectedOpportunity) return;
+    try {
+      const res = await opportunitiesApi.getMineById(selectedOpportunity._id);
+      setSelectedOpportunity(res.opportunity);
+      setRecords((prev) =>
+        prev.map((item) =>
+          item._id === res.opportunity._id ? res.opportunity : item,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to refresh opportunity after demo action:", err);
+    }
+  };
+
+  const handleAcceptDemo = async (demoSessionId) => {
+    if (!demoSessionId) return;
+    try {
+      setDemoActionLoading(true);
+      await demoSessionsApi.acceptDemo(demoSessionId);
+      await refreshSelectedOpportunity();
+    } catch (err) {
+      console.error("Failed to accept demo:", err);
+      setError(err.response?.data?.message || "Unable to accept the demo.");
+    } finally {
+      setDemoActionLoading(false);
+    }
+  };
+
+  const handleRescheduleDemo = async (demoSessionId, payload) => {
+    if (!demoSessionId) return;
+    try {
+      setDemoActionLoading(true);
+      await demoSessionsApi.rescheduleDemo(demoSessionId, payload);
+      await refreshSelectedOpportunity();
+    } catch (err) {
+      console.error("Failed to request demo reschedule:", err);
+      setError(
+        err.response?.data?.message || "Unable to request a reschedule.",
+      );
+    } finally {
+      setDemoActionLoading(false);
+    }
+  };
+
+  const handleDeclineDemo = async (demoSessionId) => {
+    if (!demoSessionId) return;
+    try {
+      setDemoActionLoading(true);
+      await demoSessionsApi.declineDemo(demoSessionId);
+      await refreshSelectedOpportunity();
+    } catch (err) {
+      console.error("Failed to decline demo:", err);
+      setError(err.response?.data?.message || "Unable to decline the demo.");
+    } finally {
+      setDemoActionLoading(false);
+    }
   };
 
   const handleOpenDetail = (record) => {
@@ -148,7 +221,8 @@ const TrainerOpportunitiesPage = () => {
             Opportunity Portal
           </h1>
           <p className="mt-1 text-sm font-medium text-slate-500">
-            Discover training opportunities matched specifically to your expertise. Review match insights and respond seamlessly.
+            Discover training opportunities matched specifically to your
+            expertise. Review match insights and respond seamlessly.
           </p>
         </div>
 
@@ -171,7 +245,9 @@ const TrainerOpportunitiesPage = () => {
               <FiClock size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">{stats.pendingOpportunities}</p>
+          <p className="mt-2 text-2xl font-black text-slate-900">
+            {stats.pendingOpportunities}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
@@ -181,7 +257,9 @@ const TrainerOpportunitiesPage = () => {
               <FiCheck size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">{stats.interestedOpportunities}</p>
+          <p className="mt-2 text-2xl font-black text-slate-900">
+            {stats.interestedOpportunities}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
@@ -191,7 +269,9 @@ const TrainerOpportunitiesPage = () => {
               <FiStar size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">{stats.selectedOpportunities}</p>
+          <p className="mt-2 text-2xl font-black text-slate-900">
+            {stats.selectedOpportunities}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
@@ -201,17 +281,23 @@ const TrainerOpportunitiesPage = () => {
               <FiX size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-black text-slate-900">{stats.expiredOpportunities}</p>
+          <p className="mt-2 text-2xl font-black text-slate-900">
+            {stats.expiredOpportunities}
+          </p>
         </div>
 
         <div className="col-span-2 sm:col-span-1 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-indigo-700">Avg Match Score</span>
+            <span className="text-xs font-bold text-indigo-700">
+              Avg Match Score
+            </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white">
               <FiZap size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-black text-indigo-900">{stats.averageMatchScore}%</p>
+          <p className="mt-2 text-2xl font-black text-indigo-900">
+            {stats.averageMatchScore}%
+          </p>
         </div>
       </div>
 
@@ -220,7 +306,10 @@ const TrainerOpportunitiesPage = () => {
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {/* Search Input */}
           <div className="relative flex-1">
-            <FiSearch size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
+            <FiSearch
+              size={16}
+              className="absolute left-3.5 top-3.5 text-slate-400"
+            />
             <input
               type="text"
               value={searchTerm}
@@ -311,8 +400,11 @@ const TrainerOpportunitiesPage = () => {
       ) : (
         <div className="space-y-4">
           {records.map((record) => {
-            const requirement = record.requirementId || record.requirementSnapshot || {};
-            const isResponded = ["INTERESTED", "MAYBE", "DECLINED"].includes(record.status);
+            const requirement =
+              record.requirementId || record.requirementSnapshot || {};
+            const isResponded = ["INTERESTED", "MAYBE", "DECLINED"].includes(
+              record.status,
+            );
             const isExpired =
               record.status === "EXPIRED" ||
               (record.expiresAt && new Date(record.expiresAt) <= new Date());
@@ -325,7 +417,8 @@ const TrainerOpportunitiesPage = () => {
                     ? "border-emerald-300 bg-emerald-50/30"
                     : record.status === "MAYBE"
                       ? "border-amber-300 bg-amber-50/30"
-                      : record.status === "DECLINED" || record.status === "EXPIRED"
+                      : record.status === "DECLINED" ||
+                          record.status === "EXPIRED"
                         ? "border-slate-200 bg-slate-50/50 opacity-75"
                         : "border-slate-200/90"
                 }`}
@@ -378,7 +471,9 @@ const TrainerOpportunitiesPage = () => {
                     <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-500">
                       <span className="flex items-center gap-1.5">
                         <FiMapPin size={14} className="text-slate-400" />
-                        {requirement.mode === "ONLINE" ? "Online" : requirement.city || "—"}
+                        {requirement.mode === "ONLINE"
+                          ? "Online"
+                          : requirement.city || "—"}
                       </span>
 
                       <span className="flex items-center gap-1.5">
@@ -388,7 +483,8 @@ const TrainerOpportunitiesPage = () => {
 
                       <span className="flex items-center gap-1.5">
                         <FiCalendar size={14} className="text-slate-400" />
-                        {formatDate(requirement.startDate)} – {formatDate(requirement.endDate)}
+                        {formatDate(requirement.startDate)} –{" "}
+                        {formatDate(requirement.endDate)}
                       </span>
 
                       {record.expiresAt && !isExpired && (
@@ -430,64 +526,80 @@ const TrainerOpportunitiesPage = () => {
                       View Details & History
                     </button>
 
-                    {!isExpired && !["SELECTED", "WITHDRAWN"].includes(record.status) && (
-                      <div className="space-y-2 pt-2 border-t border-slate-100">
-                        <div>
-                          <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            Your Rate (₹/day optional)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={quotedRateDrafts[record._id] ?? record.quotedRate ?? ""}
-                            onChange={(e) =>
-                              setQuotedRateDrafts((prev) => ({ ...prev, [record._id]: e.target.value }))
-                            }
-                            placeholder="₹ Rate"
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
-                          />
-                        </div>
+                    {!isExpired &&
+                      !["SELECTED", "WITHDRAWN"].includes(record.status) && (
+                        <div className="space-y-2 pt-2 border-t border-slate-100">
+                          <div>
+                            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Your Rate (₹/day optional)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={
+                                quotedRateDrafts[record._id] ??
+                                record.quotedRate ??
+                                ""
+                              }
+                              onChange={(e) =>
+                                setQuotedRateDrafts((prev) => ({
+                                  ...prev,
+                                  [record._id]: e.target.value,
+                                }))
+                              }
+                              placeholder="₹ Rate"
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
+                            />
+                          </div>
 
-                        {/* Responsive Phase D Action Buttons */}
-                        <div className="flex flex-col gap-1.5">
-                          <button
-                            type="button"
-                            disabled={respondingId === record._id}
-                            onClick={() => setConfirmingRecord(record)}
-                            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/20 hover:scale-[1.02] transition disabled:opacity-50"
-                          >
-                            <FiCheck size={14} /> I'm Interested
-                          </button>
-
-                          <div className="grid grid-cols-2 gap-1.5">
+                          {/* Responsive Phase D Action Buttons */}
+                          <div className="flex flex-col gap-1.5">
                             <button
                               type="button"
                               disabled={respondingId === record._id}
-                              onClick={() => handleRespond(record._id, { status: "MAYBE" })}
-                              className="rounded-xl border border-amber-200 bg-amber-50 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-50"
+                              onClick={() => setConfirmingRecord(record)}
+                              className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/20 hover:scale-[1.02] transition disabled:opacity-50"
                             >
-                              Maybe
+                              <FiCheck size={14} /> I'm Interested
                             </button>
 
-                            <button
-                              type="button"
-                              disabled={respondingId === record._id}
-                              onClick={() => handleRespond(record._id, { status: "DECLINED" })}
-                              className="rounded-xl border border-slate-200 bg-white py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
-                            >
-                              Decline
-                            </button>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                type="button"
+                                disabled={respondingId === record._id}
+                                onClick={() =>
+                                  handleRespond(record._id, { status: "MAYBE" })
+                                }
+                                className="rounded-xl border border-amber-200 bg-amber-50 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-50"
+                              >
+                                Maybe
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={respondingId === record._id}
+                                onClick={() =>
+                                  handleRespond(record._id, {
+                                    status: "DECLINED",
+                                  })
+                                }
+                                className="rounded-xl border border-slate-200 bg-white py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
+                              >
+                                Decline
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {isResponded && (
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center text-xs font-medium text-slate-500">
                         Responded on {formatDate(record.respondedAt)}
                         {record.quotedRate > 0 && (
                           <p className="mt-1 font-bold text-slate-800">
-                            Quoted: ₹{Number(record.quotedRate).toLocaleString("en-IN")}/day
+                            Quoted: ₹
+                            {Number(record.quotedRate).toLocaleString("en-IN")}
+                            /day
                           </p>
                         )}
                       </div>
@@ -504,7 +616,8 @@ const TrainerOpportunitiesPage = () => {
       {pagination.pages > 1 && (
         <div className="flex items-center justify-between border-t border-slate-200 pt-6">
           <span className="text-xs font-bold text-slate-500">
-            Page {pagination.page} of {pagination.pages} ({pagination.total} total)
+            Page {pagination.page} of {pagination.pages} ({pagination.total}{" "}
+            total)
           </span>
 
           <div className="flex gap-2">
@@ -537,6 +650,10 @@ const TrainerOpportunitiesPage = () => {
           onClose={() => setIsDetailOpen(false)}
           onRespond={handleRespond}
           responding={respondingId === selectedOpportunity?._id}
+          onAcceptDemo={handleAcceptDemo}
+          onRescheduleDemo={handleRescheduleDemo}
+          onDeclineDemo={handleDeclineDemo}
+          demoActionLoading={demoActionLoading}
         />
       )}
 
@@ -553,11 +670,13 @@ const TrainerOpportunitiesPage = () => {
             </h3>
 
             <p className="text-sm font-medium text-slate-600 leading-relaxed">
-              You are expressing interest in this opportunity. The operations team will review your profile and may select you for assignment.
+              You are expressing interest in this opportunity. The operations
+              team will review your profile and may select you for assignment.
             </p>
 
             <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500 font-medium">
-              Note: This action expresses your availability. It does not create an assignment or guarantee selection.
+              Note: This action expresses your availability. It does not create
+              an assignment or guarantee selection.
             </div>
 
             <div className="flex gap-3 pt-2">
@@ -575,7 +694,9 @@ const TrainerOpportunitiesPage = () => {
                 onClick={() => handleInlineInterestConfirm(confirmingRecord)}
                 className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/30 hover:scale-[1.02] transition disabled:opacity-50"
               >
-                {respondingId === confirmingRecord._id ? "Confirming..." : "Confirm"}
+                {respondingId === confirmingRecord._id
+                  ? "Confirming..."
+                  : "Confirm"}
               </button>
             </div>
           </div>

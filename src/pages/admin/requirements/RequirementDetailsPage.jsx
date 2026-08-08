@@ -15,6 +15,7 @@ import {
   FiTrash2,
   FiUser,
   FiUsers,
+  FiVideo,
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
@@ -385,6 +386,16 @@ const RequirementDetailsPage = () => {
               <FiCpu />✨ AI Match Trainers
             </button>
           )}
+
+          {/* Opportunity Pipeline — Demo Workflow */}
+
+          <button
+            type="button"
+            onClick={() => navigate(`/admin/requirements/${id}/opportunities`)}
+            className="press-scale flex items-center gap-2 rounded-xl border border-purple-200 bg-white px-4 py-2.5 text-sm font-semibold text-purple-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-purple-50 hover:shadow-sm"
+          >
+            <FiVideo /> Opportunity Pipeline
+          </button>
         </div>
       </div>
 

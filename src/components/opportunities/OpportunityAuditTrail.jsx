@@ -1,4 +1,6 @@
 import {
+  FiAlertTriangle,
+  FiCalendar,
   FiCheck,
   FiCheckCircle,
   FiClock,
@@ -6,6 +8,8 @@ import {
   FiPlusCircle,
   FiSend,
   FiStar,
+  FiVideo,
+  FiXCircle,
 } from "react-icons/fi";
 
 const EVENT_CONFIG = {
@@ -43,6 +47,46 @@ const EVENT_CONFIG = {
     label: "Trainer Selected for Requirement",
     icon: FiCheck,
     color: "bg-green-100 text-green-600 border-green-200",
+  },
+  DEMO_REQUESTED: {
+    label: "Demo Requested by Vendor",
+    icon: FiVideo,
+    color: "bg-purple-100 text-purple-600 border-purple-200",
+  },
+  DEMO_SCHEDULED: {
+    label: "Demo Scheduled",
+    icon: FiCalendar,
+    color: "bg-violet-100 text-violet-600 border-violet-200",
+  },
+  DEMO_COMPLETED: {
+    label: "Demo Completed",
+    icon: FiCheckCircle,
+    color: "bg-teal-100 text-teal-600 border-teal-200",
+  },
+  DEMO_NO_SHOW: {
+    label: "Demo Marked as No-Show",
+    icon: FiAlertTriangle,
+    color: "bg-orange-100 text-orange-600 border-orange-200",
+  },
+  DEMO_CANCELLED: {
+    label: "Demo Cancelled by Vendor",
+    icon: FiXCircle,
+    color: "bg-red-100 text-red-600 border-red-200",
+  },
+  DEMO_ACCEPTED_BY_TRAINER: {
+    label: "Demo Accepted by Trainer",
+    icon: FiCheck,
+    color: "bg-emerald-100 text-emerald-600 border-emerald-200",
+  },
+  DEMO_RESCHEDULE_REQUESTED: {
+    label: "Trainer Requested Reschedule",
+    icon: FiClock,
+    color: "bg-amber-100 text-amber-600 border-amber-200",
+  },
+  DEMO_DECLINED_BY_TRAINER: {
+    label: "Demo Declined by Trainer",
+    icon: FiXCircle,
+    color: "bg-red-100 text-red-600 border-red-200",
   },
 };
 
@@ -83,7 +127,10 @@ const OpportunityAuditTrail = ({ auditTrail = [] }) => {
           const IconComponent = config.icon;
 
           return (
-            <div key={index} className="relative flex items-start gap-3 text-xs">
+            <div
+              key={index}
+              className="relative flex items-start gap-3 text-xs"
+            >
               <div
                 className={`absolute -left-6 flex h-5 w-5 items-center justify-center rounded-full border shadow-xs ${config.color}`}
               >
@@ -92,7 +139,9 @@ const OpportunityAuditTrail = ({ auditTrail = [] }) => {
 
               <div className="min-w-0 flex-1 rounded-xl border border-slate-100 bg-slate-50/50 p-2.5">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-slate-800">{config.label}</span>
+                  <span className="font-bold text-slate-800">
+                    {config.label}
+                  </span>
                   <span className="text-[10px] text-slate-400">
                     {formatDate(item.timestamp)}
                   </span>
@@ -107,10 +156,17 @@ const OpportunityAuditTrail = ({ auditTrail = [] }) => {
                 {item.details && (
                   <div className="mt-1 text-[11px] font-medium text-slate-600">
                     {item.details.status && (
-                      <span className="mr-2">Status: <strong>{item.details.status}</strong></span>
+                      <span className="mr-2">
+                        Status: <strong>{item.details.status}</strong>
+                      </span>
                     )}
                     {item.details.quotedRate > 0 && (
-                      <span>Rate: <strong>₹{item.details.quotedRate.toLocaleString("en-IN")}/day</strong></span>
+                      <span>
+                        Rate:{" "}
+                        <strong>
+                          ₹{item.details.quotedRate.toLocaleString("en-IN")}/day
+                        </strong>
+                      </span>
                     )}
                   </div>
                 )}
