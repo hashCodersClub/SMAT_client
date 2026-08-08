@@ -102,34 +102,7 @@ const TrainerAvailabilityPage = () => {
   }, []);
 
   useEffect(() => {
-    let ignore = false;
-    const fetchAvailability = async () => {
-      try {
-        setError("");
-        const response = await trainerAvailabilityApi.getMine();
-        if (!ignore) {
-          setAvailability(
-            Array.isArray(response?.availability) ? response.availability : [],
-          );
-          setOverallStatus(response?.overallStatus || "AVAILABLE");
-        }
-      } catch (error) {
-        if (!ignore) {
-          console.error("Failed to load availability:", error);
-          setError(error.response?.data?.message || "Unable to load availability.");
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchAvailability();
-
-    return () => {
-      ignore = true;
-    };
+    loadAvailability();
   }, []);
 
   /*
