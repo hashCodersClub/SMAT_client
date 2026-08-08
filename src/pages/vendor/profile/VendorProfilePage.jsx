@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FiSave,
   FiRefreshCw,
@@ -6,6 +6,8 @@ import {
   FiCheckCircle,
   FiPlus,
   FiTrash2,
+  FiCamera,
+  FiUser,
 } from "react-icons/fi";
 
 import vendorsApi from "../../../api/vendorsApi";
@@ -40,11 +42,20 @@ const emptyContact = {
   isPrimary: false,
 };
 
+const ALLOWED_LOGO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_LOGO_SIZE = 5 * 1024 * 1024; // 5MB — matches backend vendorUpload limit
+
 const VendorProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const [logoUrl, setLogoUrl] = useState("");
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
+  const [logoError, setLogoError] = useState("");
+  const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
     companyName: "",
@@ -74,6 +85,8 @@ const VendorProfilePage = () => {
         const vendor = response?.vendor;
 
         if (vendor) {
+          setLogoUrl(vendor.logoUrl || "");
+
           setForm({
             companyName: vendor.companyName || "",
             companyType: vendor.companyType || "TRAINING_COMPANY",
@@ -106,6 +119,59 @@ const VendorProfilePage = () => {
   | Handlers
   |--------------------------------------------------------------------------
   */
+
+  /*
+  |--------------------------------------------------------------------------
+  | Logo Preview Cleanup
+  |--------------------------------------------------------------------------
+  |
+  | Revoke the blob: URL created for the local preview whenever it changes
+  | or the component unmounts, so we don't leak memory.
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl) {
+        URL.revokeObjectURL(logoPreviewUrl);
+      }
+    };
+  }, [logoPreviewUrl]);
+
+  const handleLogoSelect = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+
+    if (!file) return;
+
+    setLogoError("");
+
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setLogoError("Logo must be a JPEG, PNG, or WEBP image.");
+      return;
+    }
+
+    if (file.size > MAX_LOGO_SIZE) {
+      setLogoError("Logo must be smaller than 5MB.");
+      return;
+    }
+
+    if (logoPreviewUrl) {
+      URL.revokeObjectURL(logoPreviewUrl);
+    }
+
+    setLogoFile(file);
+    setLogoPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleRemoveSelectedLogo = () => {
+    if (logoPreviewUrl) {
+      URL.revokeObjectURL(logoPreviewUrl);
+    }
+    setLogoFile(null);
+    setLogoPreviewUrl("");
+    setLogoError("");
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -151,7 +217,23 @@ const VendorProfilePage = () => {
     setSuccessMessage("");
 
     try {
-      await vendorsApi.updateMyProfile(form);
+      const response = await vendorsApi.updateMyProfile({
+        ...form,
+        ...(logoFile ? { logoFile } : {}),
+      });
+
+      const updatedLogoUrl = response?.vendor?.logoUrl;
+
+      if (updatedLogoUrl !== undefined) {
+        setLogoUrl(updatedLogoUrl);
+      }
+
+      if (logoPreviewUrl) {
+        URL.revokeObjectURL(logoPreviewUrl);
+      }
+      setLogoFile(null);
+      setLogoPreviewUrl("");
+
       setSuccessMessage("Profile updated successfully.");
     } catch (err) {
       setError(
@@ -211,6 +293,68 @@ const VendorProfilePage = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Logo / Avatar */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Company Logo</h2>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Shown on your vendor profile. JPEG, PNG, or WEBP, up to 5MB.
+          </p>
+
+          <div className="mt-5 flex items-center gap-5">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50">
+              {logoPreviewUrl || logoUrl ? (
+                <img
+                  src={logoPreviewUrl || logoUrl}
+                  alt="Company logo"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <FiUser size={28} className="text-slate-300" />
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  <FiCamera size={15} />
+                  {logoUrl || logoPreviewUrl ? "Change logo" : "Upload logo"}
+                </button>
+
+                {logoFile && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveSelectedLogo}
+                    className="text-sm font-medium text-slate-500 transition hover:text-red-600"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+
+              {logoFile && (
+                <p className="text-xs text-slate-500">
+                  {logoFile.name} — will be uploaded when you save changes.
+                </p>
+              )}
+
+              {logoError && <p className="text-xs text-red-600">{logoError}</p>}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleLogoSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Company Information */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">
