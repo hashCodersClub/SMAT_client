@@ -85,28 +85,100 @@ const describeDetail = (entry) => {
   return "";
 };
 
+// These two events fire once per matched trainer, every time a generation
+// run happens (initial match, re-match on requirement edit, manual retry).
+// With N trainers matched, that's 2N near-identical rows — "matched and
+// notified" / "notified via WhatsApp, email & in-app" — that all render
+// under the same anonymized "Trainer candidate" label pre-response, so they
+// read as noise/duplicates rather than N distinct trainers. We collapse each
+// batch (same event, fired within the same generation run) into one row.
+const BATCHABLE_EVENTS = new Set(["OPPORTUNITY_CREATED", "NOTIFICATION_SENT"]);
+
+// Opportunities created in the same generate() run are written back-to-back
+// in a tight loop, so their timestamps land within a few seconds of each
+// other. 2 minutes is a generous window that still won't merge two separate
+// generation runs (e.g. initial match vs. a later manual retry) into one row.
+const BATCH_WINDOW_MS = 2 * 60 * 1000;
+
+const batchTitle = (event, count) => {
+  const noun = count === 1 ? "trainer candidate" : "trainer candidates";
+  return `${count} ${noun} ${EVENT_LABELS[event]}`;
+};
+
 /**
  * Flattens every candidate's auditTrail into one newest-first list shaped
- * for <ActivityTimeline events={...} />.
+ * for <ActivityTimeline events={...} />. Per-trainer match/notify events
+ * from the same generation run are collapsed into a single summary row;
+ * everything else (views, responses, demo lifecycle, selection) stays
+ * one row per trainer since those are genuinely distinct events.
  *
  * @param {Array} candidates - Opportunities for a requirement, each with a
  *   populated trainerId and an auditTrail array.
  * @returns {{id: string, title: string, description: string, timestamp: string, completed: boolean}[]}
  */
 export const buildRequirementTimeline = (candidates = []) => {
-  const events = candidates.flatMap((candidate) =>
-    (candidate.auditTrail || []).map((entry, index) => ({
-      id: `${candidate._id}-${entry.event}-${index}-${entry.timestamp}`,
-      title: describeEvent(candidate, entry),
-      description: describeDetail(entry),
-      timestamp: entry.timestamp,
-      completed: true,
-    })),
-  );
+  const rawEvents = candidates
+    .flatMap((candidate) =>
+      (candidate.auditTrail || []).map((entry, index) => ({
+        candidateId: candidate._id,
+        event: entry.event,
+        details: entry.details,
+        timestamp: entry.timestamp,
+        candidate,
+        index,
+      })),
+    )
+    .filter((event) => event.timestamp);
 
-  return events
-    .filter((event) => event.timestamp)
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const batchable = rawEvents.filter((e) => BATCHABLE_EVENTS.has(e.event));
+  const individual = rawEvents.filter((e) => !BATCHABLE_EVENTS.has(e.event));
+
+  // Cluster batchable events: same event type, timestamps within
+  // BATCH_WINDOW_MS of the running batch's most recent member.
+  const batches = [];
+  batchable
+    .slice()
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    .forEach((entry) => {
+      const openBatch = batches.find(
+        (batch) =>
+          batch.event === entry.event &&
+          Math.abs(new Date(entry.timestamp) - new Date(batch.lastTimestamp)) <=
+            BATCH_WINDOW_MS,
+      );
+      if (openBatch) {
+        openBatch.count += 1;
+        openBatch.lastTimestamp = entry.timestamp;
+      } else {
+        batches.push({
+          event: entry.event,
+          count: 1,
+          firstTimestamp: entry.timestamp,
+          lastTimestamp: entry.timestamp,
+        });
+      }
+    });
+
+  const batchEvents = batches.map((batch, index) => ({
+    id: `batch-${batch.event}-${index}-${batch.firstTimestamp}`,
+    title: batchTitle(batch.event, batch.count),
+    description:
+      batch.event === "NOTIFICATION_SENT" ? "Via IN_APP, EMAIL, WHATSAPP" : "",
+    timestamp: batch.lastTimestamp,
+    completed: true,
+  }));
+
+  const individualEvents = individual.map((entry) => ({
+    id: `${entry.candidateId}-${entry.event}-${entry.index}-${entry.timestamp}`,
+    title: describeEvent(entry.candidate, entry),
+    description: describeDetail(entry),
+    timestamp: entry.timestamp,
+    completed: true,
+  }));
+
+  return [...batchEvents, ...individualEvents].sort(
+    (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
+  );
 };
 
 export default buildRequirementTimeline;

@@ -242,6 +242,14 @@ const VendorRequirementDetailsPage = () => {
     ].includes(c.status),
   );
 
+  // Trainers who have been matched and sent the shortlist notification but
+  // haven't responded yet. These never show up in interestedCandidates, so
+  // without this list the vendor has no visibility into "who did we notify"
+  // beyond the noisy per-trainer activity timeline entries.
+  const notifiedCandidates = (sourcing?.candidates || []).filter(
+    (c) => c.status === "PENDING_RESPONSE",
+  );
+
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -353,26 +361,6 @@ const VendorRequirementDetailsPage = () => {
           <span>{error}</span>
         </div>
       )}
-
-      {/* No Matching Trainers Yet
-          |--------------------------------------------------------------
-          | If sourcing has finished loading, no trainers have been
-          | matched at all, and the requirement never progressed past
-          | its initial submitted state, that's not "still working on
-          | it" — it means matching found nobody. Let the vendor know
-          | instead of leaving them staring at an empty list forever. */}
-      {!sourcingLoading &&
-        (sourcing?.candidates?.length || 0) === 0 &&
-        ["SUBMITTED", "OPEN"].includes(requirement.status) && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800 flex items-center gap-2">
-            <FiAlertCircle size={18} className="text-amber-600 shrink-0" />
-            <span>
-              No trainers have been matched to this requirement yet. Our
-              operations team has been notified and will follow up with manual
-              sourcing if needed.
-            </span>
-          </div>
-        )}
 
       {/* Tabs Switcher */}
       <div className="flex border-b border-slate-200">
@@ -753,6 +741,63 @@ const VendorRequirementDetailsPage = () => {
                 tone="purple"
               />
             </div>
+          </div>
+
+          {/* Notified Trainers — who was sent the shortlist mail/WhatsApp/in-app notification */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="font-semibold text-slate-900">Notified Trainers</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Trainers matched and sent the shortlist notification, awaiting a
+              response. Identities stay hidden until our team approves their
+              rate card.
+            </p>
+
+            {!notifiedCandidates.length ? (
+              <p className="mt-4 py-6 text-center text-sm text-slate-500">
+                No trainers currently awaiting a response.
+              </p>
+            ) : (
+              <div className="mt-4 divide-y divide-slate-100">
+                {notifiedCandidates.map((candidate, index) => (
+                  <div
+                    key={candidate._id}
+                    className="flex flex-wrap items-center justify-between gap-2 py-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                        <FiSend size={14} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">
+                          Trainer candidate #{index + 1}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {candidate.invitedAt
+                            ? `Notified ${new Date(candidate.invitedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`
+                            : "Notified"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      {typeof candidate.matchScore === "number" && (
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600">
+                          {candidate.matchScore}% match
+                        </span>
+                      )}
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-bold ${
+                          OPPORTUNITY_STATUS_STYLES[candidate.status] ||
+                          "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        <FiClock size={11} />
+                        Awaiting response
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Trainer Interaction Timeline */}
