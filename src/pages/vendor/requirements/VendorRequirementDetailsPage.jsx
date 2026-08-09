@@ -31,6 +31,18 @@ import { buildRequirementTimeline } from "../../../utils/requirementTimeline";
 // vendor to click "Refresh" to see the latest status.
 const SOURCING_POLL_INTERVAL_MS = 15000;
 
+// Opportunity statuses at which the trainer's sanitized profile becomes
+// available to view (mirrors the backend's PROFILE_VISIBLE_OPPORTUNITY_STATUSES).
+const PROFILE_VISIBLE_STATUSES = [
+  "INTERESTED",
+  "MAYBE",
+  "SHORTLISTED",
+  "DEMO_REQUESTED",
+  "DEMO_SCHEDULED",
+  "DEMO_COMPLETED",
+  "SELECTED",
+];
+
 const statusStyles = {
   DRAFT: "bg-slate-100 text-slate-700",
   SUBMITTED: "bg-indigo-50 text-indigo-700",
@@ -320,6 +332,20 @@ const VendorRequirementDetailsPage = () => {
                     >
                       {formatStatusLabel(candidate.status)}
                     </span>
+                    {PROFILE_VISIBLE_STATUSES.includes(candidate.status) && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/vendor/requirements/${requirement._id}/opportunities/${candidate._id}`,
+                          )
+                        }
+                        className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                      >
+                        <FiEye size={13} />
+                        View Profile
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -7,10 +7,13 @@ const demoSessionsApi = {
   |--------------------------------------------------------------------------
   */
 
-  // Vendor shortlists a trainer's opportunity and requests a demo.
-  requestDemo: async ({ opportunityId, notes }) => {
+  // Vendor shortlists a trainer's opportunity and requests a demo /
+  // technical evaluation call. sessionType is "DEMO" (default) or
+  // "TECHNICAL".
+  requestDemo: async ({ opportunityId, sessionType, notes }) => {
     const response = await api.post("/demo-sessions/request", {
       opportunityId,
+      sessionType,
       notes,
     });
     return response.data;

@@ -50,6 +50,15 @@ const opportunitiesApi = {
     });
     return response.data;
   },
+
+  // Sanitized trainer profile — vendor (or staff) view, no contact info,
+  // no CV. Available once the trainer has responded to the opportunity.
+  getTrainerProfile: async (opportunityId) => {
+    const response = await api.get(
+      `/opportunities/${opportunityId}/trainer-profile`,
+    );
+    return response.data;
+  },
 };
 
 export default opportunitiesApi;

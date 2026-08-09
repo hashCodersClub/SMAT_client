@@ -15,6 +15,13 @@ const assignmentsApi = {
     return response.data;
   },
 
+  // Trainer confirms a PROPOSED assignment — the final step of the flow.
+  confirmMine: async (id) => {
+    const response = await api.post(`/assignments/mine/${id}/confirm`);
+
+    return response.data;
+  },
+
   getById: async (id) => {
     const response = await api.get(`/assignments/${id}`);
 

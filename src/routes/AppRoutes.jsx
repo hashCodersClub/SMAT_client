@@ -114,6 +114,9 @@ const AddVendorRequirementPage = lazy(
 const VendorRequirementDetailsPage = lazy(
   () => import("../pages/vendor/requirements/VendorRequirementDetailsPage"),
 );
+const VendorOpportunityDetailPage = lazy(
+  () => import("../pages/vendor/requirements/VendorOpportunityDetailPage"),
+);
 const EditVendorRequirementPage = lazy(
   () => import("../pages/vendor/requirements/EditVendorRequirementPage"),
 );
@@ -340,6 +343,11 @@ const AppRoutes = () => {
             <Route
               path="/vendor/requirements/:id"
               element={<VendorRequirementDetailsPage />}
+            />
+
+            <Route
+              path="/vendor/requirements/:id/opportunities/:opportunityId"
+              element={<VendorOpportunityDetailPage />}
             />
 
             <Route
