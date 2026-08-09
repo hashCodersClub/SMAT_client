@@ -36,9 +36,11 @@ import RequirementStatusTimeline from "../../../components/vendor/RequirementSta
 
 const SOURCING_POLL_INTERVAL_MS = 15000;
 
+// A trainer only becomes visible to the vendor once an admin has approved
+// their rate-card response (opportunity.profileVisible from the API).
+// This list is kept in sync as a fallback for older cached responses that
+// may not include the profileVisible flag yet.
 const PROFILE_VISIBLE_STATUSES = [
-  "INTERESTED",
-  "MAYBE",
   "SHORTLISTED",
   "DEMO_REQUESTED",
   "DEMO_SCHEDULED",
@@ -53,7 +55,8 @@ const statusStyles = {
   SOURCING: "bg-amber-50 text-amber-700",
   PROFILES_SENT: "bg-purple-50 text-purple-700",
   SHORTLISTED: "bg-cyan-50 text-cyan-700",
-  TRAINER_SELECTED: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-600/30",
+  TRAINER_SELECTED:
+    "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-600/30",
   CONFIRMED: "bg-emerald-50 text-emerald-700",
   IN_PROGRESS: "bg-orange-50 text-orange-700",
   COMPLETED: "bg-green-50 text-green-700",
@@ -138,11 +141,16 @@ const VendorRequirementDetailsPage = () => {
   }, [loadSourcing]);
 
   // Handle Schedule Demo Submit
-  const handleScheduleDemoSubmit = async ({ scheduledAt, meetingLink, notes }) => {
+  const handleScheduleDemoSubmit = async ({
+    scheduledAt,
+    meetingLink,
+    notes,
+  }) => {
     if (!demoModalCandidate) return;
     try {
       await demoSessionsApi.scheduleVendorDemo({
-        opportunityId: demoModalCandidate._id || demoModalCandidate.opportunityId,
+        opportunityId:
+          demoModalCandidate._id || demoModalCandidate.opportunityId,
         demoSessionId: demoModalCandidate.currentDemoSessionId,
         scheduledAt,
         meetingLink,
@@ -153,7 +161,11 @@ const VendorRequirementDetailsPage = () => {
       await loadSourcing();
       await loadRequirement();
     } catch (err) {
-      throw new Error(err.response?.data?.message || err.message || "Failed to schedule demo.");
+      throw new Error(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to schedule demo.",
+      );
     }
   };
 
@@ -179,7 +191,9 @@ const VendorRequirementDetailsPage = () => {
       await loadSourcing();
     } catch (err) {
       setError(
-        err.response?.data?.message || err.message || "Failed to select trainer.",
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to select trainer.",
       );
     } finally {
       setActionLoadingId(null);
@@ -205,7 +219,9 @@ const VendorRequirementDetailsPage = () => {
       await loadSourcing();
     } catch (err) {
       setError(
-        err.response?.data?.message || err.message || "Failed to reject trainer.",
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to reject trainer.",
       );
     } finally {
       setActionLoadingId(null);
@@ -215,7 +231,15 @@ const VendorRequirementDetailsPage = () => {
   const timelineEvents = buildRequirementTimeline(sourcing?.candidates || []);
 
   const interestedCandidates = (sourcing?.candidates || []).filter((c) =>
-    ["INTERESTED", "MAYBE", "SHORTLISTED", "DEMO_REQUESTED", "DEMO_SCHEDULED", "DEMO_COMPLETED", "SELECTED"].includes(c.status),
+    [
+      "INTERESTED",
+      "MAYBE",
+      "SHORTLISTED",
+      "DEMO_REQUESTED",
+      "DEMO_SCHEDULED",
+      "DEMO_COMPLETED",
+      "SELECTED",
+    ].includes(c.status),
   );
 
   if (loading) {
@@ -262,7 +286,9 @@ const VendorRequirementDetailsPage = () => {
     );
   }
 
-  const isLocked = requirement?.status === "TRAINER_SELECTED" || ["COMPLETED", "CANCELLED"].includes(requirement?.status);
+  const isLocked =
+    requirement?.status === "TRAINER_SELECTED" ||
+    ["COMPLETED", "CANCELLED"].includes(requirement?.status);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -328,6 +354,26 @@ const VendorRequirementDetailsPage = () => {
         </div>
       )}
 
+      {/* No Matching Trainers Yet
+          |--------------------------------------------------------------
+          | If sourcing has finished loading, no trainers have been
+          | matched at all, and the requirement never progressed past
+          | its initial submitted state, that's not "still working on
+          | it" — it means matching found nobody. Let the vendor know
+          | instead of leaving them staring at an empty list forever. */}
+      {!sourcingLoading &&
+        (sourcing?.candidates?.length || 0) === 0 &&
+        ["SUBMITTED", "OPEN"].includes(requirement.status) && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800 flex items-center gap-2">
+            <FiAlertCircle size={18} className="text-amber-600 shrink-0" />
+            <span>
+              No trainers have been matched to this requirement yet. Our
+              operations team has been notified and will follow up with manual
+              sourcing if needed.
+            </span>
+          </div>
+        )}
+
       {/* Tabs Switcher */}
       <div className="flex border-b border-slate-200">
         <button
@@ -370,7 +416,8 @@ const VendorRequirementDetailsPage = () => {
                   Interested Trainers & Rate Cards
                 </h2>
                 <p className="text-sm text-slate-500">
-                  Review trainers who expressed interest, compare rate cards, schedule demos, or select your trainer.
+                  Review trainers who expressed interest, compare rate cards,
+                  schedule demos, or select your trainer.
                 </p>
               </div>
               <button
@@ -397,14 +444,65 @@ const VendorRequirementDetailsPage = () => {
                   No interested trainers yet
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Trainers matched with your requirement will appear here once they express interest and submit rate cards.
+                  Trainers matched with your requirement will appear here once
+                  they express interest and submit rate cards.
                 </p>
               </div>
             ) : (
               <div className="grid gap-5 md:grid-cols-2">
                 {interestedCandidates.map((candidate) => {
                   const isSelected = candidate.status === "SELECTED";
-                  const isRejected = candidate.status === "REJECTED" || candidate.status === "NOT_SELECTED";
+                  const isRejected =
+                    candidate.status === "REJECTED" ||
+                    candidate.status === "NOT_SELECTED";
+                  const isProfileVisible =
+                    candidate.profileVisible ??
+                    PROFILE_VISIBLE_STATUSES.includes(candidate.status);
+
+                  // Trainer responded (submitted a rate card) but admin
+                  // hasn't reviewed/approved them yet — don't reveal who
+                  // they are or let the vendor act on them.
+                  if (!isProfileVisible && !isRejected) {
+                    return (
+                      <div
+                        key={candidate._id}
+                        className="relative flex flex-col justify-between rounded-2xl border border-dashed border-amber-200 bg-amber-50/40 p-5"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="font-bold text-slate-700 text-base flex items-center gap-2">
+                                <FiClock className="text-amber-500" size={16} />
+                                Trainer candidate
+                              </h3>
+                              <p className="mt-1 text-xs text-slate-500">
+                                A trainer has responded to this requirement and
+                                submitted their rate card. Our team is reviewing
+                                it — their profile and rate card will appear
+                                here once approved.
+                              </p>
+                            </div>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">
+                              Pending Admin Review
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between text-xs">
+                          <span className="text-slate-500">
+                            Current Status:
+                          </span>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 font-bold ${
+                              OPPORTUNITY_STATUS_STYLES[candidate.status] ||
+                              "bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {formatStatusLabel(candidate.status)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div
@@ -413,8 +511,8 @@ const VendorRequirementDetailsPage = () => {
                         isSelected
                           ? "border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-500/20"
                           : isRejected
-                          ? "border-slate-200 bg-slate-50/50 opacity-60"
-                          : "border-slate-200 bg-white hover:border-indigo-200 hover:shadow-md"
+                            ? "border-slate-200 bg-slate-50/50 opacity-60"
+                            : "border-slate-200 bg-white hover:border-indigo-200 hover:shadow-md"
                       }`}
                     >
                       <div>
@@ -443,7 +541,10 @@ const VendorRequirementDetailsPage = () => {
                           <div className="text-right">
                             <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
                               <FiAward size={12} />
-                              {candidate.compatibilityScore || candidate.matchScore || 85}% Match
+                              {candidate.compatibilityScore ||
+                                candidate.matchScore ||
+                                85}
+                              % Match
                             </span>
                           </div>
                         </div>
@@ -455,7 +556,9 @@ const VendorRequirementDetailsPage = () => {
                               Experience
                             </p>
                             <p className="font-bold text-slate-800 mt-0.5">
-                              {candidate.experience ? `${candidate.experience} Yrs` : "5+ Yrs"}
+                              {candidate.experience
+                                ? `${candidate.experience} Yrs`
+                                : "5+ Yrs"}
                             </p>
                           </div>
                           <div>
@@ -504,7 +607,9 @@ const VendorRequirementDetailsPage = () => {
 
                         {/* Opportunity Status Badge */}
                         <div className="mt-3 flex items-center justify-between text-xs">
-                          <span className="text-slate-500">Current Status:</span>
+                          <span className="text-slate-500">
+                            Current Status:
+                          </span>
                           <span
                             className={`rounded-full px-2.5 py-0.5 font-bold ${
                               OPPORTUNITY_STATUS_STYLES[candidate.status] ||
@@ -518,7 +623,9 @@ const VendorRequirementDetailsPage = () => {
 
                       {/* Action Buttons */}
                       <div className="mt-5 border-t border-slate-100 pt-4 flex flex-wrap items-center justify-between gap-2">
-                        {PROFILE_VISIBLE_STATUSES.includes(candidate.status) && (
+                        {PROFILE_VISIBLE_STATUSES.includes(
+                          candidate.status,
+                        ) && (
                           <button
                             type="button"
                             onClick={() =>
@@ -538,7 +645,9 @@ const VendorRequirementDetailsPage = () => {
                           {!isRejected && (
                             <button
                               type="button"
-                              disabled={isLocked || actionLoadingId === candidate._id}
+                              disabled={
+                                isLocked || actionLoadingId === candidate._id
+                              }
                               onClick={() => setDemoModalCandidate(candidate)}
                               className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50"
                             >
@@ -553,7 +662,9 @@ const VendorRequirementDetailsPage = () => {
                           {!isSelected && !isRejected && (
                             <button
                               type="button"
-                              disabled={isLocked || actionLoadingId === candidate._id}
+                              disabled={
+                                isLocked || actionLoadingId === candidate._id
+                              }
                               onClick={() => handleSelectTrainer(candidate)}
                               className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
                             >
@@ -566,7 +677,9 @@ const VendorRequirementDetailsPage = () => {
                           {!isSelected && !isRejected && (
                             <button
                               type="button"
-                              disabled={isLocked || actionLoadingId === candidate._id}
+                              disabled={
+                                isLocked || actionLoadingId === candidate._id
+                              }
                               onClick={() => handleRejectTrainer(candidate)}
                               className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
                             >
@@ -591,7 +704,9 @@ const VendorRequirementDetailsPage = () => {
           {/* Trainer Sourcing Stats Summary */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-semibold text-slate-900">Sourcing Overview</h2>
+              <h2 className="font-semibold text-slate-900">
+                Sourcing Overview
+              </h2>
               <button
                 type="button"
                 onClick={loadSourcing}
@@ -670,7 +785,9 @@ const VendorRequirementDetailsPage = () => {
               icon={FiMapPin}
               label="Location"
               value={
-                requirement.mode === "ONLINE" ? "Online" : requirement.city || "—"
+                requirement.mode === "ONLINE"
+                  ? "Online"
+                  : requirement.city || "—"
               }
             />
             <QuickCard
