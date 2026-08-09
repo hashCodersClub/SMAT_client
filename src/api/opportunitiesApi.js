@@ -59,6 +59,16 @@ const opportunitiesApi = {
     );
     return response.data;
   },
+  // Vendor select / reject trainer
+  selectTrainer: async (opportunityId) => {
+    const response = await api.post(`/opportunities/${opportunityId}/select`);
+    return response.data;
+  },
+
+  rejectTrainer: async (opportunityId) => {
+    const response = await api.post(`/opportunities/${opportunityId}/reject`);
+    return response.data;
+  },
 };
 
 export default opportunitiesApi;

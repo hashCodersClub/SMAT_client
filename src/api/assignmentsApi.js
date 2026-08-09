@@ -15,9 +15,16 @@ const assignmentsApi = {
     return response.data;
   },
 
-  // Trainer confirms a PROPOSED assignment — the final step of the flow.
+  // Trainer confirms a PROPOSED / PENDING_CONFIRMATION assignment.
   confirmMine: async (id) => {
     const response = await api.post(`/assignments/mine/${id}/confirm`);
+
+    return response.data;
+  },
+
+  // Trainer rejects a PROPOSED / PENDING_CONFIRMATION assignment.
+  rejectMine: async (id) => {
+    const response = await api.post(`/assignments/mine/${id}/reject`);
 
     return response.data;
   },

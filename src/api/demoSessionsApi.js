@@ -37,6 +37,11 @@ const demoSessionsApi = {
     return response.data;
   },
 
+  scheduleVendorDemo: async (data) => {
+    const response = await api.post("/demo-sessions/schedule-vendor", data);
+    return response.data;
+  },
+
   // Vendor marks a scheduled demo as done (or as a no-show).
   completeDemo: async (
     demoSessionId,
