@@ -19,6 +19,7 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiAward,
+  FiBriefcase,
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
