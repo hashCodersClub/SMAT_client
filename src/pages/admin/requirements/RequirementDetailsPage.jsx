@@ -5,6 +5,7 @@ import {
   FiAlertCircle,
   FiArrowLeft,
   FiCalendar,
+  FiCheck,
   FiCheckCircle,
   FiClock,
   FiCpu,
@@ -16,6 +17,7 @@ import {
   FiUser,
   FiUsers,
   FiVideo,
+  FiX,
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
@@ -120,6 +122,18 @@ const RequirementDetailsPage = () => {
 
   /*
   |--------------------------------------------------------------------------
+  | Pending Approval — trainers who responded (INTERESTED/MAYBE) but whose
+  | rate card an admin hasn't reviewed yet. Their profile stays hidden from
+  | the vendor until approved here.
+  |--------------------------------------------------------------------------
+  */
+
+  const [candidates, setCandidates] = useState([]);
+  const [approvalActionId, setApprovalActionId] = useState(null);
+  const [approvalError, setApprovalError] = useState("");
+
+  /*
+  |--------------------------------------------------------------------------
   | Load Requirement
   |--------------------------------------------------------------------------
   */
@@ -165,6 +179,7 @@ const RequirementDetailsPage = () => {
 
         const response = await opportunitiesApi.getByRequirementAdmin(id);
 
+        setCandidates(response.candidates || []);
         setTimelineEvents(buildRequirementTimeline(response.candidates || []));
       } catch (error) {
         console.error("Failed to load requirement timeline:", error);
@@ -233,6 +248,68 @@ const RequirementDetailsPage = () => {
       setStatusUpdating(false);
     }
   };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Approve / Reject a Trainer's Response
+  |--------------------------------------------------------------------------
+  |
+  | A trainer who responds INTERESTED/MAYBE has submitted a rate card, but
+  | stays anonymous to the vendor (opportunity.profileVisible = false) until
+  | an admin reviews and approves it here. Approving calls the existing
+  | admin-action endpoint with action "SHORTLIST", which flips the
+  | opportunity to SHORTLISTED — the status the vendor-facing API already
+  | treats as profile-visible — and notifies both the trainer and vendor.
+  |--------------------------------------------------------------------------
+  */
+
+  const handleApproveCandidate = async (candidateId) => {
+    try {
+      setApprovalActionId(candidateId);
+      setApprovalError("");
+
+      await opportunitiesApi.adminAction(candidateId, "SHORTLIST");
+
+      await loadTimeline({ silent: true });
+    } catch (error) {
+      console.error("Failed to approve trainer:", error);
+
+      setApprovalError(
+        error.response?.data?.message || "Unable to approve this trainer.",
+      );
+    } finally {
+      setApprovalActionId(null);
+    }
+  };
+
+  const handleRejectCandidate = async (candidateId) => {
+    const confirmed = window.confirm(
+      "Reject this trainer's response? The vendor will not see their profile.",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setApprovalActionId(candidateId);
+      setApprovalError("");
+
+      await opportunitiesApi.adminAction(candidateId, "REJECT");
+
+      await loadTimeline({ silent: true });
+    } catch (error) {
+      console.error("Failed to reject trainer:", error);
+
+      setApprovalError(
+        error.response?.data?.message || "Unable to reject this trainer.",
+      );
+    } finally {
+      setApprovalActionId(null);
+    }
+  };
+
+  const pendingApprovalCandidates = candidates.filter((candidate) =>
+    ["INTERESTED", "MAYBE"].includes(candidate.status),
+  );
 
   /*
   |--------------------------------------------------------------------------
@@ -579,6 +656,134 @@ const RequirementDetailsPage = () => {
         {/* Progress */}
 
         <StatusProgress currentStatus={requirement.status} />
+      </section>
+
+      {/* ================================================================
+          PENDING APPROVAL — trainers who responded, awaiting admin review
+          Approving makes their profile visible to the vendor (SHORTLISTED).
+      ================================================================= */}
+
+      <section
+        style={{ animationDelay: "135ms" }}
+        className="hover-lift animate-rise-in rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+      >
+        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="font-semibold text-slate-900">
+              Trainers Awaiting Approval
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Trainers who responded with a rate card. Approve to make their
+              profile visible to the vendor, or reject to keep it hidden.
+            </p>
+          </div>
+
+          <span className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 sm:self-auto">
+            {pendingApprovalCandidates.length} pending
+          </span>
+        </div>
+
+        {approvalError && (
+          <div className="animate-rise-in mt-4 flex gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            <FiAlertCircle size={17} className="mt-0.5 shrink-0" />
+            {approvalError}
+          </div>
+        )}
+
+        <div className="mt-4">
+          {!pendingApprovalCandidates.length ? (
+            <p className="py-6 text-center text-sm text-slate-500">
+              No trainer responses waiting on review right now.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="py-2 pr-4">Trainer</th>
+                    <th className="py-2 pr-4">Response</th>
+                    <th className="py-2 pr-4">Quoted Rate</th>
+                    <th className="py-2 pr-4">Responded</th>
+                    <th className="py-2 pr-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pendingApprovalCandidates.map((candidate) => {
+                    const trainer =
+                      typeof candidate.trainerId === "object"
+                        ? candidate.trainerId
+                        : {};
+                    const isBusy = approvalActionId === candidate._id;
+
+                    return (
+                      <tr key={candidate._id}>
+                        <td className="py-3 pr-4">
+                          <p className="font-semibold text-slate-800">
+                            {trainer.name || "Unnamed trainer"}
+                          </p>
+                          {trainer.city && (
+                            <p className="text-xs text-slate-500">
+                              {trainer.city}
+                            </p>
+                          )}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                              candidate.status === "INTERESTED"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-amber-50 text-amber-700"
+                            }`}
+                          >
+                            {formatLabel(candidate.status)}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 text-slate-700">
+                          {candidate.quotedRate
+                            ? `₹${Number(candidate.quotedRate).toLocaleString("en-IN")}/day`
+                            : "—"}
+                        </td>
+                        <td className="py-3 pr-4 text-slate-500">
+                          {formatDate(candidate.respondedAt)}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() =>
+                                handleRejectCandidate(candidate._id)
+                              }
+                              className="press-scale inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <FiX size={13} />
+                              Reject
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() =>
+                                handleApproveCandidate(candidate._id)
+                              }
+                              className="press-scale inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isBusy ? (
+                                <FiLoader size={13} className="animate-spin" />
+                              ) : (
+                                <FiCheck size={13} />
+                              )}
+                              Approve
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* ================================================================
