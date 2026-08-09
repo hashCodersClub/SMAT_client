@@ -32,6 +32,7 @@ import {
 import ActivityTimeline from "../../../components/ui/ActivityTimeline";
 import { buildRequirementTimeline } from "../../../utils/requirementTimeline";
 import ScheduleDemoModal from "../../../components/demo/ScheduleDemoModal";
+import RequirementStatusTimeline from "../../../components/vendor/RequirementStatusTimeline";
 
 const SOURCING_POLL_INTERVAL_MS = 15000;
 
