@@ -6,6 +6,7 @@ import Navbar from "../components/layout/Navbar";
 
 import { useAuth } from "../context/AuthContext";
 import { getNavigationConfig } from "../config/navigationConfig";
+import opportunitiesApi from "../api/opportunitiesApi";
 import outreachApi from "../api/outreachApi";
 
 const TrainerLayout = () => {
@@ -30,15 +31,19 @@ const TrainerLayout = () => {
 
     const loadBadgeCounts = async () => {
       try {
-        const response = await outreachApi.getMine();
-        const records = response?.outreach || [];
+        const statsRes = await opportunitiesApi.getMineStats().catch(() => null);
+        let count = statsRes?.stats?.pendingOpportunities ?? 0;
 
-        const pending = records.filter((record) =>
-          ["NOT_CONTACTED", "CONTACTED"].includes(record.outreachStatus),
-        ).length;
+        if (!count) {
+          const response = await outreachApi.getMine().catch(() => null);
+          const records = response?.outreach || [];
+          count = records.filter((record) =>
+            ["NOT_CONTACTED", "CONTACTED"].includes(record.outreachStatus),
+          ).length;
+        }
 
         if (!cancelled) {
-          setPendingOpportunities(pending);
+          setPendingOpportunities(count);
         }
       } catch (error) {
         console.error("Failed to load sidebar badge counts:", error.message);
