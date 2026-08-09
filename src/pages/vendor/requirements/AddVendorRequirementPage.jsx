@@ -3,12 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiAlertCircle, FiCheckCircle } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
+import {
+  SearchableSelect,
+  SearchableMultiSelect,
+} from "../../../components/ui/SearchableSelect";
+import {
+  INDIAN_STATES,
+  INDIAN_CITIES,
+  IT_SKILLS,
+} from "../../../constants/trainerOptions";
 
 const initialForm = {
   title: "",
   trainingType: "CORPORATE",
 
-  skills: "",
+  skills: [],
   experienceRequired: "",
 
   mode: "ONLINE",
@@ -74,7 +83,7 @@ const AddVendorRequirementPage = () => {
       return;
     }
 
-    if (!form.skills.trim()) {
+    if (!form.skills.length) {
       setError("Please enter at least one required skill.");
       return;
     }
@@ -120,10 +129,7 @@ const AddVendorRequirementPage = () => {
 
         trainingType: form.trainingType,
 
-        skills: form.skills
-          .split(",")
-          .map((skill) => skill.trim())
-          .filter(Boolean),
+        skills: form.skills,
 
         mode: form.mode,
 
@@ -305,18 +311,15 @@ const AddVendorRequirementPage = () => {
           />
 
           <div className="md:col-span-2">
-            <Input
+            <SearchableMultiSelect
               label="Required Skills"
-              name="skills"
-              value={form.skills}
-              onChange={handleChange}
-              placeholder="Azure, DevOps, Docker, Kubernetes"
-              required
+              values={form.skills}
+              onChange={(skills) =>
+                setForm((current) => ({ ...current, skills }))
+              }
+              options={IT_SKILLS}
+              placeholder="Search skills (e.g. Azure, DevOps)..."
             />
-
-            <p className="mt-1.5 text-xs text-slate-400">
-              Separate multiple skills using commas.
-            </p>
           </div>
 
           <div className="md:col-span-2">
@@ -350,21 +353,25 @@ const AddVendorRequirementPage = () => {
             ]}
           />
 
-          <Input
+          <SearchableSelect
             label={form.mode === "ONLINE" ? "City (Optional)" : "City"}
-            name="city"
             value={form.city}
-            onChange={handleChange}
-            placeholder="e.g. Gurgaon"
+            onChange={(value) =>
+              setForm((current) => ({ ...current, city: value }))
+            }
+            options={INDIAN_CITIES}
+            placeholder="Search or select a city..."
             required={form.mode !== "ONLINE"}
           />
 
-          <Input
+          <SearchableSelect
             label="State"
-            name="state"
             value={form.state}
-            onChange={handleChange}
-            placeholder="e.g. Haryana"
+            onChange={(value) =>
+              setForm((current) => ({ ...current, state: value }))
+            }
+            options={INDIAN_STATES}
+            placeholder="Search or select a state..."
           />
 
           <Input

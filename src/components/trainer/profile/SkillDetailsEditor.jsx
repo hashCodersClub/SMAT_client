@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { FiEdit2, FiPlus, FiStar, FiTrash2, FiX } from "react-icons/fi";
 
+import { SearchableSelect } from "../../ui/SearchableSelect";
+import { IT_SKILLS } from "../../../constants/trainerOptions";
+
 const EMPTY_SKILL = {
   name: "",
   proficiency: "INTERMEDIATE",
@@ -234,13 +237,13 @@ const SkillDetailsEditor = ({ skills = [], editing = false, onChange }) => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Skill / Technology">
-              <input
-                type="text"
-                name="name"
+              <SearchableSelect
                 value={form.name}
-                onChange={handleFieldChange}
-                placeholder="e.g. AWS"
-                className="input-style"
+                onChange={(value) =>
+                  setForm((current) => ({ ...current, name: value }))
+                }
+                options={IT_SKILLS}
+                placeholder="Search or select a skill..."
               />
             </Field>
 

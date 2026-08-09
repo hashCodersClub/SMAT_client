@@ -35,6 +35,14 @@ import LanguagesEditor from "../../../components/trainer/profile/LanguagesEditor
 import ProjectsEditor from "../../../components/trainer/profile/ProjectsEditor";
 import AvatarCropModal from "../../../components/shared/AvatarCropModal";
 import { useAuth } from "../../../context/AuthContext";
+import {
+  SearchableSelect,
+  SearchableMultiSelect,
+} from "../../../components/ui/SearchableSelect";
+import {
+  INDIAN_STATES,
+  INDIAN_CITIES,
+} from "../../../constants/trainerOptions";
 
 /*
 |--------------------------------------------------------------------------
@@ -111,7 +119,6 @@ const TrainerProfilePage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [locationInput, setLocationInput] = useState("");
   const [industryInput, setIndustryInput] = useState("");
 
   /*
@@ -1089,21 +1096,43 @@ const TrainerProfilePage = () => {
             onChange={handleChange}
           />
 
-          <Field
-            label="City"
-            name="city"
-            value={form.city}
-            editing={editing}
-            onChange={handleChange}
-          />
+          <div>
+            <Label>City</Label>
 
-          <Field
-            label="State"
-            name="state"
-            value={form.state}
-            editing={editing}
-            onChange={handleChange}
-          />
+            {editing ? (
+              <SearchableSelect
+                value={form.city}
+                onChange={(value) =>
+                  setForm((previous) => ({ ...previous, city: value }))
+                }
+                options={INDIAN_CITIES}
+                placeholder="Search or select a city..."
+              />
+            ) : (
+              <p className="mt-1.5 text-sm font-semibold text-slate-800">
+                {form.city || "—"}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label>State</Label>
+
+            {editing ? (
+              <SearchableSelect
+                value={form.state}
+                onChange={(value) =>
+                  setForm((previous) => ({ ...previous, state: value }))
+                }
+                options={INDIAN_STATES}
+                placeholder="Search or select a state..."
+              />
+            ) : (
+              <p className="mt-1.5 text-sm font-semibold text-slate-800">
+                {form.state || "—"}
+              </p>
+            )}
+          </div>
 
           <Field
             label="Country"
@@ -1426,34 +1455,27 @@ const TrainerProfilePage = () => {
         <div className="mt-6">
           <Label>Preferred Locations</Label>
 
-          <div className="mt-2 flex flex-wrap gap-2">
-            {form.preferredLocations.map((location) => (
-              <Tag
-                key={location}
-                value={location}
-                removable={editing}
-                onRemove={() => removeItem("preferredLocations", location)}
+          {editing ? (
+            <div className="mt-2">
+              <SearchableMultiSelect
+                values={form.preferredLocations}
+                onChange={(preferredLocations) =>
+                  setForm((previous) => ({ ...previous, preferredLocations }))
+                }
+                options={INDIAN_CITIES}
+                placeholder="Search or select cities..."
               />
-            ))}
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {form.preferredLocations.map((location) => (
+                <Tag key={location} value={location} />
+              ))}
 
-            {!form.preferredLocations.length && (
-              <EmptyText>No preferred locations added.</EmptyText>
-            )}
-          </div>
-
-          {editing && (
-            <AddItem
-              value={locationInput}
-              onChange={setLocationInput}
-              onAdd={() =>
-                addUniqueItem(
-                  "preferredLocations",
-                  locationInput,
-                  setLocationInput,
-                )
-              }
-              placeholder="e.g. Delhi, Gurgaon, Bangalore"
-            />
+              {!form.preferredLocations.length && (
+                <EmptyText>No preferred locations added.</EmptyText>
+              )}
+            </div>
           )}
         </div>
 

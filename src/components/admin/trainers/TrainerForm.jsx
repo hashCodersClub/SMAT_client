@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  FiPlus,
   FiX,
   FiUpload,
   FiFile,
@@ -13,6 +12,15 @@ import {
 import AvatarCropModal from "../../shared/AvatarCropModal";
 import ProjectsEditor from "../../trainer/profile/ProjectsEditor";
 import trainersApi from "../../../api/trainersApi";
+import {
+  SearchableSelect,
+  SearchableMultiSelect,
+} from "../../ui/SearchableSelect";
+import {
+  INDIAN_STATES,
+  INDIAN_CITIES,
+  IT_SKILLS,
+} from "../../../constants/trainerOptions";
 
 const initialValues = {
   name: "",
@@ -28,7 +36,7 @@ const initialValues = {
   status: "ACTIVE",
   trainingTypes: [],
   modes: [],
-  preferredLocations: "",
+  preferredLocations: [],
   skills: [],
   projects: [],
   // Existing (already-uploaded) file URLs — populated when editing a
@@ -49,8 +57,6 @@ const TrainerForm = ({
     ...initialValues,
     ...initialData,
   });
-
-  const [skillInput, setSkillInput] = useState("");
 
   // New files selected in this session — separate from form.profilePhotoUrl
   // / form.cvUrl, which only ever reflect what's already been uploaded.
@@ -145,28 +151,6 @@ const TrainerForm = ({
       [field]: previous[field].includes(value)
         ? previous[field].filter((item) => item !== value)
         : [...previous[field], value],
-    }));
-  };
-
-  const addSkill = () => {
-    const value = skillInput.trim();
-
-    if (!value) return;
-
-    if (!form.skills.includes(value)) {
-      setForm((previous) => ({
-        ...previous,
-        skills: [...previous.skills, value],
-      }));
-    }
-
-    setSkillInput("");
-  };
-
-  const removeSkill = (skill) => {
-    setForm((previous) => ({
-      ...previous,
-      skills: previous.skills.filter((item) => item !== skill),
     }));
   };
 
@@ -271,13 +255,14 @@ const TrainerForm = ({
       onlineRate: Number(form.onlineRate),
       offlineRate: Number(form.offlineRate),
 
-      preferredLocations:
-        typeof form.preferredLocations === "string"
+      preferredLocations: Array.isArray(form.preferredLocations)
+        ? form.preferredLocations
+        : typeof form.preferredLocations === "string"
           ? form.preferredLocations
               .split(",")
               .map((item) => item.trim())
               .filter(Boolean)
-          : form.preferredLocations,
+          : [],
 
       projects: form.projects || [],
 
@@ -305,7 +290,8 @@ const TrainerForm = ({
                   Auto-fill from Resume (PDF / DOCX)
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-600">
-                  Upload a PDF or DOCX file to automatically parse name, contact details, skills, experience, and projects.
+                  Upload a PDF or DOCX file to automatically parse name, contact
+                  details, skills, experience, and projects.
                 </p>
               </div>
             </div>
@@ -423,20 +409,24 @@ const TrainerForm = ({
             required
           />
 
-          <Input
+          <SearchableSelect
             label="City"
-            name="city"
             value={form.city}
-            onChange={handleChange}
-            placeholder="Delhi"
+            onChange={(value) =>
+              setForm((previous) => ({ ...previous, city: value }))
+            }
+            options={INDIAN_CITIES}
+            placeholder="Search or select a city..."
           />
 
-          <Input
+          <SearchableSelect
             label="State"
-            name="state"
             value={form.state}
-            onChange={handleChange}
-            placeholder="Delhi"
+            onChange={(value) =>
+              setForm((previous) => ({ ...previous, state: value }))
+            }
+            options={INDIAN_STATES}
+            placeholder="Search or select a state..."
           />
         </FormSection>
 
@@ -447,48 +437,15 @@ const TrainerForm = ({
           description="Technologies and professional experience."
         >
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Skills
-            </label>
-
-            <div className="flex gap-2">
-              <input
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addSkill();
-                  }
-                }}
-                placeholder="e.g. Python"
-                className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-              />
-
-              <button
-                type="button"
-                onClick={addSkill}
-                className="flex items-center gap-1 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white"
-              >
-                <FiPlus />
-                Add
-              </button>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {form.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700"
-                >
-                  {skill}
-
-                  <button type="button" onClick={() => removeSkill(skill)}>
-                    <FiX />
-                  </button>
-                </span>
-              ))}
-            </div>
+            <SearchableMultiSelect
+              label="Skills"
+              values={form.skills}
+              onChange={(skills) =>
+                setForm((previous) => ({ ...previous, skills }))
+              }
+              options={IT_SKILLS}
+              placeholder="Search skills (e.g. Python, AWS)..."
+            />
           </div>
 
           <Input
@@ -533,16 +490,18 @@ const TrainerForm = ({
           />
 
           <div className="md:col-span-2">
-            <Input
+            <SearchableMultiSelect
               label="Preferred Locations"
-              name="preferredLocations"
-              value={
+              values={
                 Array.isArray(form.preferredLocations)
-                  ? form.preferredLocations.join(", ")
-                  : form.preferredLocations
+                  ? form.preferredLocations
+                  : []
               }
-              onChange={handleChange}
-              placeholder="Delhi, Noida, Gurgaon"
+              onChange={(preferredLocations) =>
+                setForm((previous) => ({ ...previous, preferredLocations }))
+              }
+              options={INDIAN_CITIES}
+              placeholder="Search or select cities..."
             />
           </div>
         </FormSection>

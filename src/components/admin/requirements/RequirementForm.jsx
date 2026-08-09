@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
-import { FiAlertCircle, FiPlus, FiX } from "react-icons/fi";
+import { FiAlertCircle } from "react-icons/fi";
+
+import {
+  SearchableSelect,
+  SearchableMultiSelect,
+} from "../../ui/SearchableSelect";
+import {
+  INDIAN_STATES,
+  INDIAN_CITIES,
+  IT_SKILLS,
+} from "../../../constants/trainerOptions";
 
 const emptyRequirement = {
   vendorId: "",
@@ -55,8 +65,6 @@ const RequirementForm = ({
     skills: initialData?.skills || [],
   });
 
-  const [skillInput, setSkillInput] = useState("");
-
   const [formError, setFormError] = useState("");
 
   /*
@@ -86,63 +94,6 @@ const RequirementForm = ({
     setForm((current) => ({
       ...current,
       [name]: value,
-    }));
-  };
-
-  /*
-  |--------------------------------------------------------------------------
-  | Add Skill
-  |--------------------------------------------------------------------------
-  */
-
-  const addSkill = () => {
-    const skill = skillInput.trim();
-
-    if (!skill) return;
-
-    const alreadyExists = form.skills.some(
-      (existingSkill) => existingSkill.toLowerCase() === skill.toLowerCase(),
-    );
-
-    if (alreadyExists) {
-      setSkillInput("");
-      return;
-    }
-
-    setForm((current) => ({
-      ...current,
-
-      skills: [...current.skills, skill],
-    }));
-
-    setSkillInput("");
-  };
-
-  /*
-  |--------------------------------------------------------------------------
-  | Skill Keyboard
-  |--------------------------------------------------------------------------
-  */
-
-  const handleSkillKeyDown = (event) => {
-    if (event.key === "Enter" || event.key === ",") {
-      event.preventDefault();
-
-      addSkill();
-    }
-  };
-
-  /*
-  |--------------------------------------------------------------------------
-  | Remove Skill
-  |--------------------------------------------------------------------------
-  */
-
-  const removeSkill = (skill) => {
-    setForm((current) => ({
-      ...current,
-
-      skills: current.skills.filter((item) => item !== skill),
     }));
   };
 
@@ -378,55 +329,15 @@ const RequirementForm = ({
         {/* Skills */}
 
         <div className="md:col-span-2">
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Required Skills
-            <span className="ml-1 text-red-500">*</span>
-          </label>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={skillInput}
-              onChange={(event) => setSkillInput(event.target.value)}
-              onKeyDown={handleSkillKeyDown}
-              placeholder="Example: Azure, AZ-104, PowerShell"
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-            />
-
-            <button
-              type="button"
-              onClick={addSkill}
-              className="press-scale flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm"
-            >
-              <FiPlus />
-              Add
-            </button>
-          </div>
-
-          <p className="mt-2 text-xs text-slate-400">
-            Press Enter or comma after each skill.
-          </p>
-
-          {form.skills.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {form.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="animate-scale-in group/chip flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-colors duration-200 hover:bg-blue-100"
-                >
-                  {skill}
-
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill)}
-                    className="text-blue-400 transition-all duration-200 hover:scale-125 hover:text-red-500"
-                  >
-                    <FiX size={13} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          <SearchableMultiSelect
+            label="Required Skills"
+            values={form.skills}
+            onChange={(skills) =>
+              setForm((current) => ({ ...current, skills }))
+            }
+            options={IT_SKILLS}
+            placeholder="Search skills (e.g. Azure, DevOps)..."
+          />
         </div>
 
         <Input
@@ -466,21 +377,25 @@ const RequirementForm = ({
 
         {form.mode !== "ONLINE" && (
           <>
-            <Input
+            <SearchableSelect
               label="City"
-              name="city"
               value={form.city}
-              onChange={handleChange}
-              placeholder="Example: Bengaluru"
+              onChange={(value) =>
+                setForm((current) => ({ ...current, city: value }))
+              }
+              options={INDIAN_CITIES}
+              placeholder="Search or select a city..."
               required
             />
 
-            <Input
+            <SearchableSelect
               label="State"
-              name="state"
               value={form.state}
-              onChange={handleChange}
-              placeholder="Example: Karnataka"
+              onChange={(value) =>
+                setForm((current) => ({ ...current, state: value }))
+              }
+              options={INDIAN_STATES}
+              placeholder="Search or select a state..."
             />
           </>
         )}
