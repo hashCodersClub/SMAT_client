@@ -17,6 +17,7 @@ import {
 } from "react-icons/fi";
 
 import trainerAvailabilityApi from "../../../api/trainerAvailabilityApi";
+import AvailabilityCalendar from "../../../components/trainer/availability/AvailabilityCalendar";
 
 /*
 |--------------------------------------------------------------------------
@@ -56,6 +57,12 @@ const STATUS_OPTIONS = [
   },
 ];
 
+// Priority used when a date falls inside more than one saved record — the
+// more restrictive status "wins" for the calendar cell's color.
+const STATUS_PRIORITY = { UNAVAILABLE: 0, BUSY: 1, AVAILABLE: 2 };
+
+const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+
 /*
 |--------------------------------------------------------------------------
 | Trainer Availability Page
@@ -74,6 +81,11 @@ const TrainerAvailabilityPage = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+
+  const [calendarMonth, setCalendarMonth] = useState(() =>
+    startOfMonth(new Date()),
+  );
+  const [pendingStart, setPendingStart] = useState(null);
 
   /*
   |--------------------------------------------------------------------------
@@ -136,11 +148,12 @@ const TrainerAvailabilityPage = () => {
     setSuccess("");
   };
 
-  const openCreateForm = () => {
+  const openCreateForm = (overrides = {}) => {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, ...overrides });
     setError("");
     setSuccess("");
+    setPendingStart(null);
     setFormOpen(true);
   };
 
@@ -157,6 +170,7 @@ const TrainerAvailabilityPage = () => {
 
     setError("");
     setSuccess("");
+    setPendingStart(null);
     setFormOpen(true);
   };
 
@@ -165,6 +179,81 @@ const TrainerAvailabilityPage = () => {
     setFormOpen(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Calendar
+  |--------------------------------------------------------------------------
+  */
+
+  const getRecordForDate = useCallback(
+    (dateKey) => {
+      if (!dateKey) return null;
+
+      let match = null;
+
+      for (const record of availability) {
+        const startKey = String(record.startDate).slice(0, 10);
+        const endKey = String(record.endDate).slice(0, 10);
+
+        if (dateKey >= startKey && dateKey <= endKey) {
+          if (
+            !match ||
+            STATUS_PRIORITY[record.status] < STATUS_PRIORITY[match.status]
+          ) {
+            match = record;
+          }
+        }
+      }
+
+      return match;
+    },
+    [availability],
+  );
+
+  const handleDayClick = (dateKey) => {
+    // A null dateKey means "cancel" — used by the pending-selection banner.
+    if (!dateKey) {
+      setPendingStart(null);
+      return;
+    }
+
+    if (!pendingStart) {
+      const existingRecord = getRecordForDate(dateKey);
+
+      if (existingRecord) {
+        openEditForm(existingRecord);
+        return;
+      }
+
+      setPendingStart(dateKey);
+      return;
+    }
+
+    const [rangeStart, rangeEnd] =
+      pendingStart <= dateKey
+        ? [pendingStart, dateKey]
+        : [dateKey, pendingStart];
+
+    setPendingStart(null);
+    openCreateForm({ startDate: rangeStart, endDate: rangeEnd });
+  };
+
+  const goToPrevMonth = () => {
+    setCalendarMonth(
+      (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1),
+    );
+  };
+
+  const goToNextMonth = () => {
+    setCalendarMonth(
+      (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1),
+    );
+  };
+
+  const goToCurrentMonth = () => {
+    setCalendarMonth(startOfMonth(new Date()));
   };
 
   /*
@@ -328,7 +417,7 @@ const TrainerAvailabilityPage = () => {
         </div>
         <button
           type="button"
-          onClick={openCreateForm}
+          onClick={() => openCreateForm()}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           <FiPlus className="h-4 w-4" />
@@ -404,6 +493,29 @@ const TrainerAvailabilityPage = () => {
         </div>
       </section>
 
+      {/* Availability Calendar */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Availability Calendar
+          </h2>
+          <p className="text-sm text-slate-500">
+            Click a date to start adding availability, click a second date to
+            set the range, or click an existing colored date to edit it.
+          </p>
+        </div>
+
+        <AvailabilityCalendar
+          monthDate={calendarMonth}
+          onPrevMonth={goToPrevMonth}
+          onNextMonth={goToNextMonth}
+          onToday={goToCurrentMonth}
+          getRecordForDate={getRecordForDate}
+          pendingStart={pendingStart}
+          onDayClick={handleDayClick}
+        />
+      </section>
+
       {/* Availability Schedule */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm shadow-sm transition hover:shadow-md">
         <div className="border-b border-slate-100 px-6 py-5">
@@ -429,7 +541,7 @@ const TrainerAvailabilityPage = () => {
             </p>
             <button
               type="button"
-              onClick={openCreateForm}
+              onClick={() => openCreateForm()}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
             >
               <FiPlus className="h-4 w-4" />
