@@ -9,6 +9,8 @@ import {
   FiCalendar,
   FiCpu,
   FiZap,
+  FiFileText,
+  FiShoppingCart,
 } from "react-icons/fi";
 
 /*
@@ -76,6 +78,22 @@ export const navigationConfig = {
             name: "Assignments",
             path: "/admin/assignments",
             icon: FiUserCheck,
+          },
+        ],
+      },
+
+      {
+        title: "BILLING",
+        items: [
+          {
+            name: "Invoices",
+            path: "/admin/invoices",
+            icon: FiFileText,
+          },
+          {
+            name: "Purchase Orders",
+            path: "/admin/purchase-orders",
+            icon: FiShoppingCart,
           },
         ],
       },

@@ -101,6 +101,24 @@ const AssignmentDetailsPage = lazy(
 
 const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
 
+// Billing: Invoices & Purchase Orders
+const InvoicesPage = lazy(() => import("../pages/admin/invoices/InvoicesPage"));
+const CreateInvoicePage = lazy(
+  () => import("../pages/admin/invoices/CreateInvoicePage"),
+);
+const InvoiceDetailsPage = lazy(
+  () => import("../pages/admin/invoices/InvoiceDetailsPage"),
+);
+const PurchaseOrdersPage = lazy(
+  () => import("../pages/admin/purchaseOrders/PurchaseOrdersPage"),
+);
+const CreatePurchaseOrderPage = lazy(
+  () => import("../pages/admin/purchaseOrders/CreatePurchaseOrderPage"),
+);
+const PurchaseOrderDetailsPage = lazy(
+  () => import("../pages/admin/purchaseOrders/PurchaseOrderDetailsPage"),
+);
+
 // Vendor Portal Pages
 const VendorDashboardPage = lazy(
   () => import("../pages/vendor/dashboard/VendorDashboardPage"),
@@ -298,6 +316,41 @@ const AppRoutes = () => {
             <Route
               path="/admin/assignments/:id"
               element={<AssignmentDetailsPage />}
+            />
+
+            {/* ------------------------------------------------------------
+              INVOICES
+          ------------------------------------------------------------- */}
+
+            <Route path="/admin/invoices" element={<InvoicesPage />} />
+
+            <Route
+              path="/admin/invoices/create"
+              element={<CreateInvoicePage />}
+            />
+
+            <Route
+              path="/admin/invoices/:id"
+              element={<InvoiceDetailsPage />}
+            />
+
+            {/* ------------------------------------------------------------
+              PURCHASE ORDERS
+          ------------------------------------------------------------- */}
+
+            <Route
+              path="/admin/purchase-orders"
+              element={<PurchaseOrdersPage />}
+            />
+
+            <Route
+              path="/admin/purchase-orders/create"
+              element={<CreatePurchaseOrderPage />}
+            />
+
+            <Route
+              path="/admin/purchase-orders/:id"
+              element={<PurchaseOrderDetailsPage />}
             />
 
             {/* ------------------------------------------------------------
