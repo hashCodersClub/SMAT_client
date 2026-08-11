@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPlus, FiFileText, FiSearch, FiAlertCircle } from "react-icons/fi";
+import { FiFileText, FiSearch, FiAlertCircle, FiZap } from "react-icons/fi";
 
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
@@ -20,9 +20,13 @@ const STATUS_VARIANTS = {
   CANCELLED: "danger",
 };
 
+const DIRECTION_LABELS = {
+  TRAINER_TO_ADMIN: "Trainer → Us",
+  ADMIN_TO_VENDOR: "Us → Vendor",
+};
+
 const formatMoney = (value, currency = "INR") => {
   const symbol = currency === "USD" ? "$" : currency === "EUR" ? "€" : "₹";
-
   return `${symbol}${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 };
 
@@ -36,9 +40,9 @@ const InvoicesPage = () => {
 
   const [invoices, setInvoices] = useState([]);
   const [summary, setSummary] = useState({ totalInvoiced: 0, totalOutstanding: 0 });
-  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
 
   const [search, setSearch] = useState("");
+  const [direction, setDirection] = useState("");
   const [status, setStatus] = useState("");
 
   const [loading, setLoading] = useState(true);
@@ -52,13 +56,12 @@ const InvoicesPage = () => {
       const response = await invoicesApi.getAll({
         search: search.trim(),
         status,
-        page: pagination.page,
-        limit: pagination.limit,
+        direction,
+        limit: 50,
       });
 
       setInvoices(response.invoices || []);
       setSummary(response.summary || { totalInvoiced: 0, totalOutstanding: 0 });
-      setPagination((prev) => ({ ...prev, ...(response.pagination || {}) }));
     } catch (err) {
       console.error("Failed to fetch invoices:", err);
       setInvoices([]);
@@ -66,42 +69,35 @@ const InvoicesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, status, pagination.page, pagination.limit]);
+  }, [search, status, direction]);
 
   useEffect(() => {
-    const timer = setTimeout(
-      () => {
-        fetchInvoices();
-      },
-      search ? 400 : 0,
-    );
-
+    const timer = setTimeout(() => fetchInvoices(), search ? 400 : 0);
     return () => clearTimeout(timer);
   }, [fetchInvoices, search]);
+
+  const pendingReviewCount = invoices.filter(
+    (inv) => inv.direction === "TRAINER_TO_ADMIN",
+  ).length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Invoices"
-        description="Create and manage tax invoices for vendors and clients."
-        action={
-          <Button icon={FiPlus} onClick={() => navigate("/admin/invoices/create")}>
-            New Invoice
-          </Button>
-        }
+        description="Trainer invoices awaiting review, and invoices sent to vendors."
       />
 
+      {pendingReviewCount > 0 && (
+        <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200">
+          <FiAlertCircle className="h-4 w-4 shrink-0" />
+          {pendingReviewCount} trainer invoice{pendingReviewCount > 1 ? "s" : ""} — generate the
+          corresponding vendor invoice when ready.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatCard
-          label="Total Invoiced"
-          value={formatMoney(summary.totalInvoiced)}
-          icon={FiFileText}
-        />
-        <StatCard
-          label="Outstanding"
-          value={formatMoney(summary.totalOutstanding)}
-          icon={FiAlertCircle}
-        />
+        <StatCard label="Total Invoiced" value={formatMoney(summary.totalInvoiced)} icon={FiFileText} />
+        <StatCard label="Outstanding" value={formatMoney(summary.totalOutstanding)} icon={FiAlertCircle} />
       </div>
 
       <Card padding={false}>
@@ -111,10 +107,19 @@ const InvoicesPage = () => {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by invoice number or client..."
+              placeholder="Search by invoice number or name..."
               className="w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
             />
           </div>
+          <select
+            value={direction}
+            onChange={(e) => setDirection(e.target.value)}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+          >
+            <option value="">All Invoices</option>
+            <option value="TRAINER_TO_ADMIN">From Trainers</option>
+            <option value="ADMIN_TO_VENDOR">To Vendors</option>
+          </select>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -140,12 +145,7 @@ const InvoicesPage = () => {
           <EmptyState
             icon={FiFileText}
             title="No invoices yet"
-            description="Create your first invoice to get started."
-            action={
-              <Button icon={FiPlus} onClick={() => navigate("/admin/invoices/create")}>
-                New Invoice
-              </Button>
-            }
+            description="Invoices from trainers, and to vendors, will show up here."
           />
         ) : (
           <div className="overflow-x-auto">
@@ -153,32 +153,41 @@ const InvoicesPage = () => {
               <thead>
                 <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-4 py-3 font-medium">Invoice #</th>
-                  <th className="px-4 py-3 font-medium">Client</th>
+                  <th className="px-4 py-3 font-medium">Direction</th>
+                  <th className="px-4 py-3 font-medium">From / To</th>
                   <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Due Date</th>
                   <th className="px-4 py-3 font-medium text-right">Amount</th>
                   <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {loading
                   ? Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i} className="border-b border-slate-50">
-                        <td colSpan={6} className="px-4 py-4">
+                        <td colSpan={7} className="px-4 py-4">
                           <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                         </td>
                       </tr>
                     ))
                   : invoices.map((invoice) => (
-                      <tr
-                        key={invoice._id}
-                        onClick={() => navigate(`/admin/invoices/${invoice._id}`)}
-                        className="cursor-pointer border-b border-slate-50 transition-colors hover:bg-slate-50"
-                      >
-                        <td className="px-4 py-3 font-medium text-slate-900">{invoice.invoiceNumber}</td>
-                        <td className="px-4 py-3 text-slate-600">{invoice.billTo?.name || "—"}</td>
+                      <tr key={invoice._id} className="border-b border-slate-50 transition-colors hover:bg-slate-50">
+                        <td
+                          onClick={() => navigate(`/admin/invoices/${invoice._id}`)}
+                          className="cursor-pointer px-4 py-3 font-medium text-slate-900"
+                        >
+                          {invoice.invoiceNumber}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500">{DIRECTION_LABELS[invoice.direction]}</td>
+                        <td
+                          onClick={() => navigate(`/admin/invoices/${invoice._id}`)}
+                          className="cursor-pointer px-4 py-3 text-slate-600"
+                        >
+                          {invoice.direction === "TRAINER_TO_ADMIN"
+                            ? invoice.trainer?.name
+                            : invoice.vendor?.companyName || "—"}
+                        </td>
                         <td className="px-4 py-3 text-slate-600">{formatDate(invoice.invoiceDate)}</td>
-                        <td className="px-4 py-3 text-slate-600">{formatDate(invoice.dueDate)}</td>
                         <td className="px-4 py-3 text-right font-medium text-slate-900">
                           {formatMoney(invoice.grandTotal, invoice.currency)}
                         </td>
@@ -187,36 +196,26 @@ const InvoicesPage = () => {
                             {invoice.status?.replace(/_/g, " ")}
                           </Badge>
                         </td>
+                        <td className="px-4 py-3">
+                          {invoice.direction === "TRAINER_TO_ADMIN" && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              icon={FiZap}
+                              onClick={() =>
+                                navigate(
+                                  `/admin/invoices/create-vendor-invoice?fromTrainerInvoice=${invoice._id}&assignmentId=${invoice.assignment?._id || invoice.assignment}`,
+                                )
+                              }
+                            >
+                              Generate Vendor Invoice
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                     ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 p-4 text-sm text-slate-500">
-            <span>
-              Page {pagination.page} of {pagination.totalPages}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={pagination.page <= 1}
-                onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={pagination.page >= pagination.totalPages}
-                onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-              >
-                Next
-              </Button>
-            </div>
           </div>
         )}
       </Card>

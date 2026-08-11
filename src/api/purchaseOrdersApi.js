@@ -13,32 +13,30 @@ const purchaseOrdersApi = {
     return response.data;
   },
 
-  previewNextNumber: async () => {
-    const response = await api.get("/purchase-orders/next-number");
+  // Vendor — propose terms for a newly booked assignment.
+  request: async (data) => {
+    const response = await api.post("/purchase-orders/request", data);
 
     return response.data;
   },
 
-  create: async (data) => {
-    const response = await api.post("/purchase-orders", data);
+  // Vendor / Admin — withdraw a request before it's issued.
+  cancel: async (id) => {
+    const response = await api.patch(`/purchase-orders/${id}/cancel`);
 
     return response.data;
   },
 
-  update: async (id, data) => {
-    const response = await api.patch(`/purchase-orders/${id}`, data);
+  // Admin — review the vendor's proposal and issue the real PO to the trainer.
+  issue: async (id, data) => {
+    const response = await api.patch(`/purchase-orders/${id}/issue`, data);
 
     return response.data;
   },
 
-  updateStatus: async (id, data) => {
-    const response = await api.patch(`/purchase-orders/${id}/status`, data);
-
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/purchase-orders/${id}`);
+  // Trainer — confirm or reject an issued PO.
+  respond: async (id, data) => {
+    const response = await api.patch(`/purchase-orders/${id}/respond`, data);
 
     return response.data;
   },

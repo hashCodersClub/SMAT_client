@@ -158,6 +158,22 @@ export const navigationConfig = {
       },
 
       {
+        title: "BILLING",
+        items: [
+          {
+            name: "Purchase Orders",
+            path: "/vendor/purchase-orders",
+            icon: FiShoppingCart,
+          },
+          {
+            name: "Invoices",
+            path: "/vendor/invoices",
+            icon: FiFileText,
+          },
+        ],
+      },
+
+      {
         title: "ACCOUNT",
         items: [
           {
@@ -222,6 +238,22 @@ export const navigationConfig = {
             name: "Availability",
             path: "/trainer/availability",
             icon: FiCalendar,
+          },
+        ],
+      },
+
+      {
+        title: "BILLING",
+        items: [
+          {
+            name: "Purchase Orders",
+            path: "/trainer/purchase-orders",
+            icon: FiShoppingCart,
+          },
+          {
+            name: "Invoices",
+            path: "/trainer/invoices",
+            icon: FiFileText,
           },
         ],
       },

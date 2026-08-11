@@ -104,8 +104,7 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
         margin: "0 auto",
         padding: "10mm",
         background: "#ffffff",
-        fontFamily:
-          "'Helvetica Neue', Arial, 'Segoe UI', sans-serif",
+        fontFamily: "'Helvetica Neue', Arial, 'Segoe UI', sans-serif",
         color: "#1e293b",
         boxSizing: "border-box",
       }}
@@ -125,7 +124,14 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
           <div style={{ fontSize: "20px", fontWeight: 700, color: "#0f172a" }}>
             {billFrom.name || "Your Company Name"}
           </div>
-          <div style={{ fontSize: "11px", color: "#475569", marginTop: "4px", lineHeight: 1.5 }}>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#475569",
+              marginTop: "4px",
+              lineHeight: 1.5,
+            }}
+          >
             {billFrom.address && <div>{billFrom.address}</div>}
             <div>
               {[billFrom.city, billFrom.state, billFrom.pincode]
@@ -163,20 +169,30 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
           <table style={{ marginTop: "8px", fontSize: "11px" }}>
             <tbody>
               <tr>
-                <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>Invoice No.</td>
-                <td style={{ padding: "2px 0", fontWeight: 700 }}>{invoiceNumber}</td>
+                <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>
+                  Invoice No.
+                </td>
+                <td style={{ padding: "2px 0", fontWeight: 700 }}>
+                  {invoiceNumber}
+                </td>
               </tr>
               <tr>
-                <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>Invoice Date</td>
+                <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>
+                  Invoice Date
+                </td>
                 <td style={{ padding: "2px 0" }}>{formatDate(invoiceDate)}</td>
               </tr>
               <tr>
-                <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>Due Date</td>
+                <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>
+                  Due Date
+                </td>
                 <td style={{ padding: "2px 0" }}>{formatDate(dueDate)}</td>
               </tr>
               {placeOfSupply && (
                 <tr>
-                  <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>Place of Supply</td>
+                  <td style={{ padding: "2px 8px 2px 0", color: "#64748b" }}>
+                    Place of Supply
+                  </td>
                   <td style={{ padding: "2px 0" }}>{placeOfSupply}</td>
                 </tr>
               )}
@@ -195,13 +211,34 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
             padding: "10px 12px",
           }}
         >
-          <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "4px" }}>
+          <div
+            style={{
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#64748b",
+              textTransform: "uppercase",
+              marginBottom: "4px",
+            }}
+          >
             Bill To
           </div>
-          <div style={{ fontSize: "12px", fontWeight: 700 }}>{billTo.name || "—"}</div>
-          <div style={{ fontSize: "11px", color: "#475569", lineHeight: 1.5, marginTop: "2px" }}>
+          <div style={{ fontSize: "12px", fontWeight: 700 }}>
+            {billTo.name || "—"}
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#475569",
+              lineHeight: 1.5,
+              marginTop: "2px",
+            }}
+          >
             {billTo.address && <div>{billTo.address}</div>}
-            <div>{[billTo.city, billTo.state, billTo.pincode].filter(Boolean).join(", ")}</div>
+            <div>
+              {[billTo.city, billTo.state, billTo.pincode]
+                .filter(Boolean)
+                .join(", ")}
+            </div>
             {billTo.gstin && <div>GSTIN: {billTo.gstin}</div>}
             {(billTo.email || billTo.phone) && (
               <div>
@@ -221,19 +258,46 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
             padding: "10px 12px",
           }}
         >
-          <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "4px" }}>
+          <div
+            style={{
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#64748b",
+              textTransform: "uppercase",
+              marginBottom: "4px",
+            }}
+          >
             Ship To
           </div>
-          <div style={{ fontSize: "12px", fontWeight: 700 }}>{shipParty.name || "—"}</div>
-          <div style={{ fontSize: "11px", color: "#475569", lineHeight: 1.5, marginTop: "2px" }}>
+          <div style={{ fontSize: "12px", fontWeight: 700 }}>
+            {shipParty.name || "—"}
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#475569",
+              lineHeight: 1.5,
+              marginTop: "2px",
+            }}
+          >
             {shipParty.address && <div>{shipParty.address}</div>}
-            <div>{[shipParty.city, shipParty.state, shipParty.pincode].filter(Boolean).join(", ")}</div>
+            <div>
+              {[shipParty.city, shipParty.state, shipParty.pincode]
+                .filter(Boolean)
+                .join(", ")}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Line items */}
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "4px" }}>
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          marginBottom: "4px",
+        }}
+      >
         <thead>
           <tr>
             <th style={{ ...th, width: "5%" }}>#</th>
@@ -255,9 +319,15 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
               <td style={{ ...td, textAlign: "right" }}>
                 {item.quantity} {item.unit}
               </td>
-              <td style={{ ...td, textAlign: "right" }}>{money(item.rate, currency)}</td>
-              <td style={{ ...td, textAlign: "right" }}>{item.discountPercent || 0}%</td>
-              <td style={{ ...td, textAlign: "right" }}>{item.taxPercent || 0}%</td>
+              <td style={{ ...td, textAlign: "right" }}>
+                {money(item.rate, currency)}
+              </td>
+              <td style={{ ...td, textAlign: "right" }}>
+                {item.discountPercent || 0}%
+              </td>
+              <td style={{ ...td, textAlign: "right" }}>
+                {item.taxPercent || 0}%
+              </td>
               <td style={{ ...td, textAlign: "right", fontWeight: 600 }}>
                 {money(item.amount, currency)}
               </td>
@@ -267,70 +337,132 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
       </table>
 
       {/* Totals + Amount in words */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px", gap: "16px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: "10px",
+          gap: "16px",
+        }}
+      >
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#64748b",
+              textTransform: "uppercase",
+            }}
+          >
             Amount in Words
           </div>
-          <div style={{ fontSize: "11px", fontStyle: "italic", marginTop: "4px" }}>
+          <div
+            style={{ fontSize: "11px", fontStyle: "italic", marginTop: "4px" }}
+          >
             {amountInWords || "—"}
           </div>
 
           {(bankDetails.accountNumber || bankDetails.upiId) && (
             <div style={{ marginTop: "14px" }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: "#64748b",
+                  textTransform: "uppercase",
+                }}
+              >
                 Payment Details
               </div>
-              <div style={{ fontSize: "11px", lineHeight: 1.6, marginTop: "4px" }}>
-                {bankDetails.accountName && <div>Account Name: {bankDetails.accountName}</div>}
-                {bankDetails.bankName && <div>Bank: {bankDetails.bankName}{bankDetails.branch ? `, ${bankDetails.branch}` : ""}</div>}
-                {bankDetails.accountNumber && <div>Account No: {bankDetails.accountNumber}</div>}
-                {bankDetails.ifscCode && <div>IFSC: {bankDetails.ifscCode}</div>}
+              <div
+                style={{ fontSize: "11px", lineHeight: 1.6, marginTop: "4px" }}
+              >
+                {bankDetails.accountName && (
+                  <div>Account Name: {bankDetails.accountName}</div>
+                )}
+                {bankDetails.bankName && (
+                  <div>
+                    Bank: {bankDetails.bankName}
+                    {bankDetails.branch ? `, ${bankDetails.branch}` : ""}
+                  </div>
+                )}
+                {bankDetails.accountNumber && (
+                  <div>Account No: {bankDetails.accountNumber}</div>
+                )}
+                {bankDetails.ifscCode && (
+                  <div>IFSC: {bankDetails.ifscCode}</div>
+                )}
                 {bankDetails.upiId && <div>UPI: {bankDetails.upiId}</div>}
               </div>
             </div>
           )}
         </div>
 
-        <table style={{ minWidth: "260px", fontSize: "11px", borderCollapse: "collapse" }}>
+        <table
+          style={{
+            minWidth: "260px",
+            fontSize: "11px",
+            borderCollapse: "collapse",
+          }}
+        >
           <tbody>
             <tr>
               <td style={{ padding: "4px 8px", color: "#475569" }}>Subtotal</td>
-              <td style={{ padding: "4px 0", textAlign: "right" }}>{money(subtotal, currency)}</td>
+              <td style={{ padding: "4px 0", textAlign: "right" }}>
+                {money(subtotal, currency)}
+              </td>
             </tr>
             {totalDiscount > 0 && (
               <tr>
-                <td style={{ padding: "4px 8px", color: "#475569" }}>Discount</td>
-                <td style={{ padding: "4px 0", textAlign: "right" }}>- {money(totalDiscount, currency)}</td>
+                <td style={{ padding: "4px 8px", color: "#475569" }}>
+                  Discount
+                </td>
+                <td style={{ padding: "4px 0", textAlign: "right" }}>
+                  - {money(totalDiscount, currency)}
+                </td>
               </tr>
             )}
             {taxType === "INTER_STATE" ? (
               <tr>
                 <td style={{ padding: "4px 8px", color: "#475569" }}>IGST</td>
-                <td style={{ padding: "4px 0", textAlign: "right" }}>{money(igstAmount, currency)}</td>
+                <td style={{ padding: "4px 0", textAlign: "right" }}>
+                  {money(igstAmount, currency)}
+                </td>
               </tr>
             ) : taxType === "INTRA_STATE" ? (
               <>
                 <tr>
                   <td style={{ padding: "4px 8px", color: "#475569" }}>CGST</td>
-                  <td style={{ padding: "4px 0", textAlign: "right" }}>{money(cgstAmount, currency)}</td>
+                  <td style={{ padding: "4px 0", textAlign: "right" }}>
+                    {money(cgstAmount, currency)}
+                  </td>
                 </tr>
                 <tr>
                   <td style={{ padding: "4px 8px", color: "#475569" }}>SGST</td>
-                  <td style={{ padding: "4px 0", textAlign: "right" }}>{money(sgstAmount, currency)}</td>
+                  <td style={{ padding: "4px 0", textAlign: "right" }}>
+                    {money(sgstAmount, currency)}
+                  </td>
                 </tr>
               </>
             ) : null}
             {shippingCharges > 0 && (
               <tr>
-                <td style={{ padding: "4px 8px", color: "#475569" }}>Shipping</td>
-                <td style={{ padding: "4px 0", textAlign: "right" }}>{money(shippingCharges, currency)}</td>
+                <td style={{ padding: "4px 8px", color: "#475569" }}>
+                  Shipping
+                </td>
+                <td style={{ padding: "4px 0", textAlign: "right" }}>
+                  {money(shippingCharges, currency)}
+                </td>
               </tr>
             )}
             {roundOff !== 0 && (
               <tr>
-                <td style={{ padding: "4px 8px", color: "#475569" }}>Round Off</td>
-                <td style={{ padding: "4px 0", textAlign: "right" }}>{money(roundOff, currency)}</td>
+                <td style={{ padding: "4px 8px", color: "#475569" }}>
+                  Round Off
+                </td>
+                <td style={{ padding: "4px 0", textAlign: "right" }}>
+                  {money(roundOff, currency)}
+                </td>
               </tr>
             )}
             <tr>
@@ -363,12 +495,32 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
             {amountPaid > 0 && (
               <>
                 <tr>
-                  <td style={{ padding: "4px 8px", color: "#475569" }}>Amount Paid</td>
-                  <td style={{ padding: "4px 0", textAlign: "right" }}>{money(amountPaid, currency)}</td>
+                  <td style={{ padding: "4px 8px", color: "#475569" }}>
+                    Amount Paid
+                  </td>
+                  <td style={{ padding: "4px 0", textAlign: "right" }}>
+                    {money(amountPaid, currency)}
+                  </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: "4px 8px", color: "#475569", fontWeight: 700 }}>Balance Due</td>
-                  <td style={{ padding: "4px 0", textAlign: "right", fontWeight: 700 }}>{money(balanceDue, currency)}</td>
+                  <td
+                    style={{
+                      padding: "4px 8px",
+                      color: "#475569",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Balance Due
+                  </td>
+                  <td
+                    style={{
+                      padding: "4px 0",
+                      textAlign: "right",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {money(balanceDue, currency)}
+                  </td>
                 </tr>
               </>
             )}
@@ -377,29 +529,61 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
       </div>
 
       {/* Terms + Signature */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "28px", gap: "16px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: "28px",
+          gap: "16px",
+        }}
+      >
         <div style={{ flex: 1.4 }}>
           {termsAndConditions && (
             <>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: "#64748b",
+                  textTransform: "uppercase",
+                }}
+              >
                 Terms &amp; Conditions
               </div>
-              <div style={{ fontSize: "10px", color: "#475569", whiteSpace: "pre-line", lineHeight: 1.6, marginTop: "4px" }}>
+              <div
+                style={{
+                  fontSize: "10px",
+                  color: "#475569",
+                  whiteSpace: "pre-line",
+                  lineHeight: 1.6,
+                  marginTop: "4px",
+                }}
+              >
                 {termsAndConditions}
               </div>
             </>
           )}
           {notes && (
-            <div style={{ fontSize: "10px", color: "#475569", marginTop: "8px" }}>
+            <div
+              style={{ fontSize: "10px", color: "#475569", marginTop: "8px" }}
+            >
               <strong>Notes:</strong> {notes}
             </div>
           )}
         </div>
 
         <div style={{ flex: 1, textAlign: "center" }}>
-          <div style={{ fontSize: "11px", color: "#475569" }}>For {billFrom.name || "the Company"}</div>
+          <div style={{ fontSize: "11px", color: "#475569" }}>
+            For {billFrom.name || "the Company"}
+          </div>
           <div style={{ height: "48px" }} />
-          <div style={{ borderTop: "1px solid #94a3b8", paddingTop: "4px", fontSize: "11px" }}>
+          <div
+            style={{
+              borderTop: "1px solid #94a3b8",
+              paddingTop: "4px",
+              fontSize: "11px",
+            }}
+          >
             {authorizedSignatory || "Authorized Signatory"}
           </div>
         </div>
@@ -415,7 +599,8 @@ const InvoiceTemplate = forwardRef(({ invoice }, ref) => {
           textAlign: "center",
         }}
       >
-        This is a computer-generated invoice and does not require a physical signature.
+        This is a computer-generated invoice and does not require a physical
+        signature.
       </div>
     </div>
   );

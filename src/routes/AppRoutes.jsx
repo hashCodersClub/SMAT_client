@@ -103,17 +103,14 @@ const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
 
 // Billing: Invoices & Purchase Orders
 const InvoicesPage = lazy(() => import("../pages/admin/invoices/InvoicesPage"));
-const CreateInvoicePage = lazy(
-  () => import("../pages/admin/invoices/CreateInvoicePage"),
+const CreateVendorInvoicePage = lazy(
+  () => import("../pages/admin/invoices/CreateVendorInvoicePage"),
 );
 const InvoiceDetailsPage = lazy(
   () => import("../pages/admin/invoices/InvoiceDetailsPage"),
 );
 const PurchaseOrdersPage = lazy(
   () => import("../pages/admin/purchaseOrders/PurchaseOrdersPage"),
-);
-const CreatePurchaseOrderPage = lazy(
-  () => import("../pages/admin/purchaseOrders/CreatePurchaseOrderPage"),
 );
 const PurchaseOrderDetailsPage = lazy(
   () => import("../pages/admin/purchaseOrders/PurchaseOrderDetailsPage"),
@@ -148,6 +145,14 @@ const VendorAssignmentsPage = lazy(
   () => import("../pages/vendor/assignments/VendorAssignmentsPage"),
 );
 
+const VendorPurchaseOrdersPage = lazy(
+  () => import("../pages/vendor/purchaseOrders/VendorPurchaseOrdersPage"),
+);
+
+const VendorInvoicesPage = lazy(
+  () => import("../pages/vendor/invoices/VendorInvoicesPage"),
+);
+
 // Trainer Portal Pages
 const TrainerDashboardPage = lazy(
   () => import("../pages/trainer/dashboard/TrainerDashboardPage"),
@@ -163,6 +168,14 @@ const TrainerOpportunitiesPage = lazy(
 );
 const TrainerAssignmentsPage = lazy(
   () => import("../pages/trainer/assignments/TrainerAssignmentsPage"),
+);
+
+const TrainerPurchaseOrdersPage = lazy(
+  () => import("../pages/trainer/purchaseOrders/TrainerPurchaseOrdersPage"),
+);
+
+const TrainerInvoicesPage = lazy(
+  () => import("../pages/trainer/invoices/TrainerInvoicesPage"),
 );
 const TrainerSettingsPage = lazy(
   () => import("../pages/trainer/settings/TrainerSettingsPage"),
@@ -325,8 +338,8 @@ const AppRoutes = () => {
             <Route path="/admin/invoices" element={<InvoicesPage />} />
 
             <Route
-              path="/admin/invoices/create"
-              element={<CreateInvoicePage />}
+              path="/admin/invoices/create-vendor-invoice"
+              element={<CreateVendorInvoicePage />}
             />
 
             <Route
@@ -341,11 +354,6 @@ const AppRoutes = () => {
             <Route
               path="/admin/purchase-orders"
               element={<PurchaseOrdersPage />}
-            />
-
-            <Route
-              path="/admin/purchase-orders/create"
-              element={<CreatePurchaseOrderPage />}
             />
 
             <Route
@@ -413,6 +421,13 @@ const AppRoutes = () => {
               element={<VendorAssignmentsPage />}
             />
 
+            <Route
+              path="/vendor/purchase-orders"
+              element={<VendorPurchaseOrdersPage />}
+            />
+
+            <Route path="/vendor/invoices" element={<VendorInvoicesPage />} />
+
             <Route path="/vendor/profile" element={<VendorProfilePage />} />
 
             <Route path="/vendor/settings" element={<VendorSettingsPage />} />
@@ -449,6 +464,13 @@ const AppRoutes = () => {
               path="/trainer/assignments"
               element={<TrainerAssignmentsPage />}
             />
+
+            <Route
+              path="/trainer/purchase-orders"
+              element={<TrainerPurchaseOrdersPage />}
+            />
+
+            <Route path="/trainer/invoices" element={<TrainerInvoicesPage />} />
 
             <Route path="/trainer/profile" element={<TrainerProfilePage />} />
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiDownload, FiArrowLeft, FiAlertCircle } from "react-icons/fi";
+import { FiDownload, FiArrowLeft, FiAlertCircle, FiZap } from "react-icons/fi";
 
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
@@ -107,6 +107,19 @@ const InvoiceDetailsPage = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {invoice.direction === "TRAINER_TO_ADMIN" && (
+            <Button
+              variant="secondary"
+              icon={FiZap}
+              onClick={() =>
+                navigate(
+                  `/admin/invoices/create-vendor-invoice?fromTrainerInvoice=${invoice._id}&assignmentId=${invoice.assignment?._id || invoice.assignment}`,
+                )
+              }
+            >
+              Generate Vendor Invoice
+            </Button>
+          )}
           <select
             value={invoice.status}
             disabled={updatingStatus}
