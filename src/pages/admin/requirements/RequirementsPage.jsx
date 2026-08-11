@@ -182,16 +182,19 @@ const RequirementsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ---------- Filter State ----------
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [mode, setMode] = useState("");
-  const [priority, setPriority] = useState("");
-
   // ---------- Assign-Trainer Hand-off ----------
   const [searchParams, setSearchParams] = useSearchParams();
   const assignTrainerId = searchParams.get("assignTrainerId") || "";
   const [assignTrainer, setAssignTrainer] = useState(null);
+
+  // ---------- Filter State ----------
+  // `status` can arrive via ?status=OPEN (e.g. from the dashboard's
+  // pipeline widget) so a deep link lands pre-filtered instead of on the
+  // full unfiltered list.
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState(searchParams.get("status") || "");
+  const [mode, setMode] = useState("");
+  const [priority, setPriority] = useState("");
 
   // ---------- Fetch Requirements ----------
   const fetchRequirements = async () => {
