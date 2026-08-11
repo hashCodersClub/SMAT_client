@@ -48,6 +48,27 @@ const PROFILE_VISIBLE_STATUSES = [
   "SELECTED",
 ];
 
+// Purchase order status, shown once a trainer is selected — this is the
+// real signal for whether the assignment is actually booked, not the
+// opportunity's "SELECTED" status alone (that just means a PO was
+// requested and is working its way through admin -> trainer).
+const PO_STATUS_LABELS = {
+  VENDOR_REQUESTED: "PO Pending — Awaiting Admin Review",
+  ADMIN_ISSUED: "PO Sent to Trainer — Awaiting Confirmation",
+  TRAINER_CONFIRMED: "Trainer Confirmed — Assignment Booked",
+  TRAINER_REJECTED: "Trainer Declined the PO",
+  CANCELLED: "PO Request Cancelled",
+};
+
+const PO_STATUS_STYLES = {
+  VENDOR_REQUESTED: "bg-amber-100 text-amber-700",
+  ADMIN_ISSUED: "bg-indigo-100 text-indigo-700",
+  TRAINER_CONFIRMED:
+    "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-600/30",
+  TRAINER_REJECTED: "bg-red-100 text-red-700",
+  CANCELLED: "bg-slate-100 text-slate-600",
+};
+
 const statusStyles = {
   DRAFT: "bg-slate-100 text-slate-700",
   SUBMITTED: "bg-indigo-50 text-indigo-700",
@@ -173,7 +194,7 @@ const VendorRequirementDetailsPage = () => {
   const handleSelectTrainer = async (candidate) => {
     if (
       !window.confirm(
-        `Are you sure you want to select ${candidate.trainerName}? This will lock the requirement and automatically create an assignment pending trainer confirmation.`,
+        `Are you sure you want to select ${candidate.trainerName}? This will lock the requirement and submit a purchase order request to admin — the assignment is booked only after the trainer confirms the PO.`,
       )
     ) {
       return;
@@ -184,7 +205,7 @@ const VendorRequirementDetailsPage = () => {
       setError("");
       await opportunitiesApi.selectTrainer(candidate._id);
       setActionSuccess(
-        `Selected ${candidate.trainerName}! Requirement status updated to TRAINER_SELECTED and Assignment created.`,
+        `Selected ${candidate.trainerName}! A purchase order request has been sent to admin for review.`,
       );
       setTimeout(() => setActionSuccess(""), 5000);
       await loadRequirement();
@@ -607,6 +628,27 @@ const VendorRequirementDetailsPage = () => {
                             {formatStatusLabel(candidate.status)}
                           </span>
                         </div>
+
+                        {/* PO Status — the real progress once a trainer is
+                            selected. Being "Selected" no longer means the
+                            assignment is booked; it means a PO is now
+                            working its way through admin -> trainer. */}
+                        {candidate.status === "SELECTED" && (
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="text-slate-500">
+                              Booking Status:
+                            </span>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 font-bold ${
+                                PO_STATUS_STYLES[candidate.poStatus] ||
+                                "bg-amber-100 text-amber-700"
+                              }`}
+                            >
+                              {PO_STATUS_LABELS[candidate.poStatus] ||
+                                "PO Pending — Awaiting Admin Review"}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Buttons */}

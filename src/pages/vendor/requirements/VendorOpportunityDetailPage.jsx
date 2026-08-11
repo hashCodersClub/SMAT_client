@@ -18,6 +18,7 @@ import opportunitiesApi from "../../../api/opportunitiesApi";
 import demoSessionsApi from "../../../api/demoSessionsApi";
 import assignmentsApi from "../../../api/assignmentsApi";
 import requirementsApi from "../../../api/requirementsApi";
+import purchaseOrdersApi from "../../../api/purchaseOrdersApi";
 import {
   OPPORTUNITY_STATUS_STYLES,
   formatStatusLabel,
@@ -145,6 +146,7 @@ const BookAssignmentForm = ({
   const [trainerRate, setTrainerRate] = useState(defaultRate || "");
   const [rateType, setRateType] = useState("PER_DAY");
   const [notes, setNotes] = useState("");
+  const [requestPo, setRequestPo] = useState(true);
 
   return (
     <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
@@ -213,12 +215,32 @@ const BookAssignmentForm = ({
         />
       </div>
 
+      <label className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-600">
+        <input
+          type="checkbox"
+          checked={requestPo}
+          onChange={(e) => setRequestPo(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span>
+          Also request a Purchase Order for this engagement (using the rate
+          above). Admin will review and issue the official PO to the trainer.
+        </span>
+      </label>
+
       <div className="flex gap-2 pt-1">
         <button
           type="button"
           disabled={submitting || !startDate || !endDate}
           onClick={() =>
-            onSubmit({ startDate, endDate, trainerRate, rateType, notes })
+            onSubmit({
+              startDate,
+              endDate,
+              trainerRate,
+              rateType,
+              notes,
+              requestPo,
+            })
           }
           className="flex-1 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
         >
@@ -674,7 +696,7 @@ const VendorOpportunityDetailPage = () => {
               onCancel={() => setActiveForm("")}
               onSubmit={(payload) =>
                 runAction(async () => {
-                  await assignmentsApi.create({
+                  const created = await assignmentsApi.create({
                     requirementId,
                     trainerId: trainer._id,
                     startDate: payload.startDate,
@@ -685,6 +707,26 @@ const VendorOpportunityDetailPage = () => {
                     rateType: payload.rateType,
                     notes: payload.notes,
                   });
+
+                  const newAssignmentId = created?.data?._id;
+
+                  if (payload.requestPo && newAssignmentId) {
+                    try {
+                      await purchaseOrdersApi.request({
+                        assignmentId: newAssignmentId,
+                        notes: payload.notes,
+                      });
+                    } catch (poError) {
+                      // Don't block the assignment — it was created
+                      // successfully. Vendor can still see the assignment
+                      // and request a PO for it from there if this fails.
+                      console.error(
+                        "Failed to request purchase order:",
+                        poError,
+                      );
+                    }
+                  }
+
                   navigate(`/vendor/assignments`);
                 })
               }
