@@ -61,6 +61,18 @@ const STAGES = [
     chip: "bg-cyan-50 text-cyan-600",
   },
   {
+    key: "TRAINER_SELECTED",
+    label: "Trainer Selected",
+    // Requirement sits here after the trainer is picked, before an
+    // assignment record has actually been created for it. Without this
+    // entry, requirements in this status match no column's `statuses`
+    // array and silently disappear from the whole board.
+    statuses: ["TRAINER_SELECTED"],
+    dot: "bg-violet-500",
+    ring: "group-hover:border-violet-200",
+    chip: "bg-violet-50 text-violet-600",
+  },
+  {
     key: "CONFIRMED",
     label: "Confirmed",
     statuses: ["CONFIRMED", "IN_PROGRESS", "COMPLETED"],
