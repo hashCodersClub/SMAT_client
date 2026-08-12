@@ -5,35 +5,64 @@ import {
   FiUserCheck,
   FiX,
   FiTrendingUp,
-  FiTrendingDown,
   FiBriefcase,
   FiClock,
   FiAlertCircle,
   FiCheckCircle,
   FiRefreshCw,
+  FiGrid,
+  FiList,
 } from "react-icons/fi";
 
 import RequirementFilters from "../../../components/admin/requirements/RequirementFilters";
 import RequirementTable from "../../../components/admin/requirements/RequirementTable";
+import RequirementBoard from "../../../components/admin/requirements/RequirementBoard";
 
 import requirementsApi from "../../../api/requirementsApi";
 import trainersApi from "../../../api/trainersApi";
 import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
 import { useCountUp } from "../../../hooks/useCountUp";
 
-// ---------- Helper for stats ----------
+/*
+|--------------------------------------------------------------------------
+| Stats
+|--------------------------------------------------------------------------
+|
+| Every number here is computed from the actual requirements list — no
+| placeholder trend text. The "Total" card shows a real count of
+| requirements created in the last 7 days (from createdAt); the stage
+| cards show each stage's real share of the total instead of a fabricated
+| up/down delta we have no historical data to support.
+|--------------------------------------------------------------------------
+*/
+
 const getStats = (requirements) => {
   const total = requirements.length;
   const open = requirements.filter((r) => r.status === "OPEN").length;
   const sourcing = requirements.filter((r) => r.status === "SOURCING").length;
   const confirmed = requirements.filter((r) => r.status === "CONFIRMED").length;
 
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const createdThisWeek = requirements.filter(
+    (r) => r.createdAt && new Date(r.createdAt) >= sevenDaysAgo,
+  ).length;
+
+  const shareOf = (count) =>
+    total > 0
+      ? `${Math.round((count / total) * 100)}% of total`
+      : "No data yet";
+
   return [
     {
       label: "Total Requirements",
       value: total,
-      trend: "+3 this week",
-      trendUp: true,
+      badge:
+        createdThisWeek > 0
+          ? `+${createdThisWeek} this week`
+          : "No new requirements this week",
+      badgeTone: createdThisWeek > 0 ? "positive" : "neutral",
       color: "from-indigo-500 to-blue-400",
       icon: FiBriefcase,
       filterKey: null,
@@ -41,8 +70,8 @@ const getStats = (requirements) => {
     {
       label: "Open",
       value: open,
-      trend: "+1 new today",
-      trendUp: true,
+      badge: shareOf(open),
+      badgeTone: "neutral",
       color: "from-blue-500 to-cyan-400",
       icon: FiClock,
       filterKey: "status",
@@ -51,8 +80,8 @@ const getStats = (requirements) => {
     {
       label: "Sourcing",
       value: sourcing,
-      trend: "-2 from yesterday",
-      trendUp: false,
+      badge: shareOf(sourcing),
+      badgeTone: "neutral",
       color: "from-amber-500 to-orange-400",
       icon: FiAlertCircle,
       filterKey: "status",
@@ -61,8 +90,8 @@ const getStats = (requirements) => {
     {
       label: "Confirmed",
       value: confirmed,
-      trend: "+1 this week",
-      trendUp: true,
+      badge: shareOf(confirmed),
+      badgeTone: "neutral",
       color: "from-emerald-500 to-teal-400",
       icon: FiCheckCircle,
       filterKey: "status",
@@ -103,17 +132,15 @@ const StatCard = ({ stat, isActive, index, onClick }) => {
         </div>
         <span
           className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors duration-200 ${
-            stat.trendUp
+            stat.badgeTone === "positive"
               ? "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-              : "bg-rose-100/80 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+              : "bg-slate-100/80 text-slate-600 dark:bg-slate-700/40 dark:text-slate-400"
           }`}
         >
-          {stat.trendUp ? (
+          {stat.badgeTone === "positive" && (
             <FiTrendingUp className="h-3 w-3" />
-          ) : (
-            <FiTrendingDown className="h-3 w-3" />
           )}
-          {stat.trend}
+          {stat.badge}
         </span>
       </div>
       <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -190,11 +217,22 @@ const RequirementsPage = () => {
   // ---------- Filter State ----------
   // `status` can arrive via ?status=OPEN (e.g. from the dashboard's
   // pipeline widget) so a deep link lands pre-filtered instead of on the
-  // full unfiltered list.
+  // full unfiltered list. `view` similarly persists in the URL so a
+  // bookmarked/shared link opens in the same view it was copied from.
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState(searchParams.get("status") || "");
   const [mode, setMode] = useState("");
   const [priority, setPriority] = useState("");
+  const [view, setView] = useState(
+    searchParams.get("view") === "board" ? "board" : "table",
+  );
+
+  const setViewAndPersist = (nextView) => {
+    setView(nextView);
+    const next = new URLSearchParams(searchParams);
+    next.set("view", nextView);
+    setSearchParams(next);
+  };
 
   // ---------- Fetch Requirements ----------
   const fetchRequirements = async () => {
@@ -407,30 +445,70 @@ const RequirementsPage = () => {
             <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-30" />
           </div>
 
-          {/* Result count */}
-          <p
+          {/* Result count + View toggle */}
+          <div
             style={{ animationDelay: "280ms" }}
-            className="animate-rise-in mt-4 text-sm text-slate-500 dark:text-slate-400"
+            className="animate-rise-in mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
           >
-            Showing{" "}
-            <span
-              key={filteredRequirements.length}
-              className="animate-count-tick inline-block font-semibold text-slate-700 dark:text-slate-200"
-            >
-              {filteredRequirements.length}
-            </span>{" "}
-            requirements
-          </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Showing{" "}
+              <span
+                key={filteredRequirements.length}
+                className="animate-count-tick inline-block font-semibold text-slate-700 dark:text-slate-200"
+              >
+                {filteredRequirements.length}
+              </span>{" "}
+              requirements
+            </p>
 
-          {/* Table */}
+            <div className="inline-flex items-center gap-1 self-start rounded-xl border border-slate-200 bg-white/70 p-1 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50">
+              <button
+                type="button"
+                onClick={() => setViewAndPersist("table")}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-200 ${
+                  view === "table"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
+                }`}
+              >
+                <FiList size={14} />
+                Table
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewAndPersist("board")}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-200 ${
+                  view === "board"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
+                }`}
+              >
+                <FiGrid size={14} />
+                Board
+              </button>
+            </div>
+          </div>
+
+          {/* Table or Board */}
           <div
             style={{ animationDelay: "320ms" }}
-            className="animate-rise-in relative mt-2 overflow-hidden rounded-2xl border border-white/20 bg-white/60 backdrop-blur-sm shadow-xl shadow-slate-200/30 dark:bg-slate-800/30"
+            className={
+              view === "table"
+                ? "animate-rise-in relative mt-2 overflow-hidden rounded-2xl border border-white/20 bg-white/60 backdrop-blur-sm shadow-xl shadow-slate-200/30 dark:bg-slate-800/30"
+                : "animate-rise-in relative mt-2"
+            }
           >
-            <RequirementTable
-              requirements={filteredRequirements}
-              assignTrainerId={assignTrainerId}
-            />
+            {view === "table" ? (
+              <RequirementTable
+                requirements={filteredRequirements}
+                assignTrainerId={assignTrainerId}
+              />
+            ) : (
+              <RequirementBoard
+                requirements={filteredRequirements}
+                assignTrainerId={assignTrainerId}
+              />
+            )}
           </div>
         </>
       )}
