@@ -631,6 +631,12 @@ const TrainerAvailabilityPage = () => {
                       </p>
 
                       <StatusBadge status={record.status} />
+
+                      {record.source === "ASSIGNMENT" && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                          Locked by assignment
+                        </span>
+                      )}
                     </div>
 
                     <p className="mt-1 text-sm text-slate-500">

@@ -1,4 +1,4 @@
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiLock } from "react-icons/fi";
 
 /*
 |--------------------------------------------------------------------------
@@ -171,6 +171,7 @@ const AvailabilityCalendar = ({
           const record = getRecordForDate(cell.dateKey);
           const isToday = cell.dateKey === today;
           const isPending = cell.dateKey === pendingStart;
+          const isLocked = record?.source === "ASSIGNMENT";
           const styles = record ? STATUS_STYLES[record.status] : null;
 
           return (
@@ -178,15 +179,25 @@ const AvailabilityCalendar = ({
               key={cell.dateKey}
               type="button"
               onClick={() => onDayClick(cell.dateKey)}
+              title={
+                isLocked
+                  ? "Blocked automatically by a booked assignment"
+                  : undefined
+              }
               className={`relative aspect-square rounded-xl text-sm font-medium transition ${
                 isPending
                   ? "bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500"
                   : styles
                     ? styles.cell
                     : "text-slate-600 hover:bg-slate-50"
-              } ${isToday && !isPending ? "ring-2 ring-indigo-400" : ""}`}
+              } ${isToday && !isPending ? "ring-2 ring-indigo-400" : ""} ${
+                isLocked ? "ring-1 ring-inset ring-amber-400/70" : ""
+              }`}
             >
               {cell.day}
+              {isLocked && (
+                <FiLock className="absolute right-1 top-1 h-2.5 w-2.5 opacity-70" />
+              )}
             </button>
           );
         })}

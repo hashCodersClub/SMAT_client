@@ -14,6 +14,7 @@ import {
   FiUser,
   FiBriefcase,
   FiSlash,
+  FiLock,
 } from "react-icons/fi";
 
 import trainerAvailabilityApi from "../../../api/trainerAvailabilityApi";
@@ -221,6 +222,15 @@ const TrainerAvailabilityPage = () => {
 
     if (!pendingStart) {
       const existingRecord = getRecordForDate(dateKey);
+
+      if (existingRecord?.source === "ASSIGNMENT") {
+        setError("");
+        setSuccess("");
+        setError(
+          "This date is blocked automatically because you're booked on an assignment — it can't be edited here.",
+        );
+        return;
+      }
 
       if (existingRecord) {
         openEditForm(existingRecord);
@@ -585,11 +595,23 @@ const TrainerAvailabilityPage = () => {
 */
 
 const AvailabilityRow = ({ record, deleting, onEdit, onDelete }) => {
+  const isLocked = record.source === "ASSIGNMENT";
+
   return (
     <div className="flex flex-col gap-4 px-6 py-5 transition hover:bg-slate-50/50 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-500">
-          <FiCalendar className="h-5 w-5" />
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+            isLocked
+              ? "bg-amber-50 text-amber-500"
+              : "bg-indigo-50 text-indigo-500"
+          }`}
+        >
+          {isLocked ? (
+            <FiLock className="h-5 w-5" />
+          ) : (
+            <FiCalendar className="h-5 w-5" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -599,6 +621,12 @@ const AvailabilityRow = ({ record, deleting, onEdit, onDelete }) => {
               {formatDate(record.endDate)}
             </p>
             <StatusBadge status={record.status} />
+            {isLocked && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                <FiLock className="h-2.5 w-2.5" />
+                Locked by assignment
+              </span>
+            )}
           </div>
           {record.reason && (
             <p className="mt-1 text-sm font-medium text-slate-600">
@@ -610,29 +638,35 @@ const AvailabilityRow = ({ record, deleting, onEdit, onDelete }) => {
           )}
         </div>
       </div>
-      <div className="flex gap-2 self-end sm:self-auto">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-        >
-          <FiEdit2 className="h-3.5 w-3.5" />
-          Edit
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={deleting}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-        >
-          {deleting ? (
-            <FiLoader className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <FiTrash2 className="h-3.5 w-3.5" />
-          )}
-          Remove
-        </button>
-      </div>
+      {isLocked ? (
+        <p className="self-end text-xs text-slate-400 sm:self-auto">
+          Clears automatically when the assignment ends
+        </p>
+      ) : (
+        <div className="flex gap-2 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+          >
+            <FiEdit2 className="h-3.5 w-3.5" />
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+          >
+            {deleting ? (
+              <FiLoader className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FiTrash2 className="h-3.5 w-3.5" />
+            )}
+            Remove
+          </button>
+        </div>
+      )}
     </div>
   );
 };
