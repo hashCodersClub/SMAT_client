@@ -21,6 +21,7 @@ const statusStyles = {
   SOURCING: "bg-amber-50 text-amber-700",
   PROFILES_SENT: "bg-purple-50 text-purple-700",
   SHORTLISTED: "bg-cyan-50 text-cyan-700",
+  TRAINER_SELECTED: "bg-violet-50 text-violet-700",
   CONFIRMED: "bg-emerald-50 text-emerald-700",
   IN_PROGRESS: "bg-orange-50 text-orange-700",
   COMPLETED: "bg-green-50 text-green-700",

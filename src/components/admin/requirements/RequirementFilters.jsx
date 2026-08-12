@@ -64,6 +64,8 @@ const RequirementFilters = ({
 
           <option value="SHORTLISTED">Shortlisted</option>
 
+          <option value="TRAINER_SELECTED">Trainer Selected</option>
+
           <option value="CONFIRMED">Confirmed</option>
 
           <option value="IN_PROGRESS">In Progress</option>

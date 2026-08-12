@@ -59,6 +59,13 @@ const STAGES = [
     dot: "bg-cyan-500",
   },
   {
+    key: "TRAINER_SELECTED",
+    label: "Trainer Selected",
+    statuses: ["TRAINER_SELECTED"],
+    bar: "bg-violet-500",
+    dot: "bg-violet-500",
+  },
+  {
     key: "CONFIRMED",
     label: "Confirmed",
     statuses: ["CONFIRMED", "IN_PROGRESS", "COMPLETED"],

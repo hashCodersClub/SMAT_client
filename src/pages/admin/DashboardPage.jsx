@@ -47,6 +47,7 @@ const REQUIREMENT_PIPELINE_STATUSES = [
   { key: "SOURCING", label: "Sourcing" },
   { key: "PROFILES_SENT", label: "Profiles Sent" },
   { key: "SHORTLISTED", label: "Shortlisted" },
+  { key: "TRAINER_SELECTED", label: "Trainer Selected" },
   { key: "CONFIRMED", label: "Confirmed" },
 ];
 
@@ -55,6 +56,7 @@ const PIPELINE_COLORS = [
   "from-violet-500 to-purple-400",
   "from-amber-500 to-orange-400",
   "from-emerald-500 to-teal-400",
+  "from-fuchsia-500 to-pink-400",
   "from-rose-500 to-pink-400",
 ];
 

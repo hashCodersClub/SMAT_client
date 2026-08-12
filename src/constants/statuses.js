@@ -14,6 +14,7 @@ export const REQUIREMENT_STATUS_STYLES = {
   SOURCING: "bg-amber-50 text-amber-700 ring-amber-200",
   PROFILES_SENT: "bg-purple-50 text-purple-700 ring-purple-200",
   SHORTLISTED: "bg-cyan-50 text-cyan-700 ring-cyan-200",
+  TRAINER_SELECTED: "bg-violet-50 text-violet-700 ring-violet-200",
   CONFIRMED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   IN_PROGRESS: "bg-orange-50 text-orange-700 ring-orange-200",
   COMPLETED: "bg-green-50 text-green-700 ring-green-200",
@@ -83,6 +84,11 @@ export const REQUIREMENT_PIPELINE = [
     label: "Vendor Discussion",
     description: "Vendor reviewing",
   },
+  {
+    key: "TRAINER_SELECTED",
+    label: "Trainer Selected",
+    description: "Awaiting assignment creation",
+  },
   { key: "CONFIRMED", label: "Confirmed", description: "Trainer confirmed" },
   {
     key: "IN_PROGRESS",
@@ -103,6 +109,7 @@ export const getNextAction = (status) => {
     SOURCING: "Follow up on outreach responses",
     PROFILES_SENT: "Await vendor feedback on profiles",
     SHORTLISTED: "Confirm trainer with vendor",
+    TRAINER_SELECTED: "Create assignment for the selected trainer",
     CONFIRMED: "Create assignment",
     IN_PROGRESS: "Monitor delivery progress",
     COMPLETED: "Archive and collect feedback",

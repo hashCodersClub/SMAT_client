@@ -13,6 +13,9 @@ import { useNavigate } from "react-router-dom";
 import assignmentsApi from "../../../api/assignmentsApi";
 
 const statusStyles = {
+  PENDING_CONFIRMATION: "bg-amber-50 text-amber-700",
+  ASSIGNMENT_CONFIRMED: "bg-emerald-50 text-emerald-700",
+  ASSIGNMENT_REJECTED: "bg-red-50 text-red-700",
   PROPOSED: "bg-violet-50 text-violet-700",
   CONFIRMED: "bg-blue-50 text-blue-700",
   ACTIVE: "bg-amber-50 text-amber-700",
@@ -230,10 +233,13 @@ const AssignmentsPage = () => {
             className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-blue-500"
           >
             <option value="">All Statuses</option>
+            <option value="PENDING_CONFIRMATION">Pending Confirmation</option>
             <option value="PROPOSED">Proposed</option>
+            <option value="ASSIGNMENT_CONFIRMED">Assignment Confirmed</option>
             <option value="CONFIRMED">Confirmed</option>
             <option value="ACTIVE">Active</option>
             <option value="COMPLETED">Completed</option>
+            <option value="ASSIGNMENT_REJECTED">Assignment Rejected</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
         </div>
