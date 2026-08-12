@@ -559,7 +559,7 @@ const VendorRequirementDetailsPage = () => {
                         </div>
 
                         {/* Trainer Info Grid */}
-                        <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center text-xs">
+                        <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3 text-center text-xs">
                           <div>
                             <p className="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
                               Experience
@@ -577,16 +577,6 @@ const VendorRequirementDetailsPage = () => {
                             <p className="font-bold text-amber-600 mt-0.5 flex items-center justify-center gap-0.5">
                               <FiStar size={12} fill="currentColor" />
                               {candidate.rating ? candidate.rating : "4.8"}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                              Rate Card
-                            </p>
-                            <p className="font-bold text-emerald-700 mt-0.5">
-                              {candidate.quotedRate
-                                ? `₹${Number(candidate.quotedRate).toLocaleString("en-IN")}/day`
-                                : "Standard"}
                             </p>
                           </div>
                         </div>
