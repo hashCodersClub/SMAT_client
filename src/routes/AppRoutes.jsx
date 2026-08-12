@@ -100,6 +100,9 @@ const AssignmentDetailsPage = lazy(
 );
 
 const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
+const CompanySettingsPage = lazy(
+  () => import("../pages/admin/CompanySettingsPage"),
+);
 
 // Billing: Invoices & Purchase Orders
 const InvoicesPage = lazy(() => import("../pages/admin/invoices/InvoicesPage"));
@@ -366,6 +369,10 @@ const AppRoutes = () => {
           ------------------------------------------------------------- */}
 
             <Route path="/admin/settings" element={<SettingsPage />} />
+            <Route
+              path="/admin/company-settings"
+              element={<CompanySettingsPage />}
+            />
 
             {/* ------------------------------------------------------------
               NOTIFICATIONS

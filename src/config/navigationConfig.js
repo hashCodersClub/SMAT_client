@@ -102,6 +102,11 @@ export const navigationConfig = {
         title: "ACCOUNT",
         items: [
           {
+            name: "Company Settings",
+            path: "/admin/company-settings",
+            icon: FiBriefcase,
+          },
+          {
             name: "Settings",
             path: "/admin/settings",
             icon: FiSettings,
