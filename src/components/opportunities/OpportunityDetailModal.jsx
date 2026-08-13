@@ -82,9 +82,9 @@ const OpportunityDetailModal = ({
 
   const requirement =
     opportunity.requirementId || opportunity.requirementSnapshot || {};
-  const isExpired =
-    opportunity.status === "EXPIRED" ||
-    (opportunity.expiresAt && new Date(opportunity.expiresAt) <= new Date());
+  // No time-based expiry — see TrainerOpportunitiesPage.jsx for the same
+  // change and rationale. `EXPIRED` is kept only for legacy records.
+  const isExpired = opportunity.status === "EXPIRED";
 
   const handleActionClick = (actionStatus) => {
     if (actionStatus === "INTERESTED") {
@@ -190,30 +190,25 @@ const OpportunityDetailModal = ({
             </div>
           </div>
 
-          {/* Expiry Banner */}
-          {opportunity.expiresAt && (
-            <div
-              className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-xs font-bold ${
-                isExpired
-                  ? "border-red-200 bg-red-50 text-red-700"
-                  : "border-amber-200 bg-amber-50 text-amber-800"
-              }`}
-            >
+          {/* Expired Banner — only ever shown for legacy records that
+              were expired under the old time-based rule. New
+              opportunities never get an expiry deadline; they stay open
+              until the requirement is closed. */}
+          {isExpired && (
+            <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
               <span className="flex items-center gap-1.5">
                 <FiClock size={15} />
-                {isExpired
-                  ? "This opportunity expired on " +
-                    formatDate(opportunity.expiresAt)
-                  : "Response Deadline: " + formatDate(opportunity.expiresAt)}
+                This opportunity is no longer open.
               </span>
             </div>
           )}
 
-          {/* Phase C Response Form (if not expired & not selected/withdrawn/in demo stage) */}
+          {/* Phase C Response Form (if not expired & not selected/withdrawn/rejected/in demo stage) */}
           {!isExpired &&
             ![
               "SELECTED",
               "WITHDRAWN",
+              "REJECTED",
               "NOT_SELECTED",
               ...DEMO_STAGE_STATUSES,
             ].includes(opportunity.status) && (

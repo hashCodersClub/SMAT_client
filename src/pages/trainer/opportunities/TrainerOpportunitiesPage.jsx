@@ -405,9 +405,12 @@ const TrainerOpportunitiesPage = () => {
             const isResponded = ["INTERESTED", "MAYBE", "DECLINED"].includes(
               record.status,
             );
-            const isExpired =
-              record.status === "EXPIRED" ||
-              (record.expiresAt && new Date(record.expiresAt) <= new Date());
+            // No time-based expiry — an opportunity only closes once the
+            // requirement itself is locked to another trainer (status
+            // moves to REJECTED/NOT_SELECTED at that point) or this
+            // trainer withdraws. `EXPIRED` is kept only for any legacy
+            // records that were expired under the old 24-hour rule.
+            const isExpired = record.status === "EXPIRED";
 
             return (
               <div
@@ -487,12 +490,9 @@ const TrainerOpportunitiesPage = () => {
                         {formatDate(requirement.endDate)}
                       </span>
 
-                      {record.expiresAt && !isExpired && (
-                        <span className="flex items-center gap-1.5 text-amber-700 font-bold">
-                          <FiClock size={14} />
-                          Expires: {formatDate(record.expiresAt)}
-                        </span>
-                      )}
+                      {/* No deadline chip — opportunities no longer carry
+                          a response deadline; they stay open until the
+                          requirement is closed. */}
                     </div>
 
                     {/* Skill Tags */}
@@ -527,7 +527,12 @@ const TrainerOpportunitiesPage = () => {
                     </button>
 
                     {!isExpired &&
-                      !["SELECTED", "WITHDRAWN"].includes(record.status) && (
+                      ![
+                        "SELECTED",
+                        "WITHDRAWN",
+                        "REJECTED",
+                        "NOT_SELECTED",
+                      ].includes(record.status) && (
                         <div className="space-y-2 pt-2 border-t border-slate-100">
                           <div>
                             <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
