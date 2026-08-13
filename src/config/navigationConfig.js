@@ -11,6 +11,7 @@ import {
   FiZap,
   FiFileText,
   FiShoppingCart,
+  FiCompass,
 } from "react-icons/fi";
 
 /*
@@ -233,6 +234,11 @@ export const navigationConfig = {
             name: "Opportunities",
             path: "/trainer/opportunities",
             icon: FiClipboard,
+          },
+          {
+            name: "All Requirements",
+            path: "/trainer/requirements",
+            icon: FiCompass,
           },
           {
             name: "Assignments",

@@ -98,6 +98,31 @@ const requirementsApi = {
 
     return response.data;
   },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Trainer Portal: Browse Marketplace
+  |--------------------------------------------------------------------------
+  |
+  | GET  /requirements/browse
+  | POST /requirements/:id/interest
+  |
+  | Every trainer can browse every open requirement, not just the ones
+  | they were matched to. Backend strips vendor identity.
+  |--------------------------------------------------------------------------
+  */
+
+  browse: async (params = {}) => {
+    const response = await api.get("/requirements/browse", { params });
+
+    return response.data;
+  },
+
+  expressInterest: async (id) => {
+    const response = await api.post(`/requirements/${id}/interest`);
+
+    return response.data;
+  },
 };
 
 export default requirementsApi;

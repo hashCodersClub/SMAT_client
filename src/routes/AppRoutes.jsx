@@ -169,6 +169,9 @@ const TrainerAvailabilityPage = lazy(
 const TrainerOpportunitiesPage = lazy(
   () => import("../pages/trainer/opportunities/TrainerOpportunitiesPage"),
 );
+const TrainerAllRequirementsPage = lazy(
+  () => import("../pages/trainer/requirements/TrainerAllRequirementsPage"),
+);
 const TrainerAssignmentsPage = lazy(
   () => import("../pages/trainer/assignments/TrainerAssignmentsPage"),
 );
@@ -465,6 +468,11 @@ const AppRoutes = () => {
             <Route
               path="/trainer/opportunities"
               element={<TrainerOpportunitiesPage />}
+            />
+
+            <Route
+              path="/trainer/requirements"
+              element={<TrainerAllRequirementsPage />}
             />
 
             <Route
