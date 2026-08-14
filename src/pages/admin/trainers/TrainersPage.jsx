@@ -19,9 +19,13 @@ import {
   FiPhone,
   FiMoreVertical,
   FiStar,
+  FiSend,
+  FiAlertTriangle,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 import trainersApi from "../../../api/trainersApi";
+import trainerInvitationApi from "../../../api/trainerInvitationApi";
 import { mapTrainerFromApi } from "../../../utils/trainerAdapter";
 
 // ---------- Custom Half-Star Component ----------
@@ -53,6 +57,12 @@ const TrainersPage = () => {
   const [location, setLocation] = useState("");
   const [availability, setAvailability] = useState("");
   const [status, setStatus] = useState("");
+  const [invitationStatus, setInvitationStatus] = useState("");
+
+  // ---------- Invitation Resend State ----------
+  const [resendingId, setResendingId] = useState(null);
+  const [bulkResending, setBulkResending] = useState(false);
+  const [bulkResendMessage, setBulkResendMessage] = useState("");
 
   // ---------- Pagination ----------
   const [currentPage, setCurrentPage] = useState(1);
@@ -97,6 +107,56 @@ const TrainersPage = () => {
     }
   };
 
+  // ---------- Resend Single Invitation ----------
+  const handleResendInvite = async (trainerId) => {
+    try {
+      setResendingId(trainerId);
+      setError("");
+      await trainerInvitationApi.invite(trainerId);
+      setTrainers((prev) =>
+        prev.map((t) =>
+          t.id === trainerId
+            ? {
+                ...t,
+                invitationStatus: "PENDING",
+                portalEnabled: false,
+              }
+            : t,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to resend invitation:", err);
+      setError(err.response?.data?.message || "Unable to resend invitation.");
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  // ---------- Bulk Resend Expired Invitations ----------
+  const handleBulkResendExpired = async () => {
+    try {
+      setBulkResending(true);
+      setError("");
+      setBulkResendMessage("");
+      const result = await trainerInvitationApi.bulkResendExpired();
+      setBulkResendMessage(result.message);
+      if (result.sent > 0) {
+        setTrainers((prev) =>
+          prev.map((t) =>
+            t.invitationStatus === "EXPIRED"
+              ? { ...t, invitationStatus: "PENDING" }
+              : t,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("Failed to bulk resend invitations:", err);
+      setError(err.response?.data?.message || "Unable to resend invitations.");
+    } finally {
+      setBulkResending(false);
+    }
+  };
+
   // ---------- Derived Data ----------
   const skills = useMemo(
     () => [...new Set(trainers.flatMap((t) => t.skills || []))].sort(),
@@ -104,6 +164,10 @@ const TrainersPage = () => {
   );
   const locations = useMemo(
     () => [...new Set(trainers.map((t) => t.city).filter(Boolean))].sort(),
+    [trainers],
+  );
+  const expiredInvitationCount = useMemo(
+    () => trainers.filter((t) => t.invitationStatus === "EXPIRED").length,
     [trainers],
   );
 
@@ -129,16 +193,27 @@ const TrainersPage = () => {
       const matchesAvailability =
         !availability || trainer.availability === availability;
       const matchesStatus = !status || trainer.status === status;
+      const matchesInvitationStatus =
+        !invitationStatus || trainer.invitationStatus === invitationStatus;
 
       return (
         matchesSearch &&
         matchesSkill &&
         matchesLocation &&
         matchesAvailability &&
-        matchesStatus
+        matchesStatus &&
+        matchesInvitationStatus
       );
     });
-  }, [trainers, search, skill, location, availability, status]);
+  }, [
+    trainers,
+    search,
+    skill,
+    location,
+    availability,
+    status,
+    invitationStatus,
+  ]);
 
   // ---------- Pagination ----------
   const totalPages = Math.max(
@@ -163,6 +238,7 @@ const TrainersPage = () => {
     setLocation("");
     setAvailability("");
     setStatus("");
+    setInvitationStatus("");
     setCurrentPage(1);
   };
 
@@ -226,6 +302,21 @@ const TrainersPage = () => {
             <FiUpload className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5" />
             <span>Import CSV</span>
           </button>
+          {expiredInvitationCount > 0 && (
+            <button
+              onClick={handleBulkResendExpired}
+              disabled={bulkResending}
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-medium text-amber-700 backdrop-blur-sm transition-all hover:bg-amber-500/20 disabled:opacity-60 dark:text-amber-400"
+              title="Resend invitations to every trainer whose invite link has lapsed"
+            >
+              {bulkResending ? (
+                <FiRefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <FiSend className="h-4 w-4" />
+              )}
+              <span>Resend Expired ({expiredInvitationCount})</span>
+            </button>
+          )}
           <button
             onClick={() => navigate("/admin/trainers/add")}
             className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:scale-105 hover:shadow-blue-500/50 hover:shadow-xl active:scale-95"
@@ -236,6 +327,24 @@ const TrainersPage = () => {
           </button>
         </div>
       </div>
+
+      {/* ============================================================
+          BULK RESEND CONFIRMATION
+      ============================================================ */}
+      {bulkResendMessage && (
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 backdrop-blur-sm">
+          <FiSend className="h-5 w-5 shrink-0 text-emerald-500" />
+          <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+            {bulkResendMessage}
+          </p>
+          <button
+            onClick={() => setBulkResendMessage("")}
+            className="ml-auto text-emerald-500/70 hover:text-emerald-500"
+          >
+            <FiXCircle className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* ============================================================
           ERROR MESSAGE
@@ -321,8 +430,26 @@ const TrainersPage = () => {
             ))}
           </select>
 
+          {/* Invitation status filter */}
+          <select
+            value={invitationStatus}
+            onChange={(e) => updateFilter(setInvitationStatus)(e.target.value)}
+            className="rounded-lg border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-500 outline-none transition-all focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:bg-white/5 dark:text-slate-400"
+          >
+            <option value="">All Invitation Statuses</option>
+            <option value="NOT_INVITED">Not Invited</option>
+            <option value="PENDING">Invite Pending</option>
+            <option value="EXPIRED">Invite Expired</option>
+            <option value="ACTIVATED">Activated</option>
+          </select>
+
           {/* Clear filters */}
-          {(search || skill || location || availability || status) && (
+          {(search ||
+            skill ||
+            location ||
+            availability ||
+            status ||
+            invitationStatus) && (
             <button
               onClick={resetFilters}
               className="rounded-lg bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-400 transition hover:bg-rose-500/20"
@@ -369,6 +496,8 @@ const TrainersPage = () => {
                     onDelete={handleDeleteTrainer}
                     deletingId={deletingId}
                     onAssign={handleAssignTrainer}
+                    onResendInvite={handleResendInvite}
+                    resendingId={resendingId}
                   />
                 ))
               ) : (
@@ -565,7 +694,33 @@ const TrainerStats = ({
 // COMPONENT: Trainer Row (Table Row) - FIXED
 // ============================================================
 
-const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
+const INVITATION_BADGES = {
+  ACTIVATED: {
+    label: "Portal Active",
+    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  },
+  PENDING: {
+    label: "Invite Pending",
+    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  },
+  EXPIRED: {
+    label: "Invite Expired",
+    className: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  },
+  NOT_INVITED: {
+    label: "Not Invited",
+    className: "bg-slate-500/10 text-slate-500 dark:text-slate-400",
+  },
+};
+
+const TrainerRow = ({
+  trainer,
+  onDelete,
+  deletingId,
+  onAssign,
+  onResendInvite,
+  resendingId,
+}) => {
   const navigate = useNavigate(); // ✅ FIX: added this line
   const [showMenu, setShowMenu] = useState(false);
 
@@ -625,15 +780,18 @@ const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
               <p className="font-medium text-slate-900 dark:text-white">
                 {trainer.name}
               </p>
-              {trainer.portalEnabled ? (
-                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                  Portal Active
-                </span>
-              ) : (
-                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                  Invite Pending
-                </span>
-              )}
+              {(() => {
+                const badge =
+                  INVITATION_BADGES[trainer.invitationStatus] ||
+                  INVITATION_BADGES.NOT_INVITED;
+                return (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badge.className}`}
+                  >
+                    {badge.label}
+                  </span>
+                );
+              })()}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {trainer.email}
@@ -680,6 +838,28 @@ const TrainerRow = ({ trainer, onDelete, deletingId, onAssign }) => {
       </td>
       <td className="px-4 py-3 text-right">
         <div className="relative flex items-center justify-end gap-1">
+          {trainer.invitationStatus !== "ACTIVATED" && trainer.email && (
+            <button
+              onClick={() => onResendInvite(trainer.id)}
+              disabled={resendingId === trainer.id}
+              className="rounded-lg p-1.5 text-amber-500 transition hover:bg-amber-500/10 disabled:opacity-40"
+              title={
+                trainer.invitationStatus === "EXPIRED"
+                  ? "Resend expired invitation"
+                  : trainer.invitationStatus === "PENDING"
+                    ? "Resend invitation"
+                    : "Send invitation"
+              }
+            >
+              {resendingId === trainer.id ? (
+                <FiRefreshCw size={16} className="animate-spin" />
+              ) : trainer.invitationStatus === "EXPIRED" ? (
+                <FiAlertTriangle size={16} />
+              ) : (
+                <FiSend size={16} />
+              )}
+            </button>
+          )}
           <button
             onClick={() => onAssign(trainer)}
             className="rounded-lg p-1.5 text-indigo-500 transition hover:bg-indigo-500/10"

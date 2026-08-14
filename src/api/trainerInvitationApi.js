@@ -17,6 +17,18 @@ const trainerInvitationApi = {
 
   /*
   |--------------------------------------------------------------------------
+  | Bulk Resend Expired - Admin
+  |--------------------------------------------------------------------------
+  */
+
+  bulkResendExpired: async () => {
+    const response = await api.post("/trainer-invitations/bulk-resend-expired");
+
+    return response.data;
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Validate Invitation - Public
   |--------------------------------------------------------------------------
   */

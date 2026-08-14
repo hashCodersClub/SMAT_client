@@ -195,9 +195,15 @@ export const mapTrainerFromApi = (trainer = {}) => {
 
     portalEnabled: Boolean(
       trainer.userId ||
-        trainer.portalEnabled ||
-        (trainer.onboardingStatus && trainer.onboardingStatus !== "INVITED"),
+      trainer.portalEnabled ||
+      (trainer.onboardingStatus && trainer.onboardingStatus !== "INVITED"),
     ),
+
+    invitationStatus: trainer.invitationStatus || "NOT_INVITED",
+
+    invitationExpiresAt: trainer.invitationExpiresAt || null,
+
+    invitationRemindersSentCount: trainer.invitationRemindersSentCount || 0,
 
     userId: trainer.userId || null,
 
