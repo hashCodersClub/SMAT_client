@@ -13,14 +13,25 @@ import { useNavigate } from "react-router-dom";
 import assignmentsApi from "../../../api/assignmentsApi";
 
 const statusStyles = {
-  PENDING_CONFIRMATION: "bg-amber-50 text-amber-700",
-  ASSIGNMENT_CONFIRMED: "bg-emerald-50 text-emerald-700",
-  ASSIGNMENT_REJECTED: "bg-red-50 text-red-700",
-  PROPOSED: "bg-violet-50 text-violet-700",
-  CONFIRMED: "bg-blue-50 text-blue-700",
-  ACTIVE: "bg-amber-50 text-amber-700",
-  COMPLETED: "bg-emerald-50 text-emerald-700",
-  CANCELLED: "bg-red-50 text-red-700",
+  PENDING_CONFIRMATION: "bg-amber-50 text-amber-700 border-amber-200",
+  ASSIGNMENT_CONFIRMED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  ASSIGNMENT_REJECTED: "bg-red-50 text-red-700 border-red-200",
+  PROPOSED: "bg-violet-50 text-violet-700 border-violet-200",
+  CONFIRMED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  ACTIVE: "bg-amber-50 text-amber-700 border-amber-200",
+  COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  CANCELLED: "bg-red-50 text-red-700 border-red-200",
+};
+
+const statusLabels = {
+  PENDING_CONFIRMATION: "Pending Confirmation",
+  ASSIGNMENT_CONFIRMED: "Assignment Confirmed",
+  ASSIGNMENT_REJECTED: "Rejected",
+  PROPOSED: "Proposed",
+  CONFIRMED: "Confirmed",
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
 };
 
 const formatDate = (value) => {
@@ -377,12 +388,12 @@ const AssignmentsPage = () => {
 
                       <td className="px-5 py-4">
                         <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
                             statusStyles[assignment.status] ||
-                            "bg-slate-100 text-slate-600"
+                            "bg-slate-100 text-slate-600 border-slate-200"
                           }`}
                         >
-                          {assignment.status}
+                          {statusLabels[assignment.status] || assignment.status}
                         </span>
                       </td>
 

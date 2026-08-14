@@ -21,10 +21,22 @@ import AssignmentFeedbackCard from "../../../components/admin/assignments/Assign
 
 const statusStyles = {
   PROPOSED: "bg-violet-50 text-violet-700 border-violet-200",
-  CONFIRMED: "bg-blue-50 text-blue-700 border-blue-200",
+  CONFIRMED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  ASSIGNMENT_CONFIRMED: "bg-emerald-50 text-emerald-700 border-emerald-200",
   ACTIVE: "bg-amber-50 text-amber-700 border-amber-200",
   COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
   CANCELLED: "bg-red-50 text-red-700 border-red-200",
+  ASSIGNMENT_REJECTED: "bg-red-50 text-red-700 border-red-200",
+};
+
+const statusLabels = {
+  PROPOSED: "Proposed",
+  CONFIRMED: "Confirmed",
+  ASSIGNMENT_CONFIRMED: "Assignment Confirmed",
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  ASSIGNMENT_REJECTED: "Rejected",
 };
 
 const formatDate = (value) => {
@@ -320,7 +332,7 @@ const AssignmentDetailsPage = () => {
                 "border-slate-200 bg-slate-100 text-slate-600"
               }`}
             >
-              {assignment.status}
+              {statusLabels[assignment.status] || assignment.status}
             </span>
           </div>
 
