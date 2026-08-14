@@ -12,6 +12,8 @@ import {
 } from "react-icons/fi";
 import downloadDocumentPdf from "../../utils/downloadDocumentPdf";
 import PaymentWorkflowTracker from "./PaymentWorkflowTracker";
+import InteractiveCreatePOModal from "./InteractiveCreatePOModal";
+import InteractiveCreateInvoiceModal from "./InteractiveCreateInvoiceModal";
 
 const CommercialWorkspaceTab = ({
   requirement = {},
@@ -23,7 +25,11 @@ const CommercialWorkspaceTab = ({
   onCreateInvoice,
   onRecordClientPayment,
   onReleaseTrainerPayout,
+  onReloadCommercials,
 }) => {
+  const [showPOModal, setShowPOModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+
   const isInternal = ["ADMIN", "SUPER_ADMIN", "OPERATIONS"].includes(userRole);
   const isVendor = userRole === "VENDOR";
   const isTrainer = userRole === "TRAINER";
@@ -70,20 +76,20 @@ const CommercialWorkspaceTab = ({
           </div>
 
           <div className="flex flex-wrap gap-2 pt-2 border-t border-amber-200/60">
-            {isInternal && onCreatePO && (
+            {isInternal && (
               <button
                 type="button"
-                onClick={onCreatePO}
+                onClick={() => (onCreatePO ? onCreatePO() : setShowPOModal(true))}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-extrabold text-white shadow-md hover:bg-slate-800 transition"
               >
-                <FiPlus size={14} /> Auto-Generate PO for {selectedCandidate.trainerId?.name || "Trainer"}
+                <FiPlus size={14} /> Auto-Generate PO for {selectedCandidate?.trainerId?.name || "Trainer"}
               </button>
             )}
 
-            {isInternal && onCreateInvoice && (
+            {isInternal && (
               <button
                 type="button"
-                onClick={onCreateInvoice}
+                onClick={() => (onCreateInvoice ? onCreateInvoice() : setShowInvoiceModal(true))}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-extrabold text-slate-800 hover:bg-slate-50 transition"
               >
                 <FiPlus size={14} /> Generate Client Invoice
@@ -92,6 +98,7 @@ const CommercialWorkspaceTab = ({
           </div>
         </div>
       )}
+
       {/* 1. Executive Summary Panel (Role-Based Isolation) */}
       {isInternal && (
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -189,13 +196,13 @@ const CommercialWorkspaceTab = ({
             <p className="text-xs font-medium text-slate-500">Official commercial work orders issued for this requirement.</p>
           </div>
 
-          {isInternal && onCreatePO && (
+          {isInternal && (
             <button
               type="button"
-              onClick={onCreatePO}
+              onClick={() => setShowPOModal(true)}
               className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition"
             >
-              <FiPlus size={14} /> Auto-Generate PO
+              <FiPlus size={14} /> Review & Issue PO
             </button>
           )}
         </div>
@@ -213,7 +220,7 @@ const CommercialWorkspaceTab = ({
                   <div className="flex gap-3 text-xs font-semibold text-slate-500 mt-1">
                     <span>Vendor: {po.vendorId?.name || "Corporate Vendor"}</span>
                     <span>Trainer: {po.trainerId?.name || "Assigned Trainer"}</span>
-                    <span>Amount: ₹{Number(po.totalAmount || 0).toLocaleString("en-IN")}</span>
+                    <span>Amount: ₹{Number(po.totalAmount || po.grandTotal || 0).toLocaleString("en-IN")}</span>
                   </div>
                 </div>
 
@@ -238,13 +245,13 @@ const CommercialWorkspaceTab = ({
             <p className="text-xs font-medium text-slate-500">Client billing and trainer payout invoices.</p>
           </div>
 
-          {isInternal && onCreateInvoice && (
+          {isInternal && (
             <button
               type="button"
-              onClick={onCreateInvoice}
+              onClick={() => setShowInvoiceModal(true)}
               className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition"
             >
-              <FiPlus size={14} /> Generate Invoice
+              <FiPlus size={14} /> Review & Issue Invoice
             </button>
           )}
         </div>
@@ -269,7 +276,7 @@ const CommercialWorkspaceTab = ({
                       </span>
                     </div>
                     <div className="flex gap-3 text-xs font-semibold text-slate-500 mt-1">
-                      <span>Total: ₹{Number(inv.totalAmount || 0).toLocaleString("en-IN")}</span>
+                      <span>Total: ₹{Number(inv.totalAmount || inv.grandTotal || 0).toLocaleString("en-IN")}</span>
                       <span>Status: {inv.status || "DRAFT"}</span>
                     </div>
                   </div>
@@ -287,6 +294,28 @@ const CommercialWorkspaceTab = ({
           </div>
         )}
       </div>
+
+      {/* Interactive Modals */}
+      <InteractiveCreatePOModal
+        isOpen={showPOModal}
+        onClose={() => setShowPOModal(false)}
+        requirement={requirement}
+        selectedCandidate={selectedCandidate}
+        onSuccess={() => {
+          if (onReloadCommercials) onReloadCommercials();
+        }}
+      />
+
+      <InteractiveCreateInvoiceModal
+        isOpen={showInvoiceModal}
+        onClose={() => setShowInvoiceModal(false)}
+        requirement={requirement}
+        selectedCandidate={selectedCandidate}
+        purchaseOrders={purchaseOrders}
+        onSuccess={() => {
+          if (onReloadCommercials) onReloadCommercials();
+        }}
+      />
     </div>
   );
 };

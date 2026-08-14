@@ -715,8 +715,7 @@ const RequirementDetailsPage = () => {
           purchaseOrders={purchaseOrders}
           invoices={invoices}
           userRole="ADMIN"
-          onCreatePO={() => navigate(`/admin/purchase-orders/new?requirementId=${id}`)}
-          onCreateInvoice={() => navigate(`/admin/invoices/new?requirementId=${id}`)}
+          onReloadCommercials={loadCommercialData}
         />
       )}
 
