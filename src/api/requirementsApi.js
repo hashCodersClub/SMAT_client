@@ -118,8 +118,8 @@ const requirementsApi = {
     return response.data;
   },
 
-  expressInterest: async (id) => {
-    const response = await api.post(`/requirements/${id}/interest`);
+  expressInterest: async (id, data = {}) => {
+    const response = await api.post(`/requirements/${id}/interest`, data);
 
     return response.data;
   },

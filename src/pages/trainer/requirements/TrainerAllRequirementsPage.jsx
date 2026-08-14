@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 
 import requirementsApi from "../../../api/requirementsApi";
+import trainersApi from "../../../api/trainersApi";
 
 const MODE_LABELS = {
   ONLINE: "Online",
@@ -87,6 +88,70 @@ const TrainerAllRequirementsPage = () => {
   const [interestLoadingId, setInterestLoadingId] = useState("");
   const [sentInterestIds, setSentInterestIds] = useState(new Set());
   const [actionError, setActionError] = useState("");
+
+  const [trainerProfile, setTrainerProfile] = useState(null);
+  const [modalRequirement, setModalRequirement] = useState(null);
+  const [quotedRateType, setQuotedRateType] = useState("PER_DAY");
+  const [quotedRate, setQuotedRate] = useState("");
+  const [responseNote, setResponseNote] = useState("");
+  const [submittingInterest, setSubmittingInterest] = useState(false);
+
+  useEffect(() => {
+    trainersApi
+      .getMyProfile()
+      .then((res) => {
+        if (res?.trainer) setTrainerProfile(res.trainer);
+      })
+      .catch((err) => console.error("Failed to load trainer profile:", err));
+  }, []);
+
+  const openInterestModal = (req) => {
+    setModalRequirement(req);
+    const rc = trainerProfile?.rateCard || trainerProfile || {};
+    const defaultType = req.mode === "ONLINE" ? "PER_HOUR" : "PER_DAY";
+    setQuotedRateType(defaultType);
+
+    let rateVal = "";
+    if (defaultType === "PER_HOUR") rateVal = rc.hourlyRate ?? "";
+    else if (defaultType === "PER_DAY") rateVal = rc.dailyRate ?? "";
+    else if (defaultType === "PER_BATCH") rateVal = rc.batchRate ?? "";
+    else if (defaultType === "FIXED") rateVal = rc.fixedProjectRate ?? "";
+
+    setQuotedRate(rateVal !== "" ? String(rateVal) : "");
+    setResponseNote("");
+  };
+
+  const handleRateTypeChange = (type) => {
+    setQuotedRateType(type);
+    const rc = trainerProfile?.rateCard || trainerProfile || {};
+    if (type === "PER_HOUR") setQuotedRate(rc.hourlyRate != null ? String(rc.hourlyRate) : "");
+    else if (type === "PER_DAY") setQuotedRate(rc.dailyRate != null ? String(rc.dailyRate) : "");
+    else if (type === "PER_BATCH") setQuotedRate(rc.batchRate != null ? String(rc.batchRate) : "");
+    else if (type === "FIXED") setQuotedRate(rc.fixedProjectRate != null ? String(rc.fixedProjectRate) : "");
+  };
+
+  const handleConfirmInterest = async () => {
+    if (!modalRequirement) return;
+    try {
+      setActionError("");
+      setSubmittingInterest(true);
+      await requirementsApi.expressInterest(modalRequirement._id, {
+        quotedRate: quotedRate !== "" ? Number(quotedRate) : undefined,
+        quotedRateType: quotedRateType,
+        trainerResponseNote: responseNote,
+      });
+      setSentInterestIds((prev) => new Set(prev).add(modalRequirement._id));
+      setModalRequirement(null);
+    } catch (err) {
+      console.error("Failed to submit rate card interest:", err);
+      setActionError(
+        err.response?.data?.message ||
+          "Unable to send your rate quote right now. Please try again.",
+      );
+    } finally {
+      setSubmittingInterest(false);
+    }
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -362,16 +427,11 @@ const TrainerAllRequirementsPage = () => {
                   ) : isStillHiring ? (
                     <button
                       type="button"
-                      disabled={interestLoadingId === requirement._id}
-                      onClick={() => handleExpressInterest(requirement._id)}
-                      className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-md shadow-slate-900/20 transition hover:bg-slate-800 disabled:opacity-60"
+                      onClick={() => openInterestModal(requirement)}
+                      className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-md shadow-slate-900/20 transition hover:bg-slate-800"
                     >
-                      {interestLoadingId === requirement._id ? (
-                        <FiRefreshCw size={14} className="animate-spin" />
-                      ) : (
-                        <FiSend size={14} />
-                      )}
-                      Notify Interest
+                      <FiDollarSign size={14} />
+                      Show Interest & Submit Rate
                     </button>
                   ) : (
                     <span className="text-xs font-bold text-slate-400">
@@ -407,6 +467,111 @@ const TrainerAllRequirementsPage = () => {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* Rate Card & Interest Submission Modal */}
+      {modalRequirement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Express Interest & Commercial Quote</span>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  {modalRequirement.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalRequirement(null)}
+                className="rounded-full p-1 text-slate-400 hover:text-slate-700"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Select Rate Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: "PER_HOUR", label: "Per Hour Rate" },
+                    { key: "PER_DAY", label: "Per Day Rate" },
+                    { key: "PER_BATCH", label: "Per Batch Rate" },
+                    { key: "FIXED", label: "Fixed Project Cost" },
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => handleRateTypeChange(item.key)}
+                      className={`rounded-xl border p-2.5 text-xs font-bold transition text-left ${
+                        quotedRateType === item.key
+                          ? "border-indigo-600 bg-indigo-50/80 text-indigo-900 shadow-xs"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">
+                  Your Quoted Rate (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-sm font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    value={quotedRate}
+                    onChange={(e) => setQuotedRate(e.target.value)}
+                    placeholder="Enter rate amount"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-8 pr-4 py-2 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500 focus:bg-white"
+                  />
+                </div>
+                <p className="mt-1 text-[11px] font-medium text-slate-400">
+                  Auto-prefilled from your profile rate card. You may customize it for this specific requirement.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">
+                  Note to Operations Team / Client (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={responseNote}
+                  onChange={(e) => setResponseNote(e.target.value)}
+                  placeholder="e.g. Available for full schedule. Rate includes hands-on labs..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={submittingInterest}
+                onClick={handleConfirmInterest}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white shadow-md shadow-slate-900/20 hover:bg-slate-800 transition disabled:opacity-50"
+              >
+                {submittingInterest ? (
+                  <FiRefreshCw size={14} className="animate-spin" />
+                ) : (
+                  <FiSend size={14} />
+                )}
+                {submittingInterest ? "Submitting…" : "Submit Rate & Express Interest"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalRequirement(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
