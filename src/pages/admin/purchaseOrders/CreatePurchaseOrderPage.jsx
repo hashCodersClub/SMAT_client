@@ -6,21 +6,19 @@ import {
   FiTrash2,
   FiSave,
   FiAlertCircle,
-  FiZap,
   FiFileText,
 } from "react-icons/fi";
 
 import Button from "../../../components/ui/Button";
-import invoicesApi from "../../../api/invoicesApi";
+import purchaseOrdersApi from "../../../api/purchaseOrdersApi";
 import api from "../../../api/axios";
 
 const emptyItem = () => ({
-  description: "Corporate Training Services",
+  description: "Corporate Training Engagement",
   hsnSacCode: "998311",
   quantity: 1,
   unit: "Days",
   rate: 0,
-  discountPercent: 0,
   taxPercent: 18,
 });
 
@@ -32,40 +30,47 @@ const money = (value, currency = "INR") => {
   })}`;
 };
 
-const CreateVendorInvoicePage = () => {
+const CreatePurchaseOrderPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const requirementId = searchParams.get("requirementId") || "";
-  const initialAssignmentId = searchParams.get("assignmentId") || "";
-  const sourceInvoiceId = searchParams.get("fromTrainerInvoice") || "";
+  const assignmentId = searchParams.get("assignmentId") || "";
+  const initialVendorId = searchParams.get("vendorId") || "";
+  const initialTrainerId = searchParams.get("trainerId") || "";
 
-  const [assignmentId, setAssignmentId] = useState(initialAssignmentId);
+  // Data sources for dropdowns/prefill
+  const [requirement, setRequirement] = useState(null);
   const [vendors, setVendors] = useState([]);
-  const [selectedVendorId, setSelectedVendorId] = useState("");
+  const [trainers, setTrainers] = useState([]);
 
-  const [invoiceType, setInvoiceType] = useState("TAX_INVOICE");
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
-  const [dueDate, setDueDate] = useState("");
-  const [placeOfSupply, setPlaceOfSupply] = useState("Haryana (06)");
+  // Selected Entities
+  const [selectedVendorId, setSelectedVendorId] = useState(initialVendorId);
+  const [selectedTrainerId, setSelectedTrainerId] = useState(initialTrainerId);
+
+  // Document Fields
+  const [poDate, setPoDate] = useState(new Date().toISOString().slice(0, 10));
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState("");
   const [currency, setCurrency] = useState("INR");
   const [taxType, setTaxType] = useState("INTRA_STATE");
 
-  const [billFrom, setBillFrom] = useState({
+  // Party Details
+  const [buyer, setBuyer] = useState({
     name: "Trainexus Edtech Platform",
     address: "Level 4, Commercial Hub, Cyber City",
     city: "Gurugram",
     state: "Haryana",
-    pincode: "122002",
     country: "India",
+    pincode: "122002",
     gstin: "06AAACT0000A1Z5",
-    pan: "AAACT0000A",
     email: "billing@trainexus.in",
     phone: "+91 98765 43210",
   });
 
-  const [billTo, setBillTo] = useState({
+  const [supplier, setSupplier] = useState({
     name: "",
+    contactPerson: "",
     address: "",
     city: "",
     state: "",
@@ -75,124 +80,129 @@ const CreateVendorInvoicePage = () => {
     phone: "",
   });
 
-  const [bankDetails, setBankDetails] = useState({
-    accountName: "Trainexus Technologies Pvt Ltd",
-    accountNumber: "987654321098",
-    bankName: "HDFC Bank",
-    branch: "Cyber City Branch",
-    ifscCode: "HDFC0001234",
-    upiId: "trainexus@hdfcbank",
-  });
-
+  // Line items
   const [items, setItems] = useState([emptyItem()]);
   const [shippingCharges, setShippingCharges] = useState(0);
+  const [otherCharges, setOtherCharges] = useState(0);
+  const [paymentTerms, setPaymentTerms] = useState(
+    "100% payment within 30 days of invoice, subject to satisfactory delivery."
+  );
   const [termsAndConditions, setTermsAndConditions] = useState(
-    "1. Payment is due within agreed credit period from invoice date.\n2. Quote invoice number in all payment correspondence.\n3. Interest @ 18% p.a. will be charged on overdue amounts."
+    "1. Please acknowledge receipt of this Purchase Order.\n2. Goods/services must conform to specifications.\n3. PO number must be referenced on the invoice."
   );
   const [notes, setNotes] = useState("");
-  const [authorizedSignatory, setAuthorizedSignatory] = useState("Authorized Signatory");
+  const [authorizedBy, setAuthorizedBy] = useState("Authorized Signatory");
 
-  const [prefilling, setPrefilling] = useState(!!sourceInvoiceId);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Load Vendor list & Context
+  // Load context options
   useEffect(() => {
     let active = true;
 
-    const loadContext = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const vRes = await api.get("/vendors").catch(() => ({ data: [] }));
-        if (active) setVendors(vRes.data?.vendors || vRes.data || []);
+        const [vRes, tRes] = await Promise.all([
+          api.get("/vendors").catch(() => ({ data: [] })),
+          api.get("/trainers").catch(() => ({ data: [] })),
+        ]);
+
+        if (active) {
+          setVendors(vRes.data?.vendors || vRes.data || []);
+          setTrainers(tRes.data?.trainers || tRes.data || []);
+        }
 
         if (requirementId) {
           const reqRes = await api.get(`/requirements/${requirementId}`);
           if (active && reqRes.data) {
+            setRequirement(reqRes.data);
             const reqData = reqRes.data;
-            if (reqData.vendorId) {
-              const vObj = reqData.vendorId;
-              setSelectedVendorId(vObj._id || vObj);
-              setBillTo({
-                name: vObj.companyName || vObj.name || "",
-                address: vObj.address || "",
-                city: vObj.city || "",
-                state: vObj.state || "",
-                pincode: vObj.pincode || "",
-                gstin: vObj.gstNumber || vObj.gstin || "",
-                email: vObj.contactEmail || vObj.email || "",
-                phone: vObj.contactPhone || vObj.phone || "",
-              });
-            }
 
-            // Find assignment if available
-            const assignRes = await api.get(`/assignments?requirement=${requirementId}`).catch(() => ({ data: { assignments: [] } }));
-            const assignList = assignRes.data?.assignments || assignRes.data || [];
-            if (assignList.length > 0) {
-              setAssignmentId(assignList[0]._id);
-            }
-
+            const defaultRate = Number(reqData.budget) || 0;
             setItems([
               {
-                description: `Client Training Invoice - ${reqData.title}`,
+                description: `Corporate Training - ${reqData.title || "Engagement"}`,
                 hsnSacCode: "998311",
                 quantity: reqData.durationDays || 1,
                 unit: "Days",
-                rate: Number(reqData.budget) || 0,
-                discountPercent: 0,
+                rate: defaultRate,
                 taxPercent: 18,
               },
             ]);
+
+            if (reqData.vendorId) {
+              const vId = reqData.vendorId._id || reqData.vendorId;
+              setSelectedVendorId(vId);
+            }
+
+            const shortlisted = reqData.candidateMatches?.find(
+              (c) => c.selectionStatus === "SHORTLISTED" || c.selectionStatus === "SELECTED" || c.selectionStatus === "ONBOARDED"
+            );
+            if (shortlisted?.trainerId) {
+              const trId = shortlisted.trainerId._id || shortlisted.trainerId;
+              setSelectedTrainerId(trId);
+
+              const trObj = shortlisted.trainerId;
+              if (trObj && trObj.name) {
+                setSupplier({
+                  name: trObj.name || "",
+                  contactPerson: trObj.name || "",
+                  address: trObj.address || "",
+                  city: trObj.city || "",
+                  state: trObj.state || "",
+                  pincode: trObj.pincode || "",
+                  gstin: trObj.gstin || "",
+                  email: trObj.email || "",
+                  phone: trObj.phone || "",
+                });
+              }
+
+              if (shortlisted.quotedRate || shortlisted.trainerQuotedRate) {
+                const trRate = Number(shortlisted.trainerQuotedRate || shortlisted.quotedRate);
+                setItems([
+                  {
+                    description: `Corporate Training - ${reqData.title || "Engagement"}`,
+                    hsnSacCode: "998311",
+                    quantity: reqData.durationDays || 1,
+                    unit: "Days",
+                    rate: trRate,
+                    taxPercent: 18,
+                  },
+                ]);
+              }
+            }
           }
         }
       } catch (err) {
-        console.error("Failed to load context:", err);
+        console.error("Failed to load initial context:", err);
       } finally {
         if (active) setLoading(false);
       }
     };
 
-    loadContext();
+    loadData();
 
     return () => {
       active = false;
     };
   }, [requirementId]);
 
-  // Handle Trainer Invoice Prefill
-  useEffect(() => {
-    if (!sourceInvoiceId) return;
-
-    setPrefilling(true);
-    invoicesApi
-      .prefillVendorInvoice(sourceInvoiceId)
-      .then((draft) => {
-        if (draft.billTo?.name) setBillTo((prev) => ({ ...prev, ...draft.billTo }));
-        if (draft.items?.length > 0) setItems(draft.items);
-        if (draft.notes) setNotes(draft.notes);
-        if (draft.currency) setCurrency(draft.currency);
-      })
-      .catch((err) => {
-        console.error("Failed to prefill from trainer invoice:", err);
-        setError("Could not auto-fill from the trainer invoice — you can edit manually.");
-      })
-      .finally(() => setPrefilling(false));
-  }, [sourceInvoiceId]);
-
-  const handleVendorSelect = (vId) => {
-    setSelectedVendorId(vId);
-    const v = vendors.find((vendor) => (vendor._id || vendor.id) === vId);
-    if (v) {
-      setBillTo({
-        name: v.companyName || v.name || "",
-        address: v.address || "",
-        city: v.city || "",
-        state: v.state || "",
-        pincode: v.pincode || "",
-        gstin: v.gstNumber || v.gstin || "",
-        email: v.contactEmail || v.email || "",
-        phone: v.contactPhone || v.phone || "",
+  const handleTrainerChange = (trId) => {
+    setSelectedTrainerId(trId);
+    const tr = trainers.find((t) => (t._id || t.id) === trId);
+    if (tr) {
+      setSupplier({
+        name: tr.name || "",
+        contactPerson: tr.name || "",
+        address: tr.address || "",
+        city: tr.city || "",
+        state: tr.state || "",
+        pincode: tr.pincode || "",
+        gstin: tr.gstin || "",
+        email: tr.email || "",
+        phone: tr.phone || "",
       });
     }
   };
@@ -206,17 +216,12 @@ const CreateVendorInvoicePage = () => {
 
   const totals = useMemo(() => {
     let subtotal = 0;
-    let totalDiscount = 0;
     let totalTax = 0;
 
     items.forEach((item) => {
       const base = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
-      const discount = base * ((Number(item.discountPercent) || 0) / 100);
-      const taxable = base - discount;
-      const tax = taxable * ((Number(item.taxPercent) || 0) / 100);
-
+      const tax = base * ((Number(item.taxPercent) || 0) / 100);
       subtotal += base;
-      totalDiscount += discount;
       totalTax += tax;
     });
 
@@ -231,18 +236,23 @@ const CreateVendorInvoicePage = () => {
       sgst = totalTax / 2;
     }
 
-    const preRound = subtotal - totalDiscount + totalTax + Number(shippingCharges || 0);
+    const preRound = subtotal + totalTax + Number(shippingCharges || 0) + Number(otherCharges || 0);
     const grandTotal = Math.round(preRound);
     const roundOff = Math.round((grandTotal - preRound) * 100) / 100;
 
-    return { subtotal, totalDiscount, totalTax, cgst, sgst, igst, roundOff, grandTotal };
-  }, [items, taxType, shippingCharges]);
+    return { subtotal, totalTax, cgst, sgst, igst, roundOff, grandTotal };
+  }, [items, taxType, shippingCharges, otherCharges]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!billTo.name.trim()) {
-      setError("Please specify the Vendor name under Bill To.");
+    if (!selectedTrainerId) {
+      setError("Please select a Trainer / Supplier for this Purchase Order.");
+      return;
+    }
+
+    if (!selectedVendorId && !requirementId) {
+      setError("Please select a Corporate Vendor.");
       return;
     }
 
@@ -255,37 +265,38 @@ const CreateVendorInvoicePage = () => {
       setSaving(true);
       setError("");
 
-      const invoicePayload = {
-        assignmentId: assignmentId || undefined,
-        requirementId: requirementId || undefined,
-        sourceInvoiceId: sourceInvoiceId || undefined,
-        invoiceType,
-        invoiceDate,
-        dueDate: dueDate || undefined,
-        placeOfSupply,
+      const poPayload = {
+        requirement: requirementId || undefined,
+        assignment: assignmentId || undefined,
+        vendor: selectedVendorId,
+        trainer: selectedTrainerId,
+        poDate,
+        expectedDeliveryDate: expectedDeliveryDate || undefined,
+        deliveryLocation,
         taxType,
         currency,
-        billFrom,
-        billTo,
+        buyer,
+        supplier,
         items: items.map((it) => ({
           ...it,
           quantity: Number(it.quantity) || 0,
           rate: Number(it.rate) || 0,
-          discountPercent: Number(it.discountPercent) || 0,
           taxPercent: Number(it.taxPercent) || 0,
         })),
         shippingCharges: Number(shippingCharges) || 0,
-        bankDetails,
+        otherCharges: Number(otherCharges) || 0,
+        paymentTerms,
         termsAndConditions,
         notes,
-        authorizedSignatory,
+        authorizedBy,
+        status: "ADMIN_ISSUED",
       };
 
-      const created = await invoicesApi.createVendorInvoice(invoicePayload);
-      navigate(`/admin/invoices/${created._id}`);
+      const created = await purchaseOrdersApi.create(poPayload);
+      navigate(`/admin/purchase-orders/${created._id}`);
     } catch (err) {
-      console.error("Failed to create vendor invoice:", err);
-      setError(err?.response?.data?.message || "Unable to create invoice.");
+      console.error("Failed to create Purchase Order:", err);
+      setError(err?.response?.data?.message || "Unable to issue Purchase Order.");
     } finally {
       setSaving(false);
     }
@@ -294,14 +305,14 @@ const CreateVendorInvoicePage = () => {
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-24">
-      {/* Header & Actions */}
+      {/* Top Header & Actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -313,7 +324,7 @@ const CreateVendorInvoicePage = () => {
           </button>
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <FiFileText className="text-slate-900" /> Create Client Tax Invoice
+              <FiFileText className="text-blue-700" /> Create Official Purchase Order
             </h1>
             <p className="text-xs font-semibold text-slate-500">
               Interactive document sheet styled identically to the downloadable PDF document.
@@ -326,33 +337,28 @@ const CreateVendorInvoicePage = () => {
             Cancel
           </Button>
           <Button type="submit" icon={FiSave} loading={saving}>
-            Save & Issue Invoice
+            Issue Purchase Order
           </Button>
         </div>
       </div>
 
-      {prefilling && (
-        <div className="flex items-center gap-2 rounded-2xl bg-indigo-50 p-4 text-xs font-bold text-indigo-700 border border-indigo-200">
-          <FiZap size={16} className="shrink-0" /> Auto-filling values from trainer invoice...
-        </div>
-      )}
-
       {error && (
         <div className="flex items-center gap-2 rounded-2xl bg-rose-50 p-4 text-xs font-bold text-rose-700 border border-rose-200">
-          <FiAlertCircle size={16} className="shrink-0" /> {error}
+          <FiAlertCircle size={16} className="shrink-0" />
+          {error}
         </div>
       )}
 
-      {/* Top Configuration Controls */}
+      {/* Context selectors bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
-            Billed Vendor (Client) *
+            Linked Vendor (Client) *
           </label>
           <select
             value={selectedVendorId}
-            onChange={(e) => handleVendorSelect(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-slate-800"
+            onChange={(e) => setSelectedVendorId(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-blue-600"
           >
             <option value="">Select Vendor...</option>
             {vendors.map((v) => (
@@ -365,27 +371,30 @@ const CreateVendorInvoicePage = () => {
 
         <div>
           <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
-            Invoice Type
+            Assigned Trainer (Supplier) *
           </label>
           <select
-            value={invoiceType}
-            onChange={(e) => setInvoiceType(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-slate-800"
+            value={selectedTrainerId}
+            onChange={(e) => handleTrainerChange(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-blue-600"
           >
-            <option value="TAX_INVOICE">Tax Invoice</option>
-            <option value="PROFORMA_INVOICE">Proforma Invoice</option>
-            <option value="CREDIT_NOTE">Credit Note</option>
+            <option value="">Select Trainer...</option>
+            {trainers.map((t) => (
+              <option key={t._id || t.id} value={t._id || t.id}>
+                {t.name} ({t.email})
+              </option>
+            ))}
           </select>
         </div>
 
         <div>
           <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
-            Tax Format
+            Tax Type Format
           </label>
           <select
             value={taxType}
             onChange={(e) => setTaxType(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-slate-800"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-blue-600"
           >
             <option value="INTRA_STATE">Intra-State (CGST 9% + SGST 9%)</option>
             <option value="INTER_STATE">Inter-State (IGST 18%)</option>
@@ -394,9 +403,7 @@ const CreateVendorInvoicePage = () => {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* INTERACTIVE A4 INVOICE CANVAS (Styled identically to InvoiceTemplate) */}
-      {/* ========================================================================= */}
+      {/* INTERACTIVE A4 DOCUMENT CANVAS */}
       <div className="flex justify-center bg-slate-100/80 p-4 sm:p-8 rounded-3xl border border-slate-200/80 shadow-inner overflow-x-auto">
         <div
           className="bg-white shadow-2xl rounded-sm p-8 text-slate-800 space-y-6 border border-slate-200"
@@ -407,162 +414,122 @@ const CreateVendorInvoicePage = () => {
             fontFamily: "'Helvetica Neue', Arial, sans-serif",
           }}
         >
-          {/* Header */}
-          <div className="flex justify-between items-start border-b-4 border-slate-900 pb-4">
+          {/* Header Bar */}
+          <div className="flex justify-between items-start border-b-4 border-blue-900 pb-4">
             <div className="max-w-[60%] space-y-1">
               <input
                 type="text"
-                value={billFrom.name}
-                onChange={(e) => setBillFrom({ ...billFrom, name: e.target.value })}
-                className="w-full text-xl font-bold text-slate-900 bg-transparent hover:bg-slate-50 focus:bg-slate-50 border border-transparent focus:border-slate-300 rounded px-1 outline-none"
-                placeholder="Platform Company Name"
+                value={buyer.name}
+                onChange={(e) => setBuyer({ ...buyer, name: e.target.value })}
+                className="w-full text-xl font-bold text-blue-900 bg-transparent hover:bg-slate-50 focus:bg-slate-50 border border-transparent focus:border-slate-300 rounded px-1 outline-none"
+                placeholder="Buyer Company Name"
               />
               <textarea
-                value={billFrom.address}
-                onChange={(e) => setBillFrom({ ...billFrom, address: e.target.value })}
+                value={buyer.address}
+                onChange={(e) => setBuyer({ ...buyer, address: e.target.value })}
                 rows={2}
                 className="w-full text-xs text-slate-600 bg-transparent hover:bg-slate-50 focus:bg-slate-50 border border-transparent focus:border-slate-300 rounded px-1 outline-none resize-none"
-                placeholder="Address..."
+                placeholder="Buyer Address..."
               />
               <div className="flex gap-2 text-xs text-slate-500">
                 <input
                   type="text"
-                  value={billFrom.gstin}
-                  onChange={(e) => setBillFrom({ ...billFrom, gstin: e.target.value })}
+                  value={buyer.gstin}
+                  onChange={(e) => setBuyer({ ...buyer, gstin: e.target.value })}
                   className="w-1/2 bg-transparent hover:bg-slate-50 focus:bg-slate-50 border border-transparent focus:border-slate-300 rounded px-1 outline-none"
-                  placeholder="GSTIN..."
+                  placeholder="GSTIN: 06AAA..."
                 />
                 <input
                   type="text"
-                  value={billFrom.pan}
-                  onChange={(e) => setBillFrom({ ...billFrom, pan: e.target.value })}
+                  value={buyer.phone}
+                  onChange={(e) => setBuyer({ ...buyer, phone: e.target.value })}
                   className="w-1/2 bg-transparent hover:bg-slate-50 focus:bg-slate-50 border border-transparent focus:border-slate-300 rounded px-1 outline-none"
-                  placeholder="PAN..."
+                  placeholder="Phone..."
                 />
               </div>
             </div>
 
             <div className="text-right space-y-2">
-              <div className="text-2xl font-black text-slate-900 tracking-wider">
-                {invoiceType.replace(/_/g, " ")}
-              </div>
-              <span className="inline-block rounded-full bg-slate-900 px-3 py-0.5 text-[10px] font-bold text-white uppercase">
-                DRAFT
+              <div className="text-2xl font-black text-blue-900 tracking-wider">PURCHASE ORDER</div>
+              <span className="inline-block rounded-full bg-blue-600 px-3 py-0.5 text-[10px] font-bold text-white uppercase">
+                ADMIN DRAFT
               </span>
 
               <div className="text-xs space-y-1 text-slate-600 pt-1">
                 <div className="flex justify-end items-center gap-2">
-                  <span className="font-semibold text-slate-400">Invoice Date:</span>
+                  <span className="font-semibold text-slate-400">PO Date:</span>
                   <input
                     type="date"
-                    value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
+                    value={poDate}
+                    onChange={(e) => setPoDate(e.target.value)}
                     className="border border-slate-200 rounded px-2 py-0.5 text-xs text-slate-800 outline-none"
                   />
                 </div>
                 <div className="flex justify-end items-center gap-2">
-                  <span className="font-semibold text-slate-400">Due Date:</span>
+                  <span className="font-semibold text-slate-400">Delivery By:</span>
                   <input
                     type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    value={expectedDeliveryDate}
+                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
                     className="border border-slate-200 rounded px-2 py-0.5 text-xs text-slate-800 outline-none"
-                  />
-                </div>
-                <div className="flex justify-end items-center gap-2">
-                  <span className="font-semibold text-slate-400">Place of Supply:</span>
-                  <input
-                    type="text"
-                    value={placeOfSupply}
-                    onChange={(e) => setPlaceOfSupply(e.target.value)}
-                    className="border border-slate-200 rounded px-2 py-0.5 text-xs text-slate-800 outline-none w-32"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bill To & Ship To Boxes */}
+          {/* Supplier / Ship To Section */}
           <div className="grid grid-cols-2 gap-4">
             <div className="border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
               <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                Bill To (Client / Vendor)
+                Supplier / Vendor (Trainer)
               </div>
               <input
                 type="text"
-                value={billTo.name}
-                onChange={(e) => setBillTo({ ...billTo, name: e.target.value })}
-                className="w-full font-bold text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-slate-800"
-                placeholder="Client / Vendor Name..."
+                value={supplier.name}
+                onChange={(e) => setSupplier({ ...supplier, name: e.target.value })}
+                className="w-full font-bold text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-blue-500"
+                placeholder="Supplier Name..."
               />
               <input
                 type="text"
-                value={billTo.address}
-                onChange={(e) => setBillTo({ ...billTo, address: e.target.value })}
+                value={supplier.address}
+                onChange={(e) => setSupplier({ ...supplier, address: e.target.value })}
                 className="w-full text-xs text-slate-600 bg-white border border-slate-200 rounded px-2 py-1 outline-none"
-                placeholder="Address..."
+                placeholder="Supplier Address..."
               />
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <input
                   type="text"
-                  value={billTo.gstin}
-                  onChange={(e) => setBillTo({ ...billTo, gstin: e.target.value })}
+                  value={supplier.gstin}
+                  onChange={(e) => setSupplier({ ...supplier, gstin: e.target.value })}
                   className="bg-white border border-slate-200 rounded px-2 py-1 outline-none"
                   placeholder="GSTIN..."
                 />
                 <input
                   type="text"
-                  value={billTo.email}
-                  onChange={(e) => setBillTo({ ...billTo, email: e.target.value })}
+                  value={supplier.phone}
+                  onChange={(e) => setSupplier({ ...supplier, phone: e.target.value })}
                   className="bg-white border border-slate-200 rounded px-2 py-1 outline-none"
-                  placeholder="Email..."
+                  placeholder="Phone..."
                 />
               </div>
             </div>
 
             <div className="border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
               <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                Payment Bank Details
+                Ship To / Venue Location
               </div>
               <input
                 type="text"
-                value={bankDetails.accountName}
-                onChange={(e) => setBankDetails({ ...bankDetails, accountName: e.target.value })}
-                className="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded px-2 py-1 outline-none"
-                placeholder="Account Name..."
+                value={deliveryLocation}
+                onChange={(e) => setDeliveryLocation(e.target.value)}
+                className="w-full font-bold text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-blue-500"
+                placeholder="Delivery / Training Location..."
               />
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <input
-                  type="text"
-                  value={bankDetails.bankName}
-                  onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
-                  className="bg-white border border-slate-200 rounded px-2 py-1 outline-none"
-                  placeholder="Bank Name..."
-                />
-                <input
-                  type="text"
-                  value={bankDetails.accountNumber}
-                  onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                  className="bg-white border border-slate-200 rounded px-2 py-1 outline-none"
-                  placeholder="Account No..."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <input
-                  type="text"
-                  value={bankDetails.ifscCode}
-                  onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value })}
-                  className="bg-white border border-slate-200 rounded px-2 py-1 outline-none"
-                  placeholder="IFSC Code..."
-                />
-                <input
-                  type="text"
-                  value={bankDetails.upiId}
-                  onChange={(e) => setBankDetails({ ...bankDetails, upiId: e.target.value })}
-                  className="bg-white border border-slate-200 rounded px-2 py-1 outline-none"
-                  placeholder="UPI ID..."
-                />
-              </div>
+              <p className="text-[11px] text-slate-500 italic pt-1">
+                Same as platform buyer address unless specified above for client location.
+              </p>
             </div>
           </div>
 
@@ -570,13 +537,12 @@ const CreateVendorInvoicePage = () => {
           <div>
             <table className="w-full border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-900 text-white uppercase text-[10px] tracking-wider">
-                  <th className="p-2 text-left w-[5%]">#</th>
-                  <th className="p-2 text-left w-[32%]">Description</th>
-                  <th className="p-2 text-left w-[11%]">HSN/SAC</th>
-                  <th className="p-2 text-right w-[8%]">Qty</th>
+                <tr className="bg-blue-900 text-white uppercase text-[10px] tracking-wider">
+                  <th className="p-2 text-left w-[6%]">#</th>
+                  <th className="p-2 text-left w-[36%]">Description</th>
+                  <th className="p-2 text-left w-[12%]">HSN/SAC</th>
+                  <th className="p-2 text-right w-[10%]">Qty</th>
                   <th className="p-2 text-right w-[14%]">Rate ({currency})</th>
-                  <th className="p-2 text-right w-[8%]">Disc %</th>
                   <th className="p-2 text-right w-[8%]">Tax %</th>
                   <th className="p-2 text-right w-[10%]">Amount</th>
                   <th className="p-2 text-center w-[4%]" />
@@ -585,10 +551,8 @@ const CreateVendorInvoicePage = () => {
               <tbody className="divide-y divide-slate-200">
                 {items.map((item, idx) => {
                   const base = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
-                  const discount = base * ((Number(item.discountPercent) || 0) / 100);
-                  const taxable = base - discount;
-                  const tax = taxable * ((Number(item.taxPercent) || 0) / 100);
-                  const lineTotal = taxable + tax;
+                  const tax = base * ((Number(item.taxPercent) || 0) / 100);
+                  const lineTotal = base + tax;
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50/80">
@@ -598,7 +562,7 @@ const CreateVendorInvoicePage = () => {
                           type="text"
                           value={item.description}
                           onChange={(e) => updateItem(idx, "description", e.target.value)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-xs outline-none focus:border-slate-800"
+                          className="w-full border border-slate-200 rounded px-2 py-1 text-xs outline-none focus:border-blue-600"
                         />
                       </td>
                       <td className="p-1">
@@ -615,7 +579,7 @@ const CreateVendorInvoicePage = () => {
                           min="1"
                           value={item.quantity}
                           onChange={(e) => updateItem(idx, "quantity", e.target.value)}
-                          className="w-12 border border-slate-200 rounded px-1 py-1 text-xs text-right outline-none"
+                          className="w-14 border border-slate-200 rounded px-1 py-1 text-xs text-right outline-none"
                         />
                       </td>
                       <td className="p-1 text-right">
@@ -625,15 +589,6 @@ const CreateVendorInvoicePage = () => {
                           value={item.rate}
                           onChange={(e) => updateItem(idx, "rate", e.target.value)}
                           className="w-20 border border-slate-200 rounded px-1 py-1 text-xs text-right outline-none font-semibold"
-                        />
-                      </td>
-                      <td className="p-1 text-right">
-                        <input
-                          type="number"
-                          min="0"
-                          value={item.discountPercent}
-                          onChange={(e) => updateItem(idx, "discountPercent", e.target.value)}
-                          className="w-12 border border-slate-200 rounded px-1 py-1 text-xs text-right outline-none"
                         />
                       </td>
                       <td className="p-1 text-right">
@@ -667,7 +622,7 @@ const CreateVendorInvoicePage = () => {
               <button
                 type="button"
                 onClick={addItem}
-                className="inline-flex items-center gap-1 text-xs font-extrabold text-slate-900 hover:text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-300 transition"
+                className="inline-flex items-center gap-1 text-xs font-extrabold text-blue-900 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 transition"
               >
                 <FiPlus size={14} /> Add Line Item
               </button>
@@ -678,23 +633,22 @@ const CreateVendorInvoicePage = () => {
           <div className="flex justify-between items-start gap-6 pt-4 border-t border-slate-200">
             <div className="w-1/2 space-y-4">
               <div>
+                <span className="text-[10px] font-bold uppercase text-slate-400">Payment Terms</span>
+                <textarea
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value)}
+                  rows={2}
+                  className="w-full mt-1 border border-slate-200 rounded p-2 text-xs text-slate-700 outline-none resize-none"
+                />
+              </div>
+
+              <div>
                 <span className="text-[10px] font-bold uppercase text-slate-400">Terms & Conditions</span>
                 <textarea
                   value={termsAndConditions}
                   onChange={(e) => setTermsAndConditions(e.target.value)}
                   rows={3}
                   className="w-full mt-1 border border-slate-200 rounded p-2 text-xs text-slate-700 outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold uppercase text-slate-400">Notes</span>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={2}
-                  className="w-full mt-1 border border-slate-200 rounded p-2 text-xs text-slate-700 outline-none resize-none"
-                  placeholder="Additional notes for client..."
                 />
               </div>
             </div>
@@ -704,13 +658,6 @@ const CreateVendorInvoicePage = () => {
                 <span className="text-slate-500">Subtotal:</span>
                 <span className="font-semibold">{money(totals.subtotal, currency)}</span>
               </div>
-
-              {totals.totalDiscount > 0 && (
-                <div className="flex justify-between py-1 border-b border-slate-100 text-rose-600">
-                  <span>Discount:</span>
-                  <span>- {money(totals.totalDiscount, currency)}</span>
-                </div>
-              )}
 
               {taxType === "INTER_STATE" ? (
                 <div className="flex justify-between py-1 border-b border-slate-100 text-slate-600">
@@ -737,7 +684,7 @@ const CreateVendorInvoicePage = () => {
                 </div>
               )}
 
-              <div className="flex justify-between py-2 px-3 bg-slate-900 text-white rounded font-bold text-sm">
+              <div className="flex justify-between py-2 px-3 bg-blue-900 text-white rounded font-bold text-sm">
                 <span>Grand Total:</span>
                 <span>{money(totals.grandTotal, currency)}</span>
               </div>
@@ -747,14 +694,14 @@ const CreateVendorInvoicePage = () => {
           {/* Signature Footer */}
           <div className="flex justify-between items-end pt-8 border-t border-slate-200 text-xs">
             <div className="text-slate-400 text-[10px]">
-              This is a computer-generated tax invoice and does not require a physical signature.
+              Computer-generated document. Subject to Trainexus Platform Terms.
             </div>
             <div className="text-center space-y-8">
               <span className="text-slate-500 block">For Trainexus Platform</span>
               <input
                 type="text"
-                value={authorizedSignatory}
-                onChange={(e) => setAuthorizedSignatory(e.target.value)}
+                value={authorizedBy}
+                onChange={(e) => setAuthorizedBy(e.target.value)}
                 className="text-center border-t border-slate-400 pt-1 font-semibold text-slate-800 bg-transparent outline-none"
               />
             </div>
@@ -768,11 +715,11 @@ const CreateVendorInvoicePage = () => {
           Cancel
         </Button>
         <Button type="submit" icon={FiSave} loading={saving}>
-          Save & Issue Invoice
+          Issue Purchase Order
         </Button>
       </div>
     </form>
   );
 };
 
-export default CreateVendorInvoicePage;
+export default CreatePurchaseOrderPage;

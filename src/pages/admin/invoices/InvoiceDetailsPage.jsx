@@ -120,6 +120,27 @@ const InvoiceDetailsPage = () => {
               Generate Vendor Invoice
             </Button>
           )}
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/admin/invoices/${id}/edit`)}
+          >
+            Edit Invoice
+          </Button>
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (window.confirm("Are you sure you want to delete this invoice?")) {
+                try {
+                  await invoicesApi.delete(id);
+                  navigate("/admin/invoices");
+                } catch (err) {
+                  alert(err?.response?.data?.message || "Failed to delete invoice.");
+                }
+              }
+            }}
+          >
+            Delete Invoice
+          </Button>
           <select
             value={invoice.status}
             disabled={updatingStatus}

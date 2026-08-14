@@ -180,11 +180,34 @@ const PurchaseOrderDetailsPage = () => {
           </div>
         </div>
 
-        {isIssued && (
-          <Button icon={FiDownload} onClick={handleDownload} loading={downloading}>
-            Download PDF
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/admin/purchase-orders/${id}/edit`)}
+          >
+            Edit PO
           </Button>
-        )}
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (window.confirm("Are you sure you want to delete this purchase order?")) {
+                try {
+                  await purchaseOrdersApi.delete(id);
+                  navigate("/admin/purchase-orders");
+                } catch (err) {
+                  alert(err?.response?.data?.message || "Failed to delete purchase order.");
+                }
+              }
+            }}
+          >
+            Delete PO
+          </Button>
+          {isIssued && (
+            <Button icon={FiDownload} onClick={handleDownload} loading={downloading}>
+              Download PDF
+            </Button>
+          )}
+        </div>
       </div>
 
       {error && (

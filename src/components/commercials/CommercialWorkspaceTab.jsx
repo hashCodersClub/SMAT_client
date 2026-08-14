@@ -1,19 +1,12 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  FiDollarSign,
-  FiFileText,
   FiPlus,
   FiCheckCircle,
-  FiClock,
   FiDownload,
-  FiPercent,
   FiTrendingUp,
-  FiShield,
 } from "react-icons/fi";
 import downloadDocumentPdf from "../../utils/downloadDocumentPdf";
 import PaymentWorkflowTracker from "./PaymentWorkflowTracker";
-import InteractiveCreatePOModal from "./InteractiveCreatePOModal";
-import InteractiveCreateInvoiceModal from "./InteractiveCreateInvoiceModal";
 
 const CommercialWorkspaceTab = ({
   requirement = {},
@@ -25,10 +18,8 @@ const CommercialWorkspaceTab = ({
   onCreateInvoice,
   onRecordClientPayment,
   onReleaseTrainerPayout,
-  onReloadCommercials,
 }) => {
-  const [showPOModal, setShowPOModal] = useState(false);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const navigate = useNavigate();
 
   const isInternal = ["ADMIN", "SUPER_ADMIN", "OPERATIONS"].includes(userRole);
   const isVendor = userRole === "VENDOR";
@@ -36,14 +27,15 @@ const CommercialWorkspaceTab = ({
 
   // Financial Calculations
   const clientBudget = Number(requirement.budget) || 0;
-  
+
   // Find selected or highest shortlisted trainer quote
-  const selectedCandidate = candidates.find(
-    (c) =>
-      c.selectionStatus === "ONBOARDED" ||
-      c.selectionStatus === "SELECTED" ||
-      c.selectionStatus === "SHORTLISTED"
-  ) || candidates[0];
+  const selectedCandidate =
+    candidates.find(
+      (c) =>
+        c.selectionStatus === "ONBOARDED" ||
+        c.selectionStatus === "SELECTED" ||
+        c.selectionStatus === "SHORTLISTED"
+    ) || candidates[0];
 
   const trainerCost = selectedCandidate
     ? Number(selectedCandidate.trainerQuotedRate ?? selectedCandidate.quotedRate ?? 0)
@@ -55,6 +47,22 @@ const CommercialWorkspaceTab = ({
   // Determine current settlement status
   const latestInvoice = invoices[0];
   const settlementStatus = latestInvoice?.status || (purchaseOrders.length > 0 ? "AWAITING" : "DRAFT");
+
+  const handleOpenCreatePO = () => {
+    if (onCreatePO) {
+      onCreatePO();
+    } else {
+      navigate(`/admin/purchase-orders/create?requirementId=${requirement._id || requirement.id || ""}`);
+    }
+  };
+
+  const handleOpenCreateInvoice = () => {
+    if (onCreateInvoice) {
+      onCreateInvoice();
+    } else {
+      navigate(`/admin/invoices/create-vendor-invoice?requirementId=${requirement._id || requirement.id || ""}`);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -70,7 +78,7 @@ const CommercialWorkspaceTab = ({
                 Active Trainer Commercial Ready: {selectedCandidate.trainerId?.name || "Shortlisted Trainer"}
               </h4>
               <p className="text-xs font-semibold text-slate-600 mt-0.5">
-                This trainer was shortlisted/selected for this assignment (@ ₹{trainerCost.toLocaleString("en-IN")}). You can now generate official PO and Invoice records with 1 click.
+                This trainer was shortlisted/selected for this assignment (@ ₹{trainerCost.toLocaleString("en-IN")}). You can now generate official PO and Invoice records.
               </p>
             </div>
           </div>
@@ -79,20 +87,20 @@ const CommercialWorkspaceTab = ({
             {isInternal && (
               <button
                 type="button"
-                onClick={() => (onCreatePO ? onCreatePO() : setShowPOModal(true))}
+                onClick={handleOpenCreatePO}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-extrabold text-white shadow-md hover:bg-slate-800 transition"
               >
-                <FiPlus size={14} /> Auto-Generate PO for {selectedCandidate?.trainerId?.name || "Trainer"}
+                <FiPlus size={14} /> Auto-Generate PO Page for {selectedCandidate?.trainerId?.name || "Trainer"}
               </button>
             )}
 
             {isInternal && (
               <button
                 type="button"
-                onClick={() => (onCreateInvoice ? onCreateInvoice() : setShowInvoiceModal(true))}
+                onClick={handleOpenCreateInvoice}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-extrabold text-slate-800 hover:bg-slate-50 transition"
               >
-                <FiPlus size={14} /> Generate Client Invoice
+                <FiPlus size={14} /> Generate Client Invoice Page
               </button>
             )}
           </div>
@@ -199,10 +207,10 @@ const CommercialWorkspaceTab = ({
           {isInternal && (
             <button
               type="button"
-              onClick={() => setShowPOModal(true)}
+              onClick={handleOpenCreatePO}
               className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition"
             >
-              <FiPlus size={14} /> Review & Issue PO
+              <FiPlus size={14} /> Create / Issue PO Page
             </button>
           )}
         </div>
@@ -224,13 +232,22 @@ const CommercialWorkspaceTab = ({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => downloadDocumentPdf("PO", po)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition self-start sm:self-auto"
-                >
-                  <FiDownload size={13} /> Download PO PDF
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/admin/purchase-orders/${po._id}`)}
+                    className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 hover:bg-slate-50 transition"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadDocumentPdf("PO", po)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+                  >
+                    <FiDownload size={13} /> PDF
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -248,10 +265,10 @@ const CommercialWorkspaceTab = ({
           {isInternal && (
             <button
               type="button"
-              onClick={() => setShowInvoiceModal(true)}
+              onClick={handleOpenCreateInvoice}
               className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition"
             >
-              <FiPlus size={14} /> Review & Issue Invoice
+              <FiPlus size={14} /> Create Invoice Page
             </button>
           )}
         </div>
@@ -281,41 +298,28 @@ const CommercialWorkspaceTab = ({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => downloadDocumentPdf("INVOICE", inv)}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition self-start sm:self-auto"
-                  >
-                    <FiDownload size={13} /> Download Invoice PDF
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/admin/invoices/${inv._id}`)}
+                      className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 hover:bg-slate-50 transition"
+                    >
+                      View Details
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => downloadDocumentPdf("INVOICE", inv)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+                    >
+                      <FiDownload size={13} /> PDF
+                    </button>
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
-
-      {/* Interactive Modals */}
-      <InteractiveCreatePOModal
-        isOpen={showPOModal}
-        onClose={() => setShowPOModal(false)}
-        requirement={requirement}
-        selectedCandidate={selectedCandidate}
-        onSuccess={() => {
-          if (onReloadCommercials) onReloadCommercials();
-        }}
-      />
-
-      <InteractiveCreateInvoiceModal
-        isOpen={showInvoiceModal}
-        onClose={() => setShowInvoiceModal(false)}
-        requirement={requirement}
-        selectedCandidate={selectedCandidate}
-        purchaseOrders={purchaseOrders}
-        onSuccess={() => {
-          if (onReloadCommercials) onReloadCommercials();
-        }}
-      />
     </div>
   );
 };

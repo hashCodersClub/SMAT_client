@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiShoppingCart, FiAlertCircle } from "react-icons/fi";
+import { FiShoppingCart, FiAlertCircle, FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
 
 import Card from "../../../components/ui/Card";
 import Badge from "../../../components/ui/Badge";
 import PageHeader from "../../../components/ui/PageHeader";
+import Button from "../../../components/ui/Button";
 import EmptyState from "../../../components/ui/EmptyState";
 
 import purchaseOrdersApi from "../../../api/purchaseOrdersApi";
@@ -37,6 +38,7 @@ const PurchaseOrdersPage = () => {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchPurchaseOrders = useCallback(async () => {
     try {
@@ -60,14 +62,40 @@ const PurchaseOrdersPage = () => {
     return () => clearTimeout(timer);
   }, [fetchPurchaseOrders]);
 
+  const handleDelete = async (e, poId) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this purchase order? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setDeletingId(poId);
+      await purchaseOrdersApi.delete(poId);
+      setPurchaseOrders((prev) => prev.filter((item) => item._id !== poId));
+    } catch (err) {
+      console.error("Failed to delete PO:", err);
+      alert(err?.response?.data?.message || "Failed to delete purchase order.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const pendingCount = purchaseOrders.filter((po) => po.status === "VENDOR_REQUESTED").length;
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Purchase Orders"
-        description="Vendor PO requests awaiting review, and POs issued to trainers."
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageHeader
+          title="Purchase Orders"
+          description="Vendor PO requests awaiting review, and official POs issued to trainers."
+        />
+        <Button
+          icon={FiPlus}
+          onClick={() => navigate("/admin/purchase-orders/create")}
+        >
+          Create Purchase Order
+        </Button>
+      </div>
 
       {pendingCount > 0 && (
         <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200">
@@ -77,7 +105,7 @@ const PurchaseOrdersPage = () => {
       )}
 
       <Card padding={false}>
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center justify-between">
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -103,7 +131,7 @@ const PurchaseOrdersPage = () => {
           <EmptyState
             icon={FiShoppingCart}
             title="No purchase orders yet"
-            description="POs will appear here once a vendor requests one for an assignment."
+            description="POs will appear here once requested or created."
           />
         ) : (
           <div className="overflow-x-auto">
@@ -116,13 +144,14 @@ const PurchaseOrdersPage = () => {
                   <th className="px-4 py-3 font-medium">Requirement</th>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading
                   ? Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i} className="border-b border-slate-50">
-                        <td colSpan={6} className="px-4 py-4">
+                        <td colSpan={7} className="px-4 py-4">
                           <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                         </td>
                       </tr>
@@ -144,6 +173,30 @@ const PurchaseOrdersPage = () => {
                           <Badge variant={STATUS_VARIANTS[po.status] || "default"}>
                             {STATUS_LABELS[po.status] || po.status}
                           </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/admin/purchase-orders/${po._id}/edit`);
+                              }}
+                              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition"
+                              title="Edit PO"
+                            >
+                              <FiEdit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deletingId === po._id}
+                              onClick={(e) => handleDelete(e, po._id)}
+                              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                              title="Delete PO"
+                            >
+                              <FiTrash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

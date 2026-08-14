@@ -13,6 +13,24 @@ const purchaseOrdersApi = {
     return response.data;
   },
 
+  // Admin — create a new PO directly.
+  create: async (data) => {
+    const response = await api.post("/purchase-orders", data);
+    return response.data;
+  },
+
+  // Admin — update an existing PO.
+  update: async (id, data) => {
+    const response = await api.put(`/purchase-orders/${id}`, data);
+    return response.data;
+  },
+
+  // Admin — delete a PO.
+  delete: async (id) => {
+    const response = await api.delete(`/purchase-orders/${id}`);
+    return response.data;
+  },
+
   // Vendor — propose terms for a newly booked assignment.
   request: async (data) => {
     const response = await api.post("/purchase-orders/request", data);

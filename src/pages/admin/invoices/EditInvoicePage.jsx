@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   FiArrowLeft,
   FiPlus,
   FiTrash2,
   FiSave,
   FiAlertCircle,
-  FiZap,
   FiFileText,
 } from "react-icons/fi";
 
 import Button from "../../../components/ui/Button";
 import invoicesApi from "../../../api/invoicesApi";
-import api from "../../../api/axios";
 
 const emptyItem = () => ({
   description: "Corporate Training Services",
@@ -32,36 +30,30 @@ const money = (value, currency = "INR") => {
   })}`;
 };
 
-const CreateVendorInvoicePage = () => {
+const EditInvoicePage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
-  const requirementId = searchParams.get("requirementId") || "";
-  const initialAssignmentId = searchParams.get("assignmentId") || "";
-  const sourceInvoiceId = searchParams.get("fromTrainerInvoice") || "";
-
-  const [assignmentId, setAssignmentId] = useState(initialAssignmentId);
-  const [vendors, setVendors] = useState([]);
-  const [selectedVendorId, setSelectedVendorId] = useState("");
-
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceType, setInvoiceType] = useState("TAX_INVOICE");
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
+  const [status, setStatus] = useState("DRAFT");
+  const [invoiceDate, setInvoiceDate] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [placeOfSupply, setPlaceOfSupply] = useState("Haryana (06)");
+  const [placeOfSupply, setPlaceOfSupply] = useState("");
   const [currency, setCurrency] = useState("INR");
   const [taxType, setTaxType] = useState("INTRA_STATE");
 
   const [billFrom, setBillFrom] = useState({
-    name: "Trainexus Edtech Platform",
-    address: "Level 4, Commercial Hub, Cyber City",
-    city: "Gurugram",
-    state: "Haryana",
-    pincode: "122002",
+    name: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
     country: "India",
-    gstin: "06AAACT0000A1Z5",
-    pan: "AAACT0000A",
-    email: "billing@trainexus.in",
-    phone: "+91 98765 43210",
+    gstin: "",
+    pan: "",
+    email: "",
+    phone: "",
   });
 
   const [billTo, setBillTo] = useState({
@@ -76,126 +68,75 @@ const CreateVendorInvoicePage = () => {
   });
 
   const [bankDetails, setBankDetails] = useState({
-    accountName: "Trainexus Technologies Pvt Ltd",
-    accountNumber: "987654321098",
-    bankName: "HDFC Bank",
-    branch: "Cyber City Branch",
-    ifscCode: "HDFC0001234",
-    upiId: "trainexus@hdfcbank",
+    accountName: "",
+    accountNumber: "",
+    bankName: "",
+    branch: "",
+    ifscCode: "",
+    upiId: "",
   });
 
   const [items, setItems] = useState([emptyItem()]);
   const [shippingCharges, setShippingCharges] = useState(0);
-  const [termsAndConditions, setTermsAndConditions] = useState(
-    "1. Payment is due within agreed credit period from invoice date.\n2. Quote invoice number in all payment correspondence.\n3. Interest @ 18% p.a. will be charged on overdue amounts."
-  );
+  const [termsAndConditions, setTermsAndConditions] = useState("");
   const [notes, setNotes] = useState("");
   const [authorizedSignatory, setAuthorizedSignatory] = useState("Authorized Signatory");
 
-  const [prefilling, setPrefilling] = useState(!!sourceInvoiceId);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Load Vendor list & Context
   useEffect(() => {
     let active = true;
 
-    const loadContext = async () => {
-      try {
-        setLoading(true);
-        const vRes = await api.get("/vendors").catch(() => ({ data: [] }));
-        if (active) setVendors(vRes.data?.vendors || vRes.data || []);
+    invoicesApi
+      .getById(id)
+      .then((inv) => {
+        if (!active) return;
+        setInvoiceNumber(inv.invoiceNumber || "");
+        if (inv.invoiceType) setInvoiceType(inv.invoiceType);
+        if (inv.status) setStatus(inv.status);
+        if (inv.invoiceDate) setInvoiceDate(new Date(inv.invoiceDate).toISOString().slice(0, 10));
+        if (inv.dueDate) setDueDate(new Date(inv.dueDate).toISOString().slice(0, 10));
+        if (inv.placeOfSupply) setPlaceOfSupply(inv.placeOfSupply);
+        if (inv.currency) setCurrency(inv.currency);
+        if (inv.taxType) setTaxType(inv.taxType);
 
-        if (requirementId) {
-          const reqRes = await api.get(`/requirements/${requirementId}`);
-          if (active && reqRes.data) {
-            const reqData = reqRes.data;
-            if (reqData.vendorId) {
-              const vObj = reqData.vendorId;
-              setSelectedVendorId(vObj._id || vObj);
-              setBillTo({
-                name: vObj.companyName || vObj.name || "",
-                address: vObj.address || "",
-                city: vObj.city || "",
-                state: vObj.state || "",
-                pincode: vObj.pincode || "",
-                gstin: vObj.gstNumber || vObj.gstin || "",
-                email: vObj.contactEmail || vObj.email || "",
-                phone: vObj.contactPhone || vObj.phone || "",
-              });
-            }
+        if (inv.billFrom) setBillFrom((prev) => ({ ...prev, ...inv.billFrom }));
+        if (inv.billTo) setBillTo((prev) => ({ ...prev, ...inv.billTo }));
+        if (inv.bankDetails) setBankDetails((prev) => ({ ...prev, ...inv.bankDetails }));
 
-            // Find assignment if available
-            const assignRes = await api.get(`/assignments?requirement=${requirementId}`).catch(() => ({ data: { assignments: [] } }));
-            const assignList = assignRes.data?.assignments || assignRes.data || [];
-            if (assignList.length > 0) {
-              setAssignmentId(assignList[0]._id);
-            }
-
-            setItems([
-              {
-                description: `Client Training Invoice - ${reqData.title}`,
-                hsnSacCode: "998311",
-                quantity: reqData.durationDays || 1,
-                unit: "Days",
-                rate: Number(reqData.budget) || 0,
-                discountPercent: 0,
-                taxPercent: 18,
-              },
-            ]);
-          }
+        if (inv.items && inv.items.length > 0) {
+          setItems(
+            inv.items.map((it) => ({
+              description: it.description || "",
+              hsnSacCode: it.hsnSacCode || "",
+              quantity: it.quantity || 1,
+              unit: it.unit || "Days",
+              rate: it.rate || 0,
+              discountPercent: it.discountPercent || 0,
+              taxPercent: it.taxPercent || 0,
+            }))
+          );
         }
-      } catch (err) {
-        console.error("Failed to load context:", err);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
 
-    loadContext();
+        if (inv.shippingCharges) setShippingCharges(inv.shippingCharges);
+        if (inv.termsAndConditions) setTermsAndConditions(inv.termsAndConditions);
+        if (inv.notes) setNotes(inv.notes);
+        if (inv.authorizedSignatory) setAuthorizedSignatory(inv.authorizedSignatory);
+      })
+      .catch((err) => {
+        console.error("Failed to load invoice:", err);
+        if (active) setError(err?.response?.data?.message || "Unable to load invoice.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
     return () => {
       active = false;
     };
-  }, [requirementId]);
-
-  // Handle Trainer Invoice Prefill
-  useEffect(() => {
-    if (!sourceInvoiceId) return;
-
-    setPrefilling(true);
-    invoicesApi
-      .prefillVendorInvoice(sourceInvoiceId)
-      .then((draft) => {
-        if (draft.billTo?.name) setBillTo((prev) => ({ ...prev, ...draft.billTo }));
-        if (draft.items?.length > 0) setItems(draft.items);
-        if (draft.notes) setNotes(draft.notes);
-        if (draft.currency) setCurrency(draft.currency);
-      })
-      .catch((err) => {
-        console.error("Failed to prefill from trainer invoice:", err);
-        setError("Could not auto-fill from the trainer invoice — you can edit manually.");
-      })
-      .finally(() => setPrefilling(false));
-  }, [sourceInvoiceId]);
-
-  const handleVendorSelect = (vId) => {
-    setSelectedVendorId(vId);
-    const v = vendors.find((vendor) => (vendor._id || vendor.id) === vId);
-    if (v) {
-      setBillTo({
-        name: v.companyName || v.name || "",
-        address: v.address || "",
-        city: v.city || "",
-        state: v.state || "",
-        pincode: v.pincode || "",
-        gstin: v.gstNumber || v.gstin || "",
-        email: v.contactEmail || v.email || "",
-        phone: v.contactPhone || v.phone || "",
-      });
-    }
-  };
+  }, [id]);
 
   const updateItem = (index, field, value) =>
     setItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
@@ -241,11 +182,6 @@ const CreateVendorInvoicePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!billTo.name.trim()) {
-      setError("Please specify the Vendor name under Bill To.");
-      return;
-    }
-
     if (items.some((item) => !item.description.trim())) {
       setError("Every line item requires a description.");
       return;
@@ -256,17 +192,16 @@ const CreateVendorInvoicePage = () => {
       setError("");
 
       const invoicePayload = {
-        assignmentId: assignmentId || undefined,
-        requirementId: requirementId || undefined,
-        sourceInvoiceId: sourceInvoiceId || undefined,
         invoiceType,
-        invoiceDate,
+        status,
+        invoiceDate: invoiceDate || undefined,
         dueDate: dueDate || undefined,
         placeOfSupply,
         taxType,
         currency,
         billFrom,
         billTo,
+        bankDetails,
         items: items.map((it) => ({
           ...it,
           quantity: Number(it.quantity) || 0,
@@ -275,17 +210,16 @@ const CreateVendorInvoicePage = () => {
           taxPercent: Number(it.taxPercent) || 0,
         })),
         shippingCharges: Number(shippingCharges) || 0,
-        bankDetails,
         termsAndConditions,
         notes,
         authorizedSignatory,
       };
 
-      const created = await invoicesApi.createVendorInvoice(invoicePayload);
-      navigate(`/admin/invoices/${created._id}`);
+      await invoicesApi.update(id, invoicePayload);
+      navigate(`/admin/invoices/${id}`);
     } catch (err) {
-      console.error("Failed to create vendor invoice:", err);
-      setError(err?.response?.data?.message || "Unable to create invoice.");
+      console.error("Failed to update invoice:", err);
+      setError(err?.response?.data?.message || "Unable to update invoice.");
     } finally {
       setSaving(false);
     }
@@ -306,14 +240,14 @@ const CreateVendorInvoicePage = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/admin/invoices/${id}`)}
             className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm hover:bg-slate-50 transition"
           >
             <FiArrowLeft size={18} />
           </button>
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <FiFileText className="text-slate-900" /> Create Client Tax Invoice
+              <FiFileText className="text-slate-900" /> Edit Invoice #{invoiceNumber || id}
             </h1>
             <p className="text-xs font-semibold text-slate-500">
               Interactive document sheet styled identically to the downloadable PDF document.
@@ -322,20 +256,14 @@ const CreateVendorInvoicePage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+          <Button type="button" variant="secondary" onClick={() => navigate(`/admin/invoices/${id}`)}>
             Cancel
           </Button>
           <Button type="submit" icon={FiSave} loading={saving}>
-            Save & Issue Invoice
+            Save Changes
           </Button>
         </div>
       </div>
-
-      {prefilling && (
-        <div className="flex items-center gap-2 rounded-2xl bg-indigo-50 p-4 text-xs font-bold text-indigo-700 border border-indigo-200">
-          <FiZap size={16} className="shrink-0" /> Auto-filling values from trainer invoice...
-        </div>
-      )}
 
       {error && (
         <div className="flex items-center gap-2 rounded-2xl bg-rose-50 p-4 text-xs font-bold text-rose-700 border border-rose-200">
@@ -347,19 +275,19 @@ const CreateVendorInvoicePage = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
-            Billed Vendor (Client) *
+            Status
           </label>
           <select
-            value={selectedVendorId}
-            onChange={(e) => handleVendorSelect(e.target.value)}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-slate-800"
           >
-            <option value="">Select Vendor...</option>
-            {vendors.map((v) => (
-              <option key={v._id || v.id} value={v._id || v.id}>
-                {v.companyName || v.name}
-              </option>
-            ))}
+            <option value="DRAFT">DRAFT</option>
+            <option value="SENT">SENT</option>
+            <option value="PAID">PAID</option>
+            <option value="PARTIALLY_PAID">PARTIALLY PAID</option>
+            <option value="OVERDUE">OVERDUE</option>
+            <option value="CANCELLED">CANCELLED</option>
           </select>
         </div>
 
@@ -394,9 +322,7 @@ const CreateVendorInvoicePage = () => {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* INTERACTIVE A4 INVOICE CANVAS (Styled identically to InvoiceTemplate) */}
-      {/* ========================================================================= */}
+      {/* INTERACTIVE A4 INVOICE CANVAS */}
       <div className="flex justify-center bg-slate-100/80 p-4 sm:p-8 rounded-3xl border border-slate-200/80 shadow-inner overflow-x-auto">
         <div
           className="bg-white shadow-2xl rounded-sm p-8 text-slate-800 space-y-6 border border-slate-200"
@@ -415,7 +341,7 @@ const CreateVendorInvoicePage = () => {
                 value={billFrom.name}
                 onChange={(e) => setBillFrom({ ...billFrom, name: e.target.value })}
                 className="w-full text-xl font-bold text-slate-900 bg-transparent hover:bg-slate-50 focus:bg-slate-50 border border-transparent focus:border-slate-300 rounded px-1 outline-none"
-                placeholder="Platform Company Name"
+                placeholder="Company Name"
               />
               <textarea
                 value={billFrom.address}
@@ -446,9 +372,7 @@ const CreateVendorInvoicePage = () => {
               <div className="text-2xl font-black text-slate-900 tracking-wider">
                 {invoiceType.replace(/_/g, " ")}
               </div>
-              <span className="inline-block rounded-full bg-slate-900 px-3 py-0.5 text-[10px] font-bold text-white uppercase">
-                DRAFT
-              </span>
+              <div className="text-sm font-bold text-slate-700">{invoiceNumber}</div>
 
               <div className="text-xs space-y-1 text-slate-600 pt-1">
                 <div className="flex justify-end items-center gap-2">
@@ -493,7 +417,7 @@ const CreateVendorInvoicePage = () => {
                 value={billTo.name}
                 onChange={(e) => setBillTo({ ...billTo, name: e.target.value })}
                 className="w-full font-bold text-xs text-slate-900 bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-slate-800"
-                placeholder="Client / Vendor Name..."
+                placeholder="Client Name..."
               />
               <input
                 type="text"
@@ -694,7 +618,7 @@ const CreateVendorInvoicePage = () => {
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   className="w-full mt-1 border border-slate-200 rounded p-2 text-xs text-slate-700 outline-none resize-none"
-                  placeholder="Additional notes for client..."
+                  placeholder="Notes..."
                 />
               </div>
             </div>
@@ -764,15 +688,15 @@ const CreateVendorInvoicePage = () => {
 
       {/* Floating Save Actions */}
       <div className="sticky bottom-4 flex justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
-        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+        <Button type="button" variant="secondary" onClick={() => navigate(`/admin/invoices/${id}`)}>
           Cancel
         </Button>
         <Button type="submit" icon={FiSave} loading={saving}>
-          Save & Issue Invoice
+          Save Changes
         </Button>
       </div>
     </form>
   );
 };
 
-export default CreateVendorInvoicePage;
+export default EditInvoicePage;

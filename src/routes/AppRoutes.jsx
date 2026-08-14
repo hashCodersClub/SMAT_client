@@ -112,11 +112,20 @@ const CreateVendorInvoicePage = lazy(
 const InvoiceDetailsPage = lazy(
   () => import("../pages/admin/invoices/InvoiceDetailsPage"),
 );
+const EditInvoicePage = lazy(
+  () => import("../pages/admin/invoices/EditInvoicePage"),
+);
 const PurchaseOrdersPage = lazy(
   () => import("../pages/admin/purchaseOrders/PurchaseOrdersPage"),
 );
+const CreatePurchaseOrderPage = lazy(
+  () => import("../pages/admin/purchaseOrders/CreatePurchaseOrderPage"),
+);
 const PurchaseOrderDetailsPage = lazy(
   () => import("../pages/admin/purchaseOrders/PurchaseOrderDetailsPage"),
+);
+const EditPurchaseOrderPage = lazy(
+  () => import("../pages/admin/purchaseOrders/EditPurchaseOrderPage"),
 );
 
 // Vendor Portal Pages
@@ -353,6 +362,11 @@ const AppRoutes = () => {
               element={<InvoiceDetailsPage />}
             />
 
+            <Route
+              path="/admin/invoices/:id/edit"
+              element={<EditInvoicePage />}
+            />
+
             {/* ------------------------------------------------------------
               PURCHASE ORDERS
           ------------------------------------------------------------- */}
@@ -363,8 +377,18 @@ const AppRoutes = () => {
             />
 
             <Route
+              path="/admin/purchase-orders/create"
+              element={<CreatePurchaseOrderPage />}
+            />
+
+            <Route
               path="/admin/purchase-orders/:id"
               element={<PurchaseOrderDetailsPage />}
+            />
+
+            <Route
+              path="/admin/purchase-orders/:id/edit"
+              element={<EditPurchaseOrderPage />}
             />
 
             {/* ------------------------------------------------------------
