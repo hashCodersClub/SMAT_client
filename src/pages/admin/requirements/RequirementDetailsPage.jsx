@@ -22,8 +22,12 @@ import {
 
 import requirementsApi from "../../../api/requirementsApi";
 import opportunitiesApi from "../../../api/opportunitiesApi";
+import purchaseOrdersApi from "../../../api/purchaseOrdersApi";
+import invoicesApi from "../../../api/invoicesApi";
 import ActivityTimeline from "../../../components/ui/ActivityTimeline";
 import { buildRequirementTimeline } from "../../../utils/requirementTimeline";
+import CommercialWorkspaceTab from "../../../components/commercials/CommercialWorkspaceTab";
+import RequirementDocumentCenter from "../../../components/commercials/RequirementDocumentCenter";
 
 /*
 |--------------------------------------------------------------------------
@@ -131,6 +135,27 @@ const RequirementDetailsPage = () => {
   const [candidates, setCandidates] = useState([]);
   const [approvalActionId, setApprovalActionId] = useState(null);
   const [approvalError, setApprovalError] = useState("");
+
+  const [activeTab, setActiveTab] = useState("OVERVIEW");
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+
+  const loadCommercialData = useCallback(async () => {
+    try {
+      const [poRes, invRes] = await Promise.all([
+        purchaseOrdersApi.getAll({ requirementId: id }).catch(() => ({ purchaseOrders: [] })),
+        invoicesApi.getAll({ requirementId: id }).catch(() => ({ invoices: [] })),
+      ]);
+      setPurchaseOrders(poRes.purchaseOrders || poRes.data || []);
+      setInvoices(invRes.invoices || invRes.data || []);
+    } catch (err) {
+      console.error("Failed to load commercial data:", err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    loadCommercialData();
+  }, [loadCommercialData]);
 
   /*
   |--------------------------------------------------------------------------
@@ -659,6 +684,66 @@ const RequirementDetailsPage = () => {
       </section>
 
       {/* ================================================================
+          WORKFLOW NAVIGATION TABS
+      ================================================================= */}
+      <div className="flex border border-slate-200 bg-white rounded-2xl p-1.5 shadow-sm gap-1">
+        {[
+          { key: "OVERVIEW", label: "Overview" },
+          { key: "COMMERCIALS", label: `Commercials (${purchaseOrders.length + invoices.length})` },
+          { key: "DOCUMENTS", label: "Document Hub" },
+          { key: "TIMELINE", label: "Timeline Feed" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex-1 rounded-xl py-2.5 text-xs font-extrabold transition-all ${
+              activeTab === tab.key
+                ? "bg-slate-900 text-white shadow-md shadow-slate-900/20"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "COMMERCIALS" && (
+        <CommercialWorkspaceTab
+          requirement={requirement}
+          candidates={candidates}
+          purchaseOrders={purchaseOrders}
+          invoices={invoices}
+          userRole="ADMIN"
+          onCreatePO={() => navigate(`/admin/purchase-orders/new?requirementId=${id}`)}
+          onCreateInvoice={() => navigate(`/admin/invoices/new?requirementId=${id}`)}
+        />
+      )}
+
+      {activeTab === "DOCUMENTS" && (
+        <RequirementDocumentCenter
+          requirement={requirement}
+          purchaseOrders={purchaseOrders}
+          invoices={invoices}
+          userRole="ADMIN"
+        />
+      )}
+
+      {activeTab === "TIMELINE" && (
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+          <h3 className="text-base font-extrabold text-slate-900">Requirement Timeline Feed</h3>
+          {timelineLoading ? (
+            <div className="p-8 text-center"><FiLoader className="animate-spin mx-auto text-indigo-600" /></div>
+          ) : (
+            <ActivityTimeline events={timelineEvents} />
+          )}
+        </div>
+      )}
+
+      {activeTab === "OVERVIEW" && (
+        <>
+
+      {/* ================================================================
           PENDING APPROVAL — trainers who responded, awaiting admin review
           Approving makes their profile visible to the vendor (SHORTLISTED).
       ================================================================= */}
@@ -1128,6 +1213,8 @@ const RequirementDetailsPage = () => {
           </Section>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };

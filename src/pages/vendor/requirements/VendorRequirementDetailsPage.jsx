@@ -25,6 +25,8 @@ import {
 import requirementsApi from "../../../api/requirementsApi";
 import opportunitiesApi from "../../../api/opportunitiesApi";
 import demoSessionsApi from "../../../api/demoSessionsApi";
+import purchaseOrdersApi from "../../../api/purchaseOrdersApi";
+import invoicesApi from "../../../api/invoicesApi";
 import {
   OPPORTUNITY_STATUS_STYLES,
   formatStatusLabel,
@@ -33,6 +35,8 @@ import ActivityTimeline from "../../../components/ui/ActivityTimeline";
 import { buildRequirementTimeline } from "../../../utils/requirementTimeline";
 import ScheduleDemoModal from "../../../components/demo/ScheduleDemoModal";
 import RequirementStatusTimeline from "../../../components/vendor/RequirementStatusTimeline";
+import CommercialWorkspaceTab from "../../../components/commercials/CommercialWorkspaceTab";
+import RequirementDocumentCenter from "../../../components/commercials/RequirementDocumentCenter";
 
 const SOURCING_POLL_INTERVAL_MS = 15000;
 
@@ -112,7 +116,27 @@ const VendorRequirementDetailsPage = () => {
 
   const [sourcing, setSourcing] = useState(null);
   const [sourcingLoading, setSourcingLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("INTERESTED"); // "INTERESTED" | "OVERVIEW"
+  const [activeTab, setActiveTab] = useState("INTERESTED"); // "INTERESTED" | "OVERVIEW" | "COMMERCIALS" | "DOCUMENTS"
+
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+
+  const loadCommercialData = useCallback(async () => {
+    try {
+      const [poRes, invRes] = await Promise.all([
+        purchaseOrdersApi.getAll({ requirementId: id }).catch(() => ({ purchaseOrders: [] })),
+        invoicesApi.getAll({ requirementId: id }).catch(() => ({ invoices: [] })),
+      ]);
+      setPurchaseOrders(poRes.purchaseOrders || poRes.data || []);
+      setInvoices(invRes.invoices || invRes.data || []);
+    } catch (err) {
+      console.error("Failed to load commercial data:", err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    loadCommercialData();
+  }, [loadCommercialData]);
 
   // Modal State
   const [demoModalCandidate, setDemoModalCandidate] = useState(null);
@@ -403,6 +427,32 @@ const VendorRequirementDetailsPage = () => {
 
         <button
           type="button"
+          onClick={() => setActiveTab("COMMERCIALS")}
+          className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-bold transition-all ${
+            activeTab === "COMMERCIALS"
+              ? "border-indigo-600 text-indigo-600"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <FiBriefcase size={16} />
+          Commercials & POs ({purchaseOrders.length + invoices.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("DOCUMENTS")}
+          className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-bold transition-all ${
+            activeTab === "DOCUMENTS"
+              ? "border-indigo-600 text-indigo-600"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <FiBriefcase size={16} />
+          Document Hub
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("OVERVIEW")}
           className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-bold transition-all ${
             activeTab === "OVERVIEW"
@@ -410,10 +460,29 @@ const VendorRequirementDetailsPage = () => {
               : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
-          <FiBriefcase size={16} />
+          <FiClock size={16} />
           Requirement Overview & Activity
         </button>
       </div>
+
+      {activeTab === "COMMERCIALS" && (
+        <CommercialWorkspaceTab
+          requirement={requirement}
+          candidates={interestedCandidates}
+          purchaseOrders={purchaseOrders}
+          invoices={invoices}
+          userRole="VENDOR"
+        />
+      )}
+
+      {activeTab === "DOCUMENTS" && (
+        <RequirementDocumentCenter
+          requirement={requirement}
+          purchaseOrders={purchaseOrders}
+          invoices={invoices}
+          userRole="VENDOR"
+        />
+      )}
 
       {/* INTERESTED TRAINERS TAB */}
       {activeTab === "INTERESTED" && (
