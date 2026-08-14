@@ -738,10 +738,17 @@ const RequirementDetailsPage = () => {
                             {formatLabel(candidate.status)}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-slate-700">
-                          {candidate.quotedRate
-                            ? `₹${Number(candidate.quotedRate).toLocaleString("en-IN")}/day`
+                        <td className="py-3 pr-4 font-bold text-slate-800">
+                          {candidate.trainerQuotedRate || candidate.quotedRate
+                            ? `₹${Number(candidate.trainerQuotedRate || candidate.quotedRate).toLocaleString("en-IN")}${candidate.trainerQuotedRateType === "PER_HOUR" ? "/hr" : candidate.trainerQuotedRateType === "PER_DAY" ? "/day" : candidate.trainerQuotedRateType === "PER_BATCH" ? "/batch" : candidate.trainerQuotedRateType === "FIXED" ? " fixed" : "/day"}`
                             : "—"}
+                          {requirement.budget != null && (candidate.trainerQuotedRate || candidate.quotedRate) && (
+                            <p className={`text-[10px] font-bold mt-0.5 ${
+                              requirement.budget - (candidate.trainerQuotedRate || candidate.quotedRate) >= 0 ? "text-emerald-600" : "text-rose-600"
+                            }`}>
+                              Margin: {requirement.budget - (candidate.trainerQuotedRate || candidate.quotedRate) >= 0 ? `+₹${(requirement.budget - (candidate.trainerQuotedRate || candidate.quotedRate)).toLocaleString("en-IN")}` : `-₹${Math.abs(requirement.budget - (candidate.trainerQuotedRate || candidate.quotedRate)).toLocaleString("en-IN")}`}
+                            </p>
+                          )}
                         </td>
                         <td className="py-3 pr-4 text-slate-500">
                           {formatDate(candidate.respondedAt)}

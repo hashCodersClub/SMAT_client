@@ -87,9 +87,27 @@ export const mapTrainerFromApi = (trainer = {}) => {
     |--------------------------------------------------------------------------
     */
 
-    onlineRate: trainer.hourlyRate ?? 0,
+    rateCard: trainer.rateCard || {
+      hourlyRate: trainer.hourlyRate ?? null,
+      dailyRate: trainer.dailyRate ?? null,
+      batchRate: trainer.batchRate ?? null,
+      fixedProjectRate: trainer.fixedProjectRate ?? null,
+      currency: trainer.currency || "INR",
+    },
 
-    offlineRate: trainer.dailyRate ?? 0,
+    hourlyRate: trainer.rateCard?.hourlyRate ?? trainer.hourlyRate ?? null,
+
+    dailyRate: trainer.rateCard?.dailyRate ?? trainer.dailyRate ?? null,
+
+    batchRate: trainer.rateCard?.batchRate ?? trainer.batchRate ?? null,
+
+    fixedProjectRate: trainer.rateCard?.fixedProjectRate ?? trainer.fixedProjectRate ?? null,
+
+    currency: trainer.rateCard?.currency || trainer.currency || "INR",
+
+    onlineRate: trainer.rateCard?.hourlyRate ?? trainer.hourlyRate ?? 0,
+
+    offlineRate: trainer.rateCard?.dailyRate ?? trainer.dailyRate ?? 0,
 
     /*
     |--------------------------------------------------------------------------
@@ -277,9 +295,23 @@ export const mapTrainerToApi = (form = {}) => {
     |--------------------------------------------------------------------------
     */
 
-    hourlyRate: Number(form.onlineRate) || 0,
+    hourlyRate: form.hourlyRate !== undefined && form.hourlyRate !== null && form.hourlyRate !== "" ? Number(form.hourlyRate) : (Number(form.onlineRate) || null),
 
-    dailyRate: Number(form.offlineRate) || 0,
+    dailyRate: form.dailyRate !== undefined && form.dailyRate !== null && form.dailyRate !== "" ? Number(form.dailyRate) : (Number(form.offlineRate) || null),
+
+    batchRate: form.batchRate !== undefined && form.batchRate !== null && form.batchRate !== "" ? Number(form.batchRate) : null,
+
+    fixedProjectRate: form.fixedProjectRate !== undefined && form.fixedProjectRate !== null && form.fixedProjectRate !== "" ? Number(form.fixedProjectRate) : null,
+
+    currency: form.currency || "INR",
+
+    rateCard: {
+      hourlyRate: form.hourlyRate !== undefined && form.hourlyRate !== null && form.hourlyRate !== "" ? Number(form.hourlyRate) : (Number(form.onlineRate) || null),
+      dailyRate: form.dailyRate !== undefined && form.dailyRate !== null && form.dailyRate !== "" ? Number(form.dailyRate) : (Number(form.offlineRate) || null),
+      batchRate: form.batchRate !== undefined && form.batchRate !== null && form.batchRate !== "" ? Number(form.batchRate) : null,
+      fixedProjectRate: form.fixedProjectRate !== undefined && form.fixedProjectRate !== null && form.fixedProjectRate !== "" ? Number(form.fixedProjectRate) : null,
+      currency: form.currency || "INR",
+    },
 
     /*
     |--------------------------------------------------------------------------

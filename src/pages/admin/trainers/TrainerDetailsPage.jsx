@@ -7,6 +7,7 @@ import {
   FiMail,
   FiPhone,
   FiMapPin,
+  FiDollarSign,
   FiStar,
   FiBriefcase,
   FiFileText,
@@ -43,6 +44,56 @@ const TrainerDetailsPage = () => {
 
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  const [editingRateCard, setEditingRateCard] = useState(false);
+  const [rateCardForm, setRateCardForm] = useState({
+    hourlyRate: "",
+    dailyRate: "",
+    batchRate: "",
+    fixedProjectRate: "",
+    currency: "INR",
+  });
+  const [savingRates, setSavingRates] = useState(false);
+
+  const handleOpenRateModal = () => {
+    const rc = trainer?.rateCard || trainer || {};
+    setRateCardForm({
+      hourlyRate: rc.hourlyRate ?? trainer?.hourlyRate ?? "",
+      dailyRate: rc.dailyRate ?? trainer?.dailyRate ?? "",
+      batchRate: rc.batchRate ?? trainer?.batchRate ?? "",
+      fixedProjectRate: rc.fixedProjectRate ?? trainer?.fixedProjectRate ?? "",
+      currency: rc.currency || trainer?.currency || "INR",
+    });
+    setEditingRateCard(true);
+  };
+
+  const handleSaveRateCard = async () => {
+    try {
+      setSavingRates(true);
+      const payload = {
+        hourlyRate: rateCardForm.hourlyRate !== "" ? Number(rateCardForm.hourlyRate) : null,
+        dailyRate: rateCardForm.dailyRate !== "" ? Number(rateCardForm.dailyRate) : null,
+        batchRate: rateCardForm.batchRate !== "" ? Number(rateCardForm.batchRate) : null,
+        fixedProjectRate: rateCardForm.fixedProjectRate !== "" ? Number(rateCardForm.fixedProjectRate) : null,
+        currency: rateCardForm.currency || "INR",
+        rateCard: {
+          hourlyRate: rateCardForm.hourlyRate !== "" ? Number(rateCardForm.hourlyRate) : null,
+          dailyRate: rateCardForm.dailyRate !== "" ? Number(rateCardForm.dailyRate) : null,
+          batchRate: rateCardForm.batchRate !== "" ? Number(rateCardForm.batchRate) : null,
+          fixedProjectRate: rateCardForm.fixedProjectRate !== "" ? Number(rateCardForm.fixedProjectRate) : null,
+          currency: rateCardForm.currency || "INR",
+        },
+      };
+
+      await trainersApi.update(trainer.id || trainer._id || id, payload);
+      setEditingRateCard(false);
+      await fetchTrainer();
+    } catch (err) {
+      console.error("Failed to update rate card:", err);
+    } finally {
+      setSavingRates(false);
+    }
+  };
 
   /*
   |--------------------------------------------------------------------------
@@ -444,6 +495,63 @@ const TrainerDetailsPage = () => {
         </div>
       )}
 
+      {/* Commercial Rate Card & Commercial Analysis Section */}
+      <section className="relative mt-6 overflow-hidden rounded-3xl border border-indigo-200/60 bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 p-6 backdrop-blur-xl shadow-xl shadow-slate-200/50">
+        <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/60">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20 font-bold">
+              <FiDollarSign size={20} />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900">Commercial Rate Card</h2>
+              <p className="text-xs font-medium text-slate-500">Standard rates registered by this trainer across delivery models.</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleOpenRateModal}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700 shadow-xs hover:bg-indigo-50 transition"
+          >
+            <FiEdit2 size={13} />
+            Edit Rate Card
+          </button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hourly Rate</span>
+            <p className="mt-1 text-lg font-black text-slate-900">
+              {trainer.hourlyRate || trainer.rateCard?.hourlyRate ? `₹${Number(trainer.hourlyRate || trainer.rateCard?.hourlyRate).toLocaleString("en-IN")}` : "—"}
+              <span className="text-xs font-bold text-slate-400"> / hr</span>
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daily Rate</span>
+            <p className="mt-1 text-lg font-black text-slate-900">
+              {trainer.dailyRate || trainer.rateCard?.dailyRate ? `₹${Number(trainer.dailyRate || trainer.rateCard?.dailyRate).toLocaleString("en-IN")}` : "—"}
+              <span className="text-xs font-bold text-slate-400"> / day</span>
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Batch Rate</span>
+            <p className="mt-1 text-lg font-black text-slate-900">
+              {trainer.batchRate || trainer.rateCard?.batchRate ? `₹${Number(trainer.batchRate || trainer.rateCard?.batchRate).toLocaleString("en-IN")}` : "—"}
+              <span className="text-xs font-bold text-slate-400"> / batch</span>
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fixed Project Cost</span>
+            <p className="mt-1 text-lg font-black text-slate-900">
+              {trainer.fixedProjectRate || trainer.rateCard?.fixedProjectRate ? `₹${Number(trainer.fixedProjectRate || trainer.rateCard?.fixedProjectRate).toLocaleString("en-IN")}` : "—"}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Portal Access & Automated Workflow Lifecycle Section */}
       <section className="relative mt-6 overflow-hidden rounded-3xl border border-white/20 bg-white/70 p-6 backdrop-blur-xl shadow-xl shadow-slate-200/40 transition-all duration-300 dark:bg-slate-800/40">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -777,6 +885,90 @@ const TrainerDetailsPage = () => {
           </Section>
         </div>
       </div>
+
+      {/* Admin Edit Rate Card Modal */}
+      {editingRateCard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <FiDollarSign className="text-indigo-600" /> Edit Commercial Rate Card
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingRateCard(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Hourly Rate (₹/hr)</label>
+                <input
+                  type="number"
+                  value={rateCardForm.hourlyRate}
+                  onChange={(e) => setRateCardForm({ ...rateCardForm, hourlyRate: e.target.value })}
+                  placeholder="e.g. 600"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Daily Rate (₹/day)</label>
+                <input
+                  type="number"
+                  value={rateCardForm.dailyRate}
+                  onChange={(e) => setRateCardForm({ ...rateCardForm, dailyRate: e.target.value })}
+                  placeholder="e.g. 15000"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Batch Rate (₹/batch)</label>
+                <input
+                  type="number"
+                  value={rateCardForm.batchRate}
+                  onChange={(e) => setRateCardForm({ ...rateCardForm, batchRate: e.target.value })}
+                  placeholder="e.g. 45000"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Fixed Project Cost (₹)</label>
+                <input
+                  type="number"
+                  value={rateCardForm.fixedProjectRate}
+                  onChange={(e) => setRateCardForm({ ...rateCardForm, fixedProjectRate: e.target.value })}
+                  placeholder="e.g. 75000"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                disabled={savingRates}
+                onClick={handleSaveRateCard}
+                className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition disabled:opacity-50"
+              >
+                {savingRates ? "Saving…" : "Save Rate Card"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingRateCard(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

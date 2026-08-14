@@ -342,6 +342,7 @@ const OpportunityPipelinePage = () => {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [activeForm, setActiveForm] = useState({ id: "", type: "", actionName: "" });
   const [expandedTimelineId, setExpandedTimelineId] = useState("");
+  const [activeDrawerCandidate, setActiveDrawerCandidate] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -649,12 +650,14 @@ const OpportunityPipelinePage = () => {
                           )}
 
                           {requirement?.budget != null && quotedRateVal != null && (
-                            <span className={`font-extrabold px-2 py-0.5 rounded-md border text-[11px] ${
-                              requirement.budget - quotedRateVal >= 0
-                                ? "bg-cyan-50 text-cyan-800 border-cyan-200"
-                                : "bg-red-50 text-red-700 border-red-200"
+                            <span className={`font-extrabold px-2 py-0.5 rounded-md border text-[11px] flex items-center gap-1 ${
+                              requirement.budget - quotedRateVal >= (requirement.budget * 0.2)
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                : requirement.budget - quotedRateVal >= 0
+                                  ? "bg-cyan-50 text-cyan-800 border-cyan-200"
+                                  : "bg-rose-50 text-rose-700 border-rose-200"
                             }`}>
-                              Client Budget: ₹{Number(requirement.budget).toLocaleString("en-IN")} | Margin: {requirement.budget - quotedRateVal >= 0 ? `+₹${(requirement.budget - quotedRateVal).toLocaleString("en-IN")}` : `-₹${Math.abs(requirement.budget - quotedRateVal).toLocaleString("en-IN")}`}
+                              Client Budget: ₹{Number(requirement.budget).toLocaleString("en-IN")} | Profit Margin: {requirement.budget - quotedRateVal >= 0 ? `+₹${(requirement.budget - quotedRateVal).toLocaleString("en-IN")} (${Math.round(((requirement.budget - quotedRateVal) / requirement.budget) * 100)}%)` : `-₹${Math.abs(requirement.budget - quotedRateVal).toLocaleString("en-IN")}`}
                             </span>
                           )}
                         </div>
@@ -667,18 +670,29 @@ const OpportunityPipelinePage = () => {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedTimelineId(
-                          expandedTimelineId === candidate._id ? "" : candidate._id,
-                        )
-                      }
-                      className="inline-flex items-center gap-1.5 self-start rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
-                    >
-                      <FiFileText size={13} />
-                      {expandedTimelineId === candidate._id ? "Hide Timeline" : "Selection History"}
-                    </button>
+                    <div className="flex flex-wrap gap-2 self-start">
+                      <button
+                        type="button"
+                        onClick={() => setActiveDrawerCandidate(candidate)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition"
+                      >
+                        <FiDollarSign size={13} />
+                        Trainer Rate Card & Profile
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedTimelineId(
+                            expandedTimelineId === candidate._id ? "" : candidate._id,
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                      >
+                        <FiFileText size={13} />
+                        {expandedTimelineId === candidate._id ? "Hide Timeline" : "Selection History"}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Stage-specific Actions Bar */}
@@ -994,6 +1008,114 @@ const OpportunityPipelinePage = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Quick Trainer Rate Card & Profile Drawer */}
+      {activeDrawerCandidate && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-lg bg-white h-full shadow-2xl p-6 overflow-y-auto space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">Trainer Rate Card & Profile</span>
+                <h3 className="text-lg font-black text-slate-900">
+                  {activeDrawerCandidate.trainerId?.name || "Trainer Profile"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDrawerCandidate(null)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Standard Profile Rate Card Grid */}
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                <FiDollarSign size={14} /> Registered Commercial Rate Card
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-xl bg-white p-3 border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Hourly Rate</span>
+                  <p className="font-extrabold text-slate-900 text-sm mt-0.5">
+                    {activeDrawerCandidate.trainerId?.rateCard?.hourlyRate || activeDrawerCandidate.trainerId?.hourlyRate
+                      ? `₹${Number(activeDrawerCandidate.trainerId?.rateCard?.hourlyRate || activeDrawerCandidate.trainerId?.hourlyRate).toLocaleString("en-IN")}/hr`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white p-3 border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Daily Rate</span>
+                  <p className="font-extrabold text-slate-900 text-sm mt-0.5">
+                    {activeDrawerCandidate.trainerId?.rateCard?.dailyRate || activeDrawerCandidate.trainerId?.dailyRate
+                      ? `₹${Number(activeDrawerCandidate.trainerId?.rateCard?.dailyRate || activeDrawerCandidate.trainerId?.dailyRate).toLocaleString("en-IN")}/day`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white p-3 border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Batch Rate</span>
+                  <p className="font-extrabold text-slate-900 text-sm mt-0.5">
+                    {activeDrawerCandidate.trainerId?.rateCard?.batchRate || activeDrawerCandidate.trainerId?.batchRate
+                      ? `₹${Number(activeDrawerCandidate.trainerId?.rateCard?.batchRate || activeDrawerCandidate.trainerId?.batchRate).toLocaleString("en-IN")}/batch`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white p-3 border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Fixed Project Cost</span>
+                  <p className="font-extrabold text-slate-900 text-sm mt-0.5">
+                    {activeDrawerCandidate.trainerId?.rateCard?.fixedProjectRate || activeDrawerCandidate.trainerId?.fixedProjectRate
+                      ? `₹${Number(activeDrawerCandidate.trainerId?.rateCard?.fixedProjectRate || activeDrawerCandidate.trainerId?.fixedProjectRate).toLocaleString("en-IN")}`
+                      : "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submitted Application Quotation Details */}
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Submitted Requirement Quotation</span>
+              <p className="text-xl font-black text-emerald-950">
+                {activeDrawerCandidate.trainerQuotedRate != null
+                  ? `₹${Number(activeDrawerCandidate.trainerQuotedRate).toLocaleString("en-IN")}${RATE_TYPE_LABELS[activeDrawerCandidate.trainerQuotedRateType] || "/day"}`
+                  : "Not quoted yet"}
+              </p>
+              {activeDrawerCandidate.trainerResponseNote && (
+                <p className="text-xs italic text-slate-600 pt-1">
+                  "{activeDrawerCandidate.trainerResponseNote}"
+                </p>
+              )}
+            </div>
+
+            {/* Trainer Experience & Skills */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Skills & Experience</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {(activeDrawerCandidate.trainerId?.skills || []).map((skill) => (
+                  <span key={skill} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex gap-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/admin/trainers/${activeDrawerCandidate.trainerId?._id}`)}
+                className="flex-1 rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition"
+              >
+                View Full Trainer Profile →
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDrawerCandidate(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
