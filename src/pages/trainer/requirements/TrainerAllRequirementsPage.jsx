@@ -59,18 +59,7 @@ const formatDate = (value) => {
   });
 };
 
-const formatBudget = (budget, budgetType) => {
-  if (!budget) return null;
-  const amount = Number(budget).toLocaleString("en-IN");
-  const suffix =
-    {
-      PER_HOUR: "/hr",
-      PER_DAY: "/day",
-      PER_BATCH: "/batch",
-      FIXED: " fixed",
-    }[budgetType] || "";
-  return `₹${amount}${suffix}`;
-};
+
 
 const formatDuration = (value, unit) => {
   if (!value) return null;
@@ -274,10 +263,6 @@ const TrainerAllRequirementsPage = () => {
             const isStillHiring = STILL_HIRING.includes(requirement.status);
             const alreadyTracked = Boolean(requirement.myStatus);
             const justSent = sentInterestIds.has(requirement._id);
-            const budgetLabel = formatBudget(
-              requirement.budget,
-              requirement.budgetType,
-            );
             const durationLabel = formatDuration(
               requirement.durationValue,
               requirement.durationUnit,
@@ -344,12 +329,6 @@ const TrainerAllRequirementsPage = () => {
                     {requirement.trainersNeeded || 1} trainer
                     {(requirement.trainersNeeded || 1) > 1 ? "s" : ""} needed
                   </span>
-                  {budgetLabel && (
-                    <span className="flex items-center gap-1.5 font-bold text-slate-700">
-                      <FiDollarSign size={14} className="text-slate-400" />
-                      {budgetLabel}
-                    </span>
-                  )}
                 </div>
 
                 {requirement.skills?.length > 0 && (

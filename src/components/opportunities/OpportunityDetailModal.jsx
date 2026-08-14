@@ -69,9 +69,10 @@ const OpportunityDetailModal = ({
 }) => {
   const [selectedAction, setSelectedAction] = useState("");
   const [quotedRate, setQuotedRate] = useState(
-    opportunity?.quotedRate !== null && opportunity?.quotedRate !== undefined
-      ? opportunity.quotedRate
-      : "",
+    opportunity?.trainerQuotedRate ?? opportunity?.quotedRate ?? "",
+  );
+  const [rateType, setRateType] = useState(
+    opportunity?.trainerQuotedRateType || "PER_DAY",
   );
   const [note, setNote] = useState(opportunity?.trainerResponseNote || "");
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -82,8 +83,6 @@ const OpportunityDetailModal = ({
 
   const requirement =
     opportunity.requirementId || opportunity.requirementSnapshot || {};
-  // No time-based expiry — see TrainerOpportunitiesPage.jsx for the same
-  // change and rationale. `EXPIRED` is kept only for legacy records.
   const isExpired = opportunity.status === "EXPIRED";
 
   const handleActionClick = (actionStatus) => {
@@ -98,9 +97,12 @@ const OpportunityDetailModal = ({
 
   const handleFinalSubmit = async (statusToSubmit) => {
     const finalStatus = statusToSubmit || selectedAction;
+    const numRate = quotedRate !== "" ? Number(quotedRate) : null;
     await onRespond(opportunity._id, {
       status: finalStatus,
-      quotedRate: quotedRate !== "" ? Number(quotedRate) : null,
+      quotedRate: numRate,
+      trainerQuotedRate: numRate,
+      trainerQuotedRateType: rateType,
       trainerResponseNote: note,
     });
     setShowConfirmation(false);
@@ -217,24 +219,40 @@ const OpportunityDetailModal = ({
                   Your Response
                 </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                      Your Quoted Daily Rate (₹ optional)
+                      Rate Type
+                    </label>
+                    <select
+                      value={rateType}
+                      onChange={(e) => setRateType(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
+                    >
+                      <option value="PER_DAY">Per Day Rate</option>
+                      <option value="PER_HOUR">Per Hour Rate</option>
+                      <option value="FIXED">Fixed Project Cost</option>
+                      <option value="PER_BATCH">Per Batch Rate</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">
+                      Expected Rate (₹)
                     </label>
                     <input
                       type="number"
                       min="0"
                       value={quotedRate}
                       onChange={(e) => setQuotedRate(e.target.value)}
-                      placeholder="Enter rate..."
+                      placeholder="Enter your rate..."
                       className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
                   </div>
 
                   <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                      Note / Availability Remark (optional)
+                      Availability / Note
                     </label>
                     <input
                       type="text"

@@ -16,18 +16,18 @@ const MatchBreakdown = ({ match }) => {
     },
     {
       label: "Experience",
-      score: breakdown.experience.score,
-      max: breakdown.experience.max,
+      score: breakdown.experience?.score,
+      max: breakdown.experience?.max,
     },
-    {
+    ...(breakdown.budget ? [{
       label: "Budget",
       score: breakdown.budget.score,
       max: breakdown.budget.max,
-    },
+    }] : []),
     {
       label: "Mode",
-      score: breakdown.mode.score,
-      max: breakdown.mode.max,
+      score: breakdown.mode?.score,
+      max: breakdown.mode?.max,
     },
     {
       label: "Availability",

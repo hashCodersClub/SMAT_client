@@ -44,10 +44,9 @@ const opportunitiesApi = {
     return response.data;
   },
 
-  adminAction: async (id, action) => {
-    const response = await api.post(`/opportunities/${id}/admin-action`, {
-      action,
-    });
+  adminAction: async (id, actionPayload) => {
+    const payload = typeof actionPayload === "string" ? { action: actionPayload } : actionPayload;
+    const response = await api.post(`/opportunities/${id}/admin-action`, payload);
     return response.data;
   },
 

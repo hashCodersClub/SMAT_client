@@ -55,12 +55,6 @@ const MatchInsight = ({ matchScore, breakdown, insights = [], compact = false })
       icon: FiBriefcase,
     });
   }
-  if (breakdown?.budget?.score > 8) {
-    bulletPoints.push({
-      label: "Within Target Daily Rate Budget",
-      icon: FiDollarSign,
-    });
-  }
 
   // Fallback to AI Insights string list if available
   if (bulletPoints.length === 0 && Array.isArray(insights) && insights.length > 0) {

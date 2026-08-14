@@ -140,11 +140,11 @@ const TrainerOpportunitiesPage = () => {
 
   const handleInlineInterestConfirm = (record) => {
     const draftRate = quotedRateDrafts[record._id];
+    const numRate = draftRate !== undefined && draftRate !== "" ? Number(draftRate) : null;
     handleRespond(record._id, {
       status: "INTERESTED",
-      ...(draftRate !== undefined && draftRate !== ""
-        ? { quotedRate: Number(draftRate) }
-        : {}),
+      ...(numRate !== null ? { quotedRate: numRate, trainerQuotedRate: numRate } : {}),
+      trainerQuotedRateType: "PER_DAY",
     });
   };
 

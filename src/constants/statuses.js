@@ -33,6 +33,7 @@ export const ASSIGNMENT_STATUS_STYLES = {
 export const OPPORTUNITY_STATUS_STYLES = {
   DRAFT: "bg-slate-100 text-slate-700 ring-slate-200",
   CREATED: "bg-slate-100 text-slate-700 ring-slate-200",
+  OPPORTUNITY_SENT: "bg-sky-50 text-sky-700 ring-sky-200",
   PENDING_RESPONSE: "bg-blue-50 text-blue-700 ring-blue-200",
   NOTIFIED: "bg-blue-50 text-blue-700 ring-blue-200",
   VIEWED: "bg-indigo-50 text-indigo-700 ring-indigo-200",
@@ -47,6 +48,8 @@ export const OPPORTUNITY_STATUS_STYLES = {
   DEMO_COMPLETED: "bg-teal-50 text-teal-700 ring-teal-200",
   SELECTED: "bg-green-50 text-green-700 ring-green-200",
   NOT_SELECTED: "bg-red-50 text-red-700 ring-red-200",
+  REJECTED: "bg-red-50 text-red-700 ring-red-200",
+  ONBOARDED: "bg-emerald-100 text-emerald-800 ring-emerald-300",
 };
 
 /** DemoSession lifecycle */
