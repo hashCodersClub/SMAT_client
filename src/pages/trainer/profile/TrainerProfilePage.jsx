@@ -7,7 +7,7 @@ import {
   FiBookOpen,
   FiBriefcase,
   FiCheck,
-  FiCheckCircle,
+  FiDollarSign,
   FiEdit2,
   FiExternalLink,
   FiFile,
@@ -198,6 +198,12 @@ const TrainerProfilePage = () => {
         experience: trainer.experience ?? 0,
 
         trainingExperience: trainer.trainingExperience ?? 0,
+
+        hourlyRate: trainer.rateCard?.hourlyRate ?? trainer.hourlyRate ?? "",
+        dailyRate: trainer.rateCard?.dailyRate ?? trainer.dailyRate ?? "",
+        batchRate: trainer.rateCard?.batchRate ?? trainer.batchRate ?? "",
+        fixedProjectRate: trainer.rateCard?.fixedProjectRate ?? trainer.fixedProjectRate ?? "",
+        currency: trainer.rateCard?.currency || trainer.currency || "INR",
 
         industries: Array.isArray(trainer.industries) ? trainer.industries : [],
 
@@ -674,6 +680,19 @@ const TrainerProfilePage = () => {
         experience: Number(form.experience) || 0,
 
         trainingExperience: Number(form.trainingExperience) || 0,
+
+        hourlyRate: form.hourlyRate !== "" && form.hourlyRate !== null ? Number(form.hourlyRate) : null,
+        dailyRate: form.dailyRate !== "" && form.dailyRate !== null ? Number(form.dailyRate) : null,
+        batchRate: form.batchRate !== "" && form.batchRate !== null ? Number(form.batchRate) : null,
+        fixedProjectRate: form.fixedProjectRate !== "" && form.fixedProjectRate !== null ? Number(form.fixedProjectRate) : null,
+        currency: form.currency || "INR",
+        rateCard: {
+          hourlyRate: form.hourlyRate !== "" && form.hourlyRate !== null ? Number(form.hourlyRate) : null,
+          dailyRate: form.dailyRate !== "" && form.dailyRate !== null ? Number(form.dailyRate) : null,
+          batchRate: form.batchRate !== "" && form.batchRate !== null ? Number(form.batchRate) : null,
+          fixedProjectRate: form.fixedProjectRate !== "" && form.fixedProjectRate !== null ? Number(form.fixedProjectRate) : null,
+          currency: form.currency || "INR",
+        },
 
         industries: form.industries,
 
@@ -1278,6 +1297,59 @@ const TrainerProfilePage = () => {
               placeholder="e.g. IT Services, Banking, EdTech"
             />
           )}
+        </div>
+      </Section>
+
+      {/* ================================================================
+          COMMERCIAL RATE CARD
+      ================================================================= */}
+
+      <Section
+        id="section-rate-card"
+        title="Trainer Rate Card"
+        description="Set your standard commercial rates. These values will automatically prefill when you express interest in training requirements."
+        icon={FiDollarSign}
+      >
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Field
+            label="Hourly Rate (₹/hr)"
+            name="hourlyRate"
+            value={form.hourlyRate}
+            type="number"
+            placeholder="e.g. 600"
+            editing={editing}
+            onChange={handleChange}
+          />
+
+          <Field
+            label="Daily Rate (₹/day)"
+            name="dailyRate"
+            value={form.dailyRate}
+            type="number"
+            placeholder="e.g. 15000"
+            editing={editing}
+            onChange={handleChange}
+          />
+
+          <Field
+            label="Batch Rate (₹/batch)"
+            name="batchRate"
+            value={form.batchRate}
+            type="number"
+            placeholder="e.g. 45000"
+            editing={editing}
+            onChange={handleChange}
+          />
+
+          <Field
+            label="Fixed Project Cost (₹)"
+            name="fixedProjectRate"
+            value={form.fixedProjectRate}
+            type="number"
+            placeholder="e.g. 75000"
+            editing={editing}
+            onChange={handleChange}
+          />
         </div>
       </Section>
 

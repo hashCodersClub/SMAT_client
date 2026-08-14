@@ -67,17 +67,43 @@ const OpportunityDetailModal = ({
   onDeclineDemo,
   demoActionLoading = false,
 }) => {
-  const [selectedAction, setSelectedAction] = useState("");
-  const [quotedRate, setQuotedRate] = useState(
-    opportunity?.trainerQuotedRate ?? opportunity?.quotedRate ?? "",
-  );
-  const [rateType, setRateType] = useState(
-    opportunity?.trainerQuotedRateType || "PER_DAY",
-  );
-  const [note, setNote] = useState(opportunity?.trainerResponseNote || "");
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [rescheduleNote, setRescheduleNote] = useState("");
-  const [showReschedule, setShowReschedule] = useState(false);
+  const trainerRc = opportunity?.trainerId?.rateCard || opportunity?.trainerId || {};
+
+  useEffect(() => {
+    if (opportunity) {
+      const existingRate = opportunity.trainerQuotedRate ?? opportunity.quotedRate;
+      const existingType = opportunity.trainerQuotedRateType || "PER_DAY";
+      setRateType(existingType);
+
+      if (existingRate !== null && existingRate !== undefined && existingRate !== "") {
+        setQuotedRate(existingRate);
+      } else {
+        // Auto-prefill from trainer rate card in profile
+        let defaultRate = null;
+        if (existingType === "PER_HOUR") defaultRate = trainerRc.hourlyRate;
+        else if (existingType === "PER_DAY") defaultRate = trainerRc.dailyRate;
+        else if (existingType === "PER_BATCH") defaultRate = trainerRc.batchRate;
+        else if (existingType === "FIXED") defaultRate = trainerRc.fixedProjectRate;
+
+        if (defaultRate !== null && defaultRate !== undefined) {
+          setQuotedRate(defaultRate);
+        }
+      }
+    }
+  }, [opportunity]);
+
+  const handleRateTypeChange = (newType) => {
+    setRateType(newType);
+    let autoRate = null;
+    if (newType === "PER_HOUR") autoRate = trainerRc.hourlyRate;
+    else if (newType === "PER_DAY") autoRate = trainerRc.dailyRate;
+    else if (newType === "PER_BATCH") autoRate = trainerRc.batchRate;
+    else if (newType === "FIXED") autoRate = trainerRc.fixedProjectRate;
+
+    if (autoRate !== null && autoRate !== undefined) {
+      setQuotedRate(autoRate);
+    }
+  };
 
   if (!isOpen || !opportunity) return null;
 
@@ -226,7 +252,7 @@ const OpportunityDetailModal = ({
                     </label>
                     <select
                       value={rateType}
-                      onChange={(e) => setRateType(e.target.value)}
+                      onChange={(e) => handleRateTypeChange(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     >
                       <option value="PER_DAY">Per Day Rate</option>

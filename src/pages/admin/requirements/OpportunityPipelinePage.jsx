@@ -408,24 +408,46 @@ const OpportunityPipelinePage = () => {
     return stats;
   }, [candidates]);
 
+  const [sortBy, setSortBy] = useState("BEST_MATCH");
+
   const filteredCandidates = useMemo(() => {
-    if (activeFilter === "ALL") return candidates;
-    return candidates.filter((c) => {
-      const st = c.selectionStatus || c.status;
-      if (activeFilter === "SENT")
-        return ["OPPORTUNITY_SENT", "CREATED", "PENDING_RESPONSE", "NOTIFIED"].includes(st);
-      if (activeFilter === "INTERESTED")
-        return ["INTERESTED", "MAYBE"].includes(st);
-      if (activeFilter === "SHORTLISTED") return st === "SHORTLISTED";
-      if (activeFilter === "DEMO")
-        return ["DEMO_REQUESTED", "DEMO_SCHEDULED", "DEMO_COMPLETED"].includes(st);
-      if (activeFilter === "SELECTED") return st === "SELECTED";
-      if (activeFilter === "ONBOARDED") return st === "ONBOARDED";
-      if (activeFilter === "REJECTED")
-        return ["REJECTED", "NOT_SELECTED", "DECLINED"].includes(st);
-      return true;
-    });
-  }, [candidates, activeFilter]);
+    let list = [...candidates];
+    if (activeFilter !== "ALL") {
+      list = list.filter((c) => {
+        const st = c.selectionStatus || c.status;
+        if (activeFilter === "SENT")
+          return ["OPPORTUNITY_SENT", "CREATED", "PENDING_RESPONSE", "NOTIFIED"].includes(st);
+        if (activeFilter === "INTERESTED")
+          return ["INTERESTED", "MAYBE"].includes(st);
+        if (activeFilter === "SHORTLISTED") return st === "SHORTLISTED";
+        if (activeFilter === "DEMO")
+          return ["DEMO_REQUESTED", "DEMO_SCHEDULED", "DEMO_COMPLETED"].includes(st);
+        if (activeFilter === "SELECTED") return st === "SELECTED";
+        if (activeFilter === "ONBOARDED") return st === "ONBOARDED";
+        if (activeFilter === "REJECTED")
+          return ["REJECTED", "NOT_SELECTED", "DECLINED"].includes(st);
+        return true;
+      });
+    }
+
+    if (sortBy === "LOWEST_RATE") {
+      list.sort((a, b) => {
+        const rateA = a.trainerQuotedRate ?? a.quotedRate ?? Infinity;
+        const rateB = b.trainerQuotedRate ?? b.quotedRate ?? Infinity;
+        return rateA - rateB;
+      });
+    } else if (sortBy === "HIGHEST_RATE") {
+      list.sort((a, b) => {
+        const rateA = a.trainerQuotedRate ?? a.quotedRate ?? -1;
+        const rateB = b.trainerQuotedRate ?? b.quotedRate ?? -1;
+        return rateB - rateA;
+      });
+    } else if (sortBy === "BEST_MATCH") {
+      list.sort((a, b) => (b.overallScore || b.matchScore || 0) - (a.overallScore || a.matchScore || 0));
+    }
+
+    return list;
+  }, [candidates, activeFilter, sortBy]);
 
   if (loading) {
     return (
@@ -511,31 +533,46 @@ const OpportunityPipelinePage = () => {
         </div>
       </div>
 
-      {/* Stage Filter Tabs */}
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-xs">
-        {[
-          { key: "ALL", label: "All Candidates" },
-          { key: "SENT", label: "Opportunity Sent" },
-          { key: "INTERESTED", label: "Interested" },
-          { key: "SHORTLISTED", label: "Shortlisted" },
-          { key: "DEMO", label: "Demo Stage" },
-          { key: "SELECTED", label: "Selected" },
-          { key: "ONBOARDED", label: "Onboarded" },
-          { key: "REJECTED", label: "Rejected" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveFilter(tab.key)}
-            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
-              activeFilter === tab.key
-                ? "bg-slate-900 text-white shadow-md shadow-slate-900/20"
-                : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80"
-            }`}
+      {/* Stage Filter Tabs & Sort Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-xs">
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { key: "ALL", label: "All Candidates" },
+            { key: "SENT", label: "Opportunity Sent" },
+            { key: "INTERESTED", label: "Interested" },
+            { key: "SHORTLISTED", label: "Shortlisted" },
+            { key: "DEMO", label: "Demo Stage" },
+            { key: "SELECTED", label: "Selected" },
+            { key: "ONBOARDED", label: "Onboarded" },
+            { key: "REJECTED", label: "Rejected" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveFilter(tab.key)}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                activeFilter === tab.key
+                  ? "bg-slate-900 text-white shadow-md shadow-slate-900/20"
+                  : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 px-2 shrink-0">
+          <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Sort By:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500"
           >
-            {tab.label}
-          </button>
-        ))}
+            <option value="BEST_MATCH">Best Match Score</option>
+            <option value="LOWEST_RATE">Lowest Quoted Rate</option>
+            <option value="HIGHEST_RATE">Highest Quoted Rate</option>
+          </select>
+        </div>
       </div>
 
       {actionError && (
@@ -609,6 +646,16 @@ const OpportunityPipelinePage = () => {
                             </span>
                           ) : (
                             <span className="text-slate-400 font-medium">Rate: Not quoted yet</span>
+                          )}
+
+                          {requirement?.budget != null && quotedRateVal != null && (
+                            <span className={`font-extrabold px-2 py-0.5 rounded-md border text-[11px] ${
+                              requirement.budget - quotedRateVal >= 0
+                                ? "bg-cyan-50 text-cyan-800 border-cyan-200"
+                                : "bg-red-50 text-red-700 border-red-200"
+                            }`}>
+                              Client Budget: ₹{Number(requirement.budget).toLocaleString("en-IN")} | Margin: {requirement.budget - quotedRateVal >= 0 ? `+₹${(requirement.budget - quotedRateVal).toLocaleString("en-IN")}` : `-₹${Math.abs(requirement.budget - quotedRateVal).toLocaleString("en-IN")}`}
+                            </span>
                           )}
                         </div>
 
