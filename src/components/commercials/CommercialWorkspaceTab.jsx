@@ -33,7 +33,10 @@ const CommercialWorkspaceTab = ({
   
   // Find selected or highest shortlisted trainer quote
   const selectedCandidate = candidates.find(
-    (c) => c.selectionStatus === "ONBOARDED" || c.selectionStatus === "SELECTED"
+    (c) =>
+      c.selectionStatus === "ONBOARDED" ||
+      c.selectionStatus === "SELECTED" ||
+      c.selectionStatus === "SHORTLISTED"
   ) || candidates[0];
 
   const trainerCost = selectedCandidate
@@ -49,6 +52,46 @@ const CommercialWorkspaceTab = ({
 
   return (
     <div className="space-y-6">
+      {/* Shortlisted Candidate Retroactive Commercial Banner */}
+      {selectedCandidate && purchaseOrders.length === 0 && (
+        <div className="rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 via-orange-50/50 to-white p-6 shadow-xl space-y-3 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white font-bold shadow-md shadow-amber-500/20">
+              <FiCheckCircle size={20} />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-900">
+                Active Trainer Commercial Ready: {selectedCandidate.trainerId?.name || "Shortlisted Trainer"}
+              </h4>
+              <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                This trainer was shortlisted/selected for this assignment (@ ₹{trainerCost.toLocaleString("en-IN")}). You can now generate official PO and Invoice records with 1 click.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-amber-200/60">
+            {isInternal && onCreatePO && (
+              <button
+                type="button"
+                onClick={onCreatePO}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-extrabold text-white shadow-md hover:bg-slate-800 transition"
+              >
+                <FiPlus size={14} /> Auto-Generate PO for {selectedCandidate.trainerId?.name || "Trainer"}
+              </button>
+            )}
+
+            {isInternal && onCreateInvoice && (
+              <button
+                type="button"
+                onClick={onCreateInvoice}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-extrabold text-slate-800 hover:bg-slate-50 transition"
+              >
+                <FiPlus size={14} /> Generate Client Invoice
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* 1. Executive Summary Panel (Role-Based Isolation) */}
       {isInternal && (
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
