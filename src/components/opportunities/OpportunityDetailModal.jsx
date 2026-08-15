@@ -129,6 +129,7 @@ const OpportunityDetailModal = ({
       quotedRate: numRate,
       trainerQuotedRate: numRate,
       trainerQuotedRateType: rateType,
+      quotedRateType: rateType,
       trainerResponseNote: note,
     });
     setShowConfirmation(false);

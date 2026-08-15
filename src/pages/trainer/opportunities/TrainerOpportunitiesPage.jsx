@@ -72,6 +72,7 @@ const TrainerOpportunitiesPage = () => {
   // Confirmation modal state for inline "Interested" click
   const [confirmingRecord, setConfirmingRecord] = useState(null);
   const [quotedRateDrafts, setQuotedRateDrafts] = useState({});
+  const [quotedRateTypeDrafts, setQuotedRateTypeDrafts] = useState({});
   const [demoActionLoading, setDemoActionLoading] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -140,11 +141,17 @@ const TrainerOpportunitiesPage = () => {
 
   const handleInlineInterestConfirm = (record) => {
     const draftRate = quotedRateDrafts[record._id];
-    const numRate = draftRate !== undefined && draftRate !== "" ? Number(draftRate) : null;
+    const draftType =
+      quotedRateTypeDrafts[record._id] ||
+      record.trainerQuotedRateType ||
+      "PER_DAY";
+    const numRate =
+      draftRate !== undefined && draftRate !== "" ? Number(draftRate) : null;
     handleRespond(record._id, {
       status: "INTERESTED",
       ...(numRate !== null ? { quotedRate: numRate, trainerQuotedRate: numRate } : {}),
-      trainerQuotedRateType: "PER_DAY",
+      trainerQuotedRateType: draftType,
+      quotedRateType: draftType,
     });
   };
 
@@ -536,25 +543,46 @@ const TrainerOpportunitiesPage = () => {
                         <div className="space-y-2 pt-2 border-t border-slate-100">
                           <div>
                             <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                              Your Rate (₹/day optional)
+                              Your Rate & Unit
                             </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={
-                                quotedRateDrafts[record._id] ??
-                                record.quotedRate ??
-                                ""
-                              }
-                              onChange={(e) =>
-                                setQuotedRateDrafts((prev) => ({
-                                  ...prev,
-                                  [record._id]: e.target.value,
-                                }))
-                              }
-                              placeholder="₹ Rate"
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
-                            />
+                            <div className="flex gap-1.5">
+                              <input
+                                type="number"
+                                min="0"
+                                value={
+                                  quotedRateDrafts[record._id] ??
+                                  record.quotedRate ??
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  setQuotedRateDrafts((prev) => ({
+                                    ...prev,
+                                    [record._id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="₹ Rate"
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
+                              />
+                              <select
+                                value={
+                                  quotedRateTypeDrafts[record._id] ??
+                                  record.trainerQuotedRateType ??
+                                  "PER_DAY"
+                                }
+                                onChange={(e) =>
+                                  setQuotedRateTypeDrafts((prev) => ({
+                                    ...prev,
+                                    [record._id]: e.target.value,
+                                  }))
+                                }
+                                className="rounded-xl border border-slate-200 bg-slate-50/50 px-2 py-1.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
+                              >
+                                <option value="PER_DAY">/ Day</option>
+                                <option value="PER_HOUR">/ Hour</option>
+                                <option value="PER_BATCH">/ Batch</option>
+                                <option value="FIXED">Fixed</option>
+                              </select>
+                            </div>
                           </div>
 
                           {/* Responsive Phase D Action Buttons */}
@@ -603,8 +631,14 @@ const TrainerOpportunitiesPage = () => {
                         {record.quotedRate > 0 && (
                           <p className="mt-1 font-bold text-slate-800">
                             Quoted: ₹
-                            {Number(record.quotedRate).toLocaleString("en-IN")}
-                            /day
+                            {Number(record.quotedRate).toLocaleString("en-IN")}{" "}
+                            {record.trainerQuotedRateType === "PER_HOUR"
+                              ? "/ hr"
+                              : record.trainerQuotedRateType === "PER_BATCH"
+                                ? "/ batch"
+                                : record.trainerQuotedRateType === "FIXED"
+                                  ? "(fixed)"
+                                  : "/ day"}
                           </p>
                         )}
                       </div>

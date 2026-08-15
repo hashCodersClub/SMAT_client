@@ -156,7 +156,8 @@ const RequirementOutreachPage = () => {
   };
 
   const updateRate = (trainerId, field, value) => {
-    const parsed = value === "" ? "" : Number(value);
+    const isNumericField = field === "quotedRate" || field === "negotiatedRate";
+    const parsed = isNumericField ? (value === "" ? "" : Number(value)) : value;
 
     updateRecord(trainerId, { [field]: parsed });
 

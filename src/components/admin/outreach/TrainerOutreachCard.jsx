@@ -130,15 +130,30 @@ const TrainerOutreachCard = ({
               Trainer Quoted Rate
             </label>
 
-            <input
-              type="number"
-              value={record?.quotedRate ?? trainer.dailyRate ?? ""}
-              onChange={(e) =>
-                onUpdateRate(trainer.id, "quotedRate", e.target.value)
-              }
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-              placeholder="Rate per day"
-            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={record?.quotedRate ?? trainer.dailyRate ?? ""}
+                onChange={(e) =>
+                  onUpdateRate(trainer.id, "quotedRate", e.target.value)
+                }
+                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                placeholder="Rate"
+              />
+
+              <select
+                value={record?.quotedRateType || "PER_DAY"}
+                onChange={(e) =>
+                  onUpdateRate(trainer.id, "quotedRateType", e.target.value)
+                }
+                className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500"
+              >
+                <option value="PER_DAY">Per Day</option>
+                <option value="PER_HOUR">Per Hour</option>
+                <option value="PER_BATCH">Per Batch</option>
+                <option value="FIXED">Fixed</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -146,15 +161,30 @@ const TrainerOutreachCard = ({
               Final Negotiated Rate
             </label>
 
-            <input
-              type="number"
-              value={record?.negotiatedRate ?? ""}
-              onChange={(e) =>
-                onUpdateRate(trainer.id, "negotiatedRate", e.target.value)
-              }
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-              placeholder="Final rate"
-            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={record?.negotiatedRate ?? ""}
+                onChange={(e) =>
+                  onUpdateRate(trainer.id, "negotiatedRate", e.target.value)
+                }
+                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                placeholder="Final rate"
+              />
+
+              <select
+                value={record?.negotiatedRateType || "PER_DAY"}
+                onChange={(e) =>
+                  onUpdateRate(trainer.id, "negotiatedRateType", e.target.value)
+                }
+                className="rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500"
+              >
+                <option value="PER_DAY">Per Day</option>
+                <option value="PER_HOUR">Per Hour</option>
+                <option value="PER_BATCH">Per Batch</option>
+                <option value="FIXED">Fixed</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
