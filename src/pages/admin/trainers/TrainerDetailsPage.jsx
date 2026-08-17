@@ -8,6 +8,7 @@ import {
   FiPhone,
   FiMapPin,
   FiDollarSign,
+  FiCreditCard,
   FiStar,
   FiBriefcase,
   FiFileText,
@@ -547,6 +548,91 @@ const TrainerDetailsPage = () => {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fixed Project Cost</span>
             <p className="mt-1 text-lg font-black text-slate-900">
               {trainer.fixedProjectRate || trainer.rateCard?.fixedProjectRate ? `₹${Number(trainer.fixedProjectRate || trainer.rateCard?.fixedProjectRate).toLocaleString("en-IN")}` : "—"}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Banking & Payout Details Section */}
+      <section className="relative mt-6 overflow-hidden rounded-3xl border border-white/20 bg-white/70 p-6 backdrop-blur-xl shadow-xl shadow-slate-200/40 transition-all duration-300 dark:bg-slate-800/40">
+        <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/60">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20 font-bold">
+              <FiCreditCard size={20} />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900">Banking & Payout Details</h2>
+              <p className="text-xs font-medium text-slate-500">Bank account and tax information registered for disbursement.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Holder Name</span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {trainer.bankDetails?.accountHolderName || "—"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bank & Branch</span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {trainer.bankDetails?.bankName ? (
+                <>
+                  {trainer.bankDetails.bankName}
+                  {trainer.bankDetails.branchName && (
+                    <span className="text-xs font-normal text-slate-500"> ({trainer.bankDetails.branchName})</span>
+                  )}
+                </>
+              ) : "—"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Number</span>
+            <p className="mt-1 font-mono text-sm font-bold tracking-wider text-slate-900">
+              {trainer.bankDetails?.accountNumber || "—"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">IFSC Code</span>
+            <p className="mt-1 font-mono text-sm font-bold uppercase text-slate-900">
+              {trainer.bankDetails?.ifscCode || "—"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">PAN Number (Tax ID)</span>
+            <p className="mt-1 font-mono text-sm font-bold uppercase text-slate-900">
+              {trainer.bankDetails?.panNumber || "—"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">UPI ID</span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {trainer.bankDetails?.upiId || "—"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:col-span-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verification Document</span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {trainer.bankDetails?.cancelledChequeUrl ? (
+                <a
+                  href={trainer.bankDetails.cancelledChequeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-indigo-600 hover:underline"
+                >
+                  <FiExternalLink size={14} />
+                  View Cancelled Cheque / Passbook
+                </a>
+              ) : (
+                <span className="font-normal text-slate-400">No document attached</span>
+              )}
             </p>
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   FiBookOpen,
   FiBriefcase,
   FiCheck,
+  FiCreditCard,
   FiDollarSign,
   FiEdit2,
   FiExternalLink,
@@ -33,6 +34,7 @@ import EmploymentHistoryEditor from "../../../components/trainer/profile/Employm
 import EducationEditor from "../../../components/trainer/profile/EducationEditor";
 import LanguagesEditor from "../../../components/trainer/profile/LanguagesEditor";
 import ProjectsEditor from "../../../components/trainer/profile/ProjectsEditor";
+import BankingDetailsEditor from "../../../components/trainer/profile/BankingDetailsEditor";
 import AvatarCropModal from "../../../components/shared/AvatarCropModal";
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -100,6 +102,18 @@ const INITIAL_FORM = {
   profileCompletion: 0,
   profileVerified: false,
   vendorProfileCode: "",
+  bankDetails: {
+    accountHolderName: "",
+    bankName: "",
+    branchName: "",
+    accountNumber: "",
+    accountType: "SAVINGS",
+    ifscCode: "",
+    panNumber: "",
+    upiId: "",
+    cancelledChequeUrl: "",
+    isVerified: false,
+  },
 };
 
 /*
@@ -234,6 +248,19 @@ const TrainerProfilePage = () => {
         profileVerified: trainer.profileVerified ?? false,
 
         vendorProfileCode: trainer.vendorProfileCode || "",
+
+        bankDetails: trainer.bankDetails || {
+          accountHolderName: "",
+          bankName: "",
+          branchName: "",
+          accountNumber: "",
+          accountType: "SAVINGS",
+          ifscCode: "",
+          panNumber: "",
+          upiId: "",
+          cancelledChequeUrl: "",
+          isVerified: false,
+        },
       });
 
       setPhotoPreviewUrl(trainer.profilePhotoUrl || "");
@@ -420,6 +447,23 @@ const TrainerProfilePage = () => {
     setForm((current) => ({
       ...current,
       languages,
+    }));
+
+    if (success) {
+      setSuccess("");
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Bank Details
+  |--------------------------------------------------------------------------
+  */
+
+  const handleBankDetailsChange = (bankDetails) => {
+    setForm((current) => ({
+      ...current,
+      bankDetails,
     }));
 
     if (success) {
@@ -1475,6 +1519,23 @@ const TrainerProfilePage = () => {
           languages={form.languages}
           editing={editing}
           onChange={handleLanguagesChange}
+        />
+      </Section>
+
+      {/* ================================================================
+          BANKING & PAYOUT DETAILS
+      ================================================================= */}
+
+      <Section
+        id="section-banking"
+        title="Banking & Payout Details"
+        description="Provide your bank account and PAN details to enable direct payout transfers for completed assignments."
+        icon={FiCreditCard}
+      >
+        <BankingDetailsEditor
+          bankDetails={form.bankDetails}
+          editing={editing}
+          onChange={handleBankDetailsChange}
         />
       </Section>
 

@@ -191,6 +191,19 @@ export const mapTrainerFromApi = (trainer = {}) => {
 
     projects: Array.isArray(trainer.projects) ? trainer.projects : [],
 
+    bankDetails: trainer.bankDetails || {
+      accountHolderName: "",
+      bankName: "",
+      branchName: "",
+      accountNumber: "",
+      accountType: "SAVINGS",
+      ifscCode: "",
+      panNumber: "",
+      upiId: "",
+      cancelledChequeUrl: "",
+      isVerified: false,
+    },
+
     /*
     |--------------------------------------------------------------------------
     | Performance
@@ -388,6 +401,8 @@ export const mapTrainerToApi = (form = {}) => {
     currentOrganization: form.currentOrganization?.trim() || "",
 
     projects: Array.isArray(form.projects) ? form.projects : [],
+
+    bankDetails: form.bankDetails || {},
 
     /*
     |--------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiFileText, FiPlus, FiTrash2, FiSend, FiAlertCircle } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { FiFileText, FiPlus, FiTrash2, FiSend, FiAlertCircle, FiCreditCard } from "react-icons/fi";
 
 import Card, { CardHeader, CardBody } from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
@@ -9,6 +10,7 @@ import EmptyState from "../../../components/ui/EmptyState";
 
 import invoicesApi from "../../../api/invoicesApi";
 import assignmentsApi from "../../../api/assignmentsApi";
+import trainersApi from "../../../api/trainersApi";
 
 const STATUS_VARIANTS = {
   SENT: "primary",
@@ -33,6 +35,7 @@ const emptyItem = (rate = 0, unit = "Nos") => ({
 const TrainerInvoicesPage = () => {
   const [invoices, setInvoices] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [trainerProfile, setTrainerProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -43,10 +46,17 @@ const TrainerInvoicesPage = () => {
 
   const load = () => {
     setLoading(true);
-    Promise.all([invoicesApi.getAll({ limit: 50 }), assignmentsApi.getMine()])
-      .then(([invoiceRes, assignmentRes]) => {
-        setInvoices(invoiceRes.invoices || []);
-        setAssignments(assignmentRes.data || []);
+    Promise.all([
+      invoicesApi.getAll({ limit: 50 }),
+      assignmentsApi.getMine(),
+      trainersApi.getMyProfile().catch(() => null),
+    ])
+      .then(([invoiceRes, assignmentRes, trainerRes]) => {
+        setInvoices(invoiceRes?.invoices || []);
+        setAssignments(assignmentRes?.data || []);
+        if (trainerRes?.trainer) {
+          setTrainerProfile(trainerRes.trainer);
+        }
       })
       .catch((err) => {
         console.error("Failed to load invoices:", err);
@@ -127,6 +137,30 @@ const TrainerInvoicesPage = () => {
         title="Invoices"
         description="Submit an invoice once a training assignment is complete."
       />
+
+      {trainerProfile &&
+        (!trainerProfile.bankDetails?.accountNumber ||
+          !trainerProfile.bankDetails?.ifscCode) && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-amber-900 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                <FiCreditCard size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold">Banking & Payout Details Incomplete</p>
+                <p className="text-xs text-amber-700">
+                  Please add your Bank Account & PAN details in your profile so finance can disburse your honorarium without delays.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/trainer/profile"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700"
+            >
+              Update Banking Details
+            </Link>
+          </div>
+        )}
 
       {error && (
         <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
