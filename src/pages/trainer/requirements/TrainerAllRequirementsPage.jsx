@@ -6,6 +6,7 @@ import {
   FiClock,
   FiCompass,
   FiDollarSign,
+  FiEdit2,
   FiFilter,
   FiMapPin,
   FiRefreshCw,
@@ -25,19 +26,27 @@ const MODE_LABELS = {
 };
 
 const STATUS_LABELS = {
-  OPEN: "Open",
-  SOURCING: "Sourcing",
-  PROFILES_SENT: "Profiles Sent",
-  SHORTLISTED: "Shortlisted",
+  OPEN: "Open for Applications",
+  SOURCING: "Actively Sourcing",
+  PROFILES_SENT: "Under Client Review",
+  SHORTLISTED: "Profiles Shortlisted",
   TRAINER_SELECTED: "Trainer Selected",
   CONFIRMED: "Confirmed",
   IN_PROGRESS: "In Progress",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
-  SUBMITTED: "Submitted",
 };
 
-const STILL_HIRING = ["OPEN", "SOURCING", "PROFILES_SENT", "SHORTLISTED"];
+const STILL_HIRING = ["OPEN", "SOURCING", "PROFILES_SENT"];
+
+const PRE_APPROVAL_STATUSES = [
+  "INTERESTED",
+  "MAYBE",
+  "PENDING_RESPONSE",
+  "CREATED",
+  "NOTIFIED",
+  "VIEWED",
+];
 
 const FILTERS = [
   { key: "ACTIVE", label: "Still Hiring" },
@@ -60,8 +69,6 @@ const formatDate = (value) => {
   });
 };
 
-
-
 const formatDuration = (value, unit) => {
   if (!value) return null;
   const unitLabel =
@@ -74,7 +81,7 @@ const TrainerAllRequirementsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [activeFilter, setActiveFilter] = useState("ACTIVE");
+  const [activeFilter, setActiveFilter] = useState("ALL");
   const [modeFilter, setModeFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -108,17 +115,24 @@ const TrainerAllRequirementsPage = () => {
   const openInterestModal = (req) => {
     setModalRequirement(req);
     const rc = trainerProfile?.rateCard || trainerProfile || {};
-    const defaultType = req.mode === "ONLINE" ? "PER_HOUR" : "PER_DAY";
-    setQuotedRateType(defaultType);
+    
+    // Check if trainer has a previously submitted rate for this requirement
+    const hasPreviousRate = req.myQuotedRate !== undefined && req.myQuotedRate !== null;
+    const initialRateType = req.myQuotedRateType || (req.mode === "ONLINE" ? "PER_HOUR" : "PER_DAY");
+    setQuotedRateType(initialRateType);
 
-    let rateVal = "";
-    if (defaultType === "PER_HOUR") rateVal = rc.hourlyRate ?? "";
-    else if (defaultType === "PER_DAY") rateVal = rc.dailyRate ?? "";
-    else if (defaultType === "PER_BATCH") rateVal = rc.batchRate ?? "";
-    else if (defaultType === "FIXED") rateVal = rc.fixedProjectRate ?? "";
+    if (hasPreviousRate) {
+      setQuotedRate(String(req.myQuotedRate));
+    } else {
+      let rateVal = "";
+      if (initialRateType === "PER_HOUR") rateVal = rc.hourlyRate ?? "";
+      else if (initialRateType === "PER_DAY") rateVal = rc.dailyRate ?? "";
+      else if (initialRateType === "PER_BATCH") rateVal = rc.batchRate ?? "";
+      else if (initialRateType === "FIXED") rateVal = rc.fixedProjectRate ?? "";
+      setQuotedRate(rateVal !== "" ? String(rateVal) : "");
+    }
 
-    setQuotedRate(rateVal !== "" ? String(rateVal) : "");
-    setResponseNote("");
+    setResponseNote(req.myResponseNote || "");
   };
 
   const handleRateTypeChange = (type) => {
@@ -142,6 +156,7 @@ const TrainerAllRequirementsPage = () => {
       });
       setSentInterestIds((prev) => new Set(prev).add(modalRequirement._id));
       setModalRequirement(null);
+      loadData();
     } catch (err) {
       console.error("Failed to submit rate card interest:", err);
       setActionError(
@@ -417,9 +432,25 @@ const TrainerAllRequirementsPage = () => {
 
                 <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
                   {alreadyTracked ? (
-                    <span className="flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700">
-                      <FiCheck size={14} /> Already in your Opportunities
-                    </span>
+                    PRE_APPROVAL_STATUSES.includes(requirement.myStatus) ? (
+                      <div className="flex flex-wrap items-center justify-between w-full gap-2">
+                        <span className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-200">
+                          <FiCheck size={14} /> {requirement.myQuotedRate ? `Quoted ₹${Number(requirement.myQuotedRate).toLocaleString("en-IN")}` : "Interest Sent"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => openInterestModal(requirement)}
+                          className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition shadow-xs"
+                          title="Edit your rate card before admin approves"
+                        >
+                          <FiEdit2 size={13} /> Edit Rate Card
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="flex items-center gap-1.5 rounded-xl bg-purple-50 px-3 py-2 text-xs font-bold text-purple-700 border border-purple-200">
+                        <FiCheck size={14} /> Shortlisted / Approved by Admin
+                      </span>
+                    )
                   ) : justSent ? (
                     <span className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
                       <FiCheck size={14} /> Interest sent to the team
@@ -476,7 +507,11 @@ const TrainerAllRequirementsPage = () => {
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Express Interest & Commercial Quote</span>
+                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                  {modalRequirement.myStatus && PRE_APPROVAL_STATUSES.includes(modalRequirement.myStatus)
+                    ? "Edit Submitted Rate Card (Before Admin Approval)"
+                    : "Express Interest & Commercial Quote"}
+                </span>
                 <h3 className="text-base font-extrabold text-slate-900">
                   {modalRequirement.title}
                 </h3>
@@ -531,7 +566,9 @@ const TrainerAllRequirementsPage = () => {
                   />
                 </div>
                 <p className="mt-1 text-[11px] font-medium text-slate-400">
-                  Auto-prefilled from your profile rate card. You may customize it for this specific requirement.
+                  {modalRequirement.myStatus && PRE_APPROVAL_STATUSES.includes(modalRequirement.myStatus)
+                    ? "Updating your quoted rate before the Admin approves this opportunity."
+                    : "Auto-prefilled from your profile rate card. You may customize it for this specific requirement."}
                 </p>
               </div>
 
@@ -561,7 +598,11 @@ const TrainerAllRequirementsPage = () => {
                 ) : (
                   <FiSend size={14} />
                 )}
-                {submittingInterest ? "Submitting…" : "Submit Rate & Express Interest"}
+                {submittingInterest
+                  ? "Submitting…"
+                  : modalRequirement.myStatus && PRE_APPROVAL_STATUSES.includes(modalRequirement.myStatus)
+                  ? "Update Rate Quote"
+                  : "Submit Rate & Express Interest"}
               </button>
               <button
                 type="button"

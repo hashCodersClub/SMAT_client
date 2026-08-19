@@ -67,6 +67,14 @@ const OpportunityDetailModal = ({
   onDeclineDemo,
   demoActionLoading = false,
 }) => {
+  const [rateType, setRateType] = useState("PER_DAY");
+  const [quotedRate, setQuotedRate] = useState("");
+  const [note, setNote] = useState("");
+  const [selectedAction, setSelectedAction] = useState("INTERESTED");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [rescheduleNote, setRescheduleNote] = useState("");
+
   const trainerRc = opportunity?.trainerId?.rateCard || opportunity?.trainerId || {};
 
   useEffect(() => {
@@ -74,6 +82,7 @@ const OpportunityDetailModal = ({
       const existingRate = opportunity.trainerQuotedRate ?? opportunity.quotedRate;
       const existingType = opportunity.trainerQuotedRateType || "PER_DAY";
       setRateType(existingType);
+      setNote(opportunity.trainerResponseNote || "");
 
       if (existingRate !== null && existingRate !== undefined && existingRate !== "") {
         setQuotedRate(existingRate);
@@ -219,10 +228,7 @@ const OpportunityDetailModal = ({
             </div>
           </div>
 
-          {/* Expired Banner — only ever shown for legacy records that
-              were expired under the old time-based rule. New
-              opportunities never get an expiry deadline; they stay open
-              until the requirement is closed. */}
+          {/* Expired Banner */}
           {isExpired && (
             <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
               <span className="flex items-center gap-1.5">
@@ -232,7 +238,7 @@ const OpportunityDetailModal = ({
             </div>
           )}
 
-          {/* Phase C Response Form (if not expired & not selected/withdrawn/rejected/in demo stage) */}
+          {/* Phase C Response Form */}
           {!isExpired &&
             ![
               "SELECTED",
@@ -242,9 +248,13 @@ const OpportunityDetailModal = ({
               ...DEMO_STAGE_STATUSES,
             ].includes(opportunity.status) && (
               <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 space-y-4">
-                <h4 className="text-sm font-extrabold text-slate-900">
-                  Your Response
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-extrabold text-slate-900">
+                    {opportunity.respondedAt
+                      ? "Submitted Rate Card (Editable until Admin approves)"
+                      : "Your Response & Commercial Quote"}
+                  </h4>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -300,7 +310,7 @@ const OpportunityDetailModal = ({
                     onClick={() => handleActionClick("INTERESTED")}
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:scale-[1.02] transition disabled:opacity-50"
                   >
-                    <FiCheck size={16} /> Interested
+                    <FiCheck size={16} /> {opportunity.respondedAt ? "Update Rate & Interest" : "Interested"}
                   </button>
 
                   <button
