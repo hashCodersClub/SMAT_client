@@ -52,7 +52,12 @@ const CommercialWorkspaceTab = ({
     if (onCreatePO) {
       onCreatePO();
     } else {
-      navigate(`/admin/purchase-orders/create?requirementId=${requirement._id || requirement.id || ""}`);
+      const reqId = requirement._id || requirement.id || "";
+      const trainerId = selectedCandidate?.trainerId?._id || selectedCandidate?.trainerId || "";
+      const vendorId = requirement.vendorId?._id || requirement.vendorId || "";
+      navigate(
+        `/admin/purchase-orders/create?requirementId=${reqId}&trainerId=${trainerId}&vendorId=${vendorId}`
+      );
     }
   };
 

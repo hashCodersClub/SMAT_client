@@ -60,13 +60,13 @@ export const downloadDocumentPdf = async (nodeOrType, filenameOrDoc = "document.
         <div style="display: flex; justify-content: space-between; gap: 20px; margin-top: 24px; font-size: 12px;">
           <div style="flex: 1; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9;">
             <div style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Issued By</div>
-            <div style="font-weight: 800; color: #0f172a; margin-top: 4px;">${docData.vendorId?.name || "Trainexus Operations"}</div>
+            <div style="font-weight: 800; color: #0f172a; margin-top: 4px;">${docData.buyer?.name || docData.vendorId?.name || "Nxthack IT Solutions"}</div>
             <div style="color: #64748b; margin-top: 2px;">India</div>
           </div>
 
           <div style="flex: 1; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9;">
             <div style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Issued To</div>
-            <div style="font-weight: 800; color: #0f172a; margin-top: 4px;">${docData.trainerId?.name || docData.vendorId?.name || "Corporate Client"}</div>
+            <div style="font-weight: 800; color: #0f172a; margin-top: 4px;">${docData.supplier?.name || docData.trainerId?.name || docData.trainer?.name || "Assigned Trainer"}</div>
             <div style="color: #64748b; margin-top: 2px;">Verified Partner</div>
           </div>
         </div>

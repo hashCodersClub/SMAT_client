@@ -52,7 +52,7 @@ const CreateVendorInvoicePage = () => {
   const [taxType, setTaxType] = useState("INTRA_STATE");
 
   const [billFrom, setBillFrom] = useState({
-    name: "Trainexus Edtech Platform",
+    name: "Nxthack IT Solutions",
     address: "Level 4, Commercial Hub, Cyber City",
     city: "Gurugram",
     state: "Haryana",
@@ -60,7 +60,7 @@ const CreateVendorInvoicePage = () => {
     country: "India",
     gstin: "06AAACT0000A1Z5",
     pan: "AAACT0000A",
-    email: "billing@trainexus.in",
+    email: "billing@nxthack.com",
     phone: "+91 98765 43210",
   });
 

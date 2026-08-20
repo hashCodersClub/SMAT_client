@@ -57,14 +57,14 @@ const CreatePurchaseOrderPage = () => {
 
   // Party Details
   const [buyer, setBuyer] = useState({
-    name: "Trainexus Edtech Platform",
+    name: "Nxthack IT Solutions",
     address: "Level 4, Commercial Hub, Cyber City",
     city: "Gurugram",
     state: "Haryana",
     country: "India",
     pincode: "122002",
     gstin: "06AAACT0000A1Z5",
-    email: "billing@trainexus.in",
+    email: "billing@nxthack.com",
     phone: "+91 98765 43210",
   });
 
@@ -104,16 +104,82 @@ const CreatePurchaseOrderPage = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [vRes, tRes] = await Promise.all([
+        const [vRes, tRes, cRes] = await Promise.all([
           api.get("/vendors").catch(() => ({ data: [] })),
           api.get("/trainers").catch(() => ({ data: [] })),
+          api.get("/company-settings").catch(() => ({ data: null })),
         ]);
 
+        const trainerList = tRes.data?.trainers || tRes.data || [];
+        const vendorList = vRes.data?.vendors || vRes.data || [];
+
         if (active) {
-          setVendors(vRes.data?.vendors || vRes.data || []);
-          setTrainers(tRes.data?.trainers || tRes.data || []);
+          setVendors(vendorList);
+          setTrainers(trainerList);
+
+          if (cRes.data && cRes.data.name) {
+            setBuyer((prev) => ({
+              ...prev,
+              name: cRes.data.name || "Nxthack IT Solutions",
+              address: cRes.data.address || prev.address,
+              city: cRes.data.city || prev.city,
+              state: cRes.data.state || prev.state,
+              country: cRes.data.country || prev.country,
+              pincode: cRes.data.pincode || prev.pincode,
+              gstin: cRes.data.gstin || prev.gstin,
+              email: cRes.data.email || prev.email,
+              phone: cRes.data.phone || prev.phone,
+            }));
+          }
         }
 
+        // If assignmentId is passed, fetch assignment directly
+        if (assignmentId) {
+          try {
+            const assignRes = await api.get(`/assignments/${assignmentId}`);
+            const assignData = assignRes.data?.data || assignRes.data;
+            if (active && assignData) {
+              if (assignData.vendorId) {
+                const vId = assignData.vendorId._id || assignData.vendorId;
+                setSelectedVendorId(vId);
+              }
+              if (assignData.trainerId) {
+                const trObj = assignData.trainerId;
+                const trId = trObj._id || trObj;
+                setSelectedTrainerId(trId);
+                if (typeof trObj === "object" && trObj.name) {
+                  setSupplier({
+                    name: trObj.name || "",
+                    contactPerson: trObj.name || "",
+                    address: trObj.address || "",
+                    city: trObj.city || "",
+                    state: trObj.state || "",
+                    pincode: trObj.pincode || "",
+                    gstin: trObj.gstin || "",
+                    email: trObj.email || "",
+                    phone: trObj.phone || "",
+                  });
+                }
+              }
+              if (assignData.trainerRate !== undefined) {
+                setItems([
+                  {
+                    description: `Corporate Training - ${assignData.requirementId?.title || "Engagement"}`,
+                    hsnSacCode: "998311",
+                    quantity: 1,
+                    unit: assignData.rateType === "PER_HOUR" ? "Hours" : "Days",
+                    rate: Number(assignData.trainerRate) || 0,
+                    taxPercent: 18,
+                  },
+                ]);
+              }
+            }
+          } catch (err) {
+            console.error("Failed to load assignment:", err);
+          }
+        }
+
+        // If requirementId is passed, fetch requirement details & shortlisted trainer
         if (requirementId) {
           const reqRes = await api.get(`/requirements/${requirementId}`);
           if (active && reqRes.data) {
@@ -121,31 +187,37 @@ const CreatePurchaseOrderPage = () => {
             const reqData = reqRes.data;
 
             const defaultRate = Number(reqData.budget) || 0;
-            setItems([
-              {
-                description: `Corporate Training - ${reqData.title || "Engagement"}`,
-                hsnSacCode: "998311",
-                quantity: reqData.durationDays || 1,
-                unit: "Days",
-                rate: defaultRate,
-                taxPercent: 18,
-              },
-            ]);
+            if (!assignmentId) {
+              setItems([
+                {
+                  description: `Corporate Training - ${reqData.title || "Engagement"}`,
+                  hsnSacCode: "998311",
+                  quantity: reqData.durationDays || reqData.durationValue || 1,
+                  unit: "Days",
+                  rate: defaultRate,
+                  taxPercent: 18,
+                },
+              ]);
+            }
 
-            if (reqData.vendorId) {
+            if (reqData.vendorId && !selectedVendorId) {
               const vId = reqData.vendorId._id || reqData.vendorId;
               setSelectedVendorId(vId);
             }
 
+            // Find shortlisted/selected candidate for this requirement
             const shortlisted = reqData.candidateMatches?.find(
-              (c) => c.selectionStatus === "SHORTLISTED" || c.selectionStatus === "SELECTED" || c.selectionStatus === "ONBOARDED"
+              (c) =>
+                c.selectionStatus === "SHORTLISTED" ||
+                c.selectionStatus === "SELECTED" ||
+                c.selectionStatus === "ONBOARDED"
             );
-            if (shortlisted?.trainerId) {
+            if (shortlisted?.trainerId && !selectedTrainerId) {
               const trId = shortlisted.trainerId._id || shortlisted.trainerId;
               setSelectedTrainerId(trId);
 
               const trObj = shortlisted.trainerId;
-              if (trObj && trObj.name) {
+              if (trObj && typeof trObj === "object" && trObj.name) {
                 setSupplier({
                   name: trObj.name || "",
                   contactPerson: trObj.name || "",
@@ -159,13 +231,13 @@ const CreatePurchaseOrderPage = () => {
                 });
               }
 
-              if (shortlisted.quotedRate || shortlisted.trainerQuotedRate) {
+              if (!assignmentId && (shortlisted.quotedRate || shortlisted.trainerQuotedRate)) {
                 const trRate = Number(shortlisted.trainerQuotedRate || shortlisted.quotedRate);
                 setItems([
                   {
                     description: `Corporate Training - ${reqData.title || "Engagement"}`,
                     hsnSacCode: "998311",
-                    quantity: reqData.durationDays || 1,
+                    quantity: reqData.durationDays || reqData.durationValue || 1,
                     unit: "Days",
                     rate: trRate,
                     taxPercent: 18,
@@ -173,6 +245,25 @@ const CreatePurchaseOrderPage = () => {
                 ]);
               }
             }
+          }
+        }
+
+        // If explicit initialTrainerId was passed in query
+        if (initialTrainerId && active) {
+          setSelectedTrainerId(initialTrainerId);
+          const tr = trainerList.find((t) => (t._id || t.id) === initialTrainerId);
+          if (tr) {
+            setSupplier({
+              name: tr.name || "",
+              contactPerson: tr.name || "",
+              address: tr.address || "",
+              city: tr.city || "",
+              state: tr.state || "",
+              pincode: tr.pincode || "",
+              gstin: tr.gstin || "",
+              email: tr.email || "",
+              phone: tr.phone || "",
+            });
           }
         }
       } catch (err) {
@@ -187,7 +278,7 @@ const CreatePurchaseOrderPage = () => {
     return () => {
       active = false;
     };
-  }, [requirementId]);
+  }, [requirementId, assignmentId, initialTrainerId]);
 
   const handleTrainerChange = (trId) => {
     setSelectedTrainerId(trId);

@@ -123,21 +123,19 @@ const InteractiveCreatePOModal = ({
 
       // Create & issue PO payload
       const payload = {
-        requirementId: requirement._id,
-        trainerId: trainer._id || selectedCandidate?.trainerId,
-        vendorId: vendor._id || requirement.vendorId,
+        requirement: requirement._id || requirement.id,
+        trainer: trainer._id || selectedCandidate?.trainerId?._id || selectedCandidate?.trainerId,
+        vendor: vendor._id || requirement.vendorId?._id || requirement.vendorId,
         poDate: formData.poDate,
-        expectedDeliveryDate: formData.expectedDeliveryDate,
+        expectedDeliveryDate: formData.expectedDeliveryDate || undefined,
         deliveryLocation: formData.deliveryLocation,
         paymentTerms: formData.paymentTerms,
         notes: formData.notes,
         items: formData.items,
-        subtotal,
-        taxTotal,
-        grandTotal,
+        status: "ADMIN_ISSUED",
       };
 
-      const res = await purchaseOrdersApi.request(payload);
+      const res = await purchaseOrdersApi.create(payload);
 
       if (onSuccess) onSuccess(res.purchaseOrder || res);
       onClose();
@@ -184,16 +182,20 @@ const InteractiveCreatePOModal = ({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Party Pre-filled Information */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-xs">
             <div>
-              <span className="font-extrabold uppercase text-slate-400 text-[10px]">Buyer (Vendor / Operations)</span>
-              <p className="mt-1 font-extrabold text-slate-900">{vendor.name || "Corporate Client Vendor"}</p>
-              <p className="text-slate-500">{vendor.email || "vendor@trainexus.in"}</p>
+              <span className="font-extrabold uppercase text-slate-400 text-[10px]">PO Issuer / Sender</span>
+              <p className="mt-1 font-extrabold text-blue-900">Nxthack IT Solutions</p>
+              <p className="text-slate-500">billing@nxthack.com</p>
             </div>
             <div>
-              <span className="font-extrabold uppercase text-slate-400 text-[10px]">Supplier (Selected Trainer)</span>
-              <p className="mt-1 font-extrabold text-indigo-950">{trainer.name || selectedCandidate?.name || "Assigned Trainer"}</p>
+              <span className="font-extrabold uppercase text-slate-400 text-[10px]">Shortlisted Trainer (PO Receiver)</span>
+              <p className="mt-1 font-extrabold text-indigo-950">{trainer.name || selectedCandidate?.trainerId?.name || selectedCandidate?.name || "Assigned Trainer"}</p>
               <p className="text-slate-500">Agreed Rate: ₹{defaultRate.toLocaleString("en-IN")}</p>
+            </div>
+            <div>
+              <span className="font-extrabold uppercase text-slate-400 text-[10px]">Client / Vendor</span>
+              <p className="mt-1 font-extrabold text-slate-900">{vendor.companyName || vendor.name || requirement.vendorId?.companyName || "Corporate Client Vendor"}</p>
             </div>
           </div>
 
